@@ -7,42 +7,40 @@ from almapy.client import Client
 
 class SubClientBibs(Client):
     def __init__(
-            self,
-            session: AsyncClient,
-            con_params: Dict[str, Any],
-            rate_limit: int = 20,
+        self,
+        session: AsyncClient,
+        con_params: Dict[str, Any],
+        rate_limit: int = 20,
     ) -> None:
         super().__init__(session, con_params, rate_limit)
         self.con_params = con_params.copy()
         self.con_params["api_endpoint"] = "/almaws/v1/bibs"
 
     async def get_item(self, item_barcode: str):
-        response = await self.__get_req__(
-            "/almaws/v1/items", params={"item_barcode": item_barcode}
-        )
+        response = await self.__get_req__("/almaws/v1/items", params={"item_barcode": item_barcode})
         return response
 
     async def get_items(
-            self,
-            mms_id: str,
-            holding_id: str,
-            expand: Optional[str] = None,
-            user_id: Optional[str] = None,
-            limit: int = 10,
-            offset: int = 0,
-            current_library: Optional[str] = None,
-            current_location: Optional[str] = None,
-            q: Optional[str] = None,
-            order_by: Optional[str] = None,
-            direction: Optional[str] = "desc",
-            create_date_from: Optional[str] = None,
-            create_date_to: Optional[str] = None,
-            modify_date_from: Optional[str] = None,
-            receive_date_from: Optional[str] = None,
-            receive_date_to: Optional[str] = None,
-            expected_receive_date_from: Optional[str] = None,
-            expected_receive_date_to: Optional[str] = None,
-            view: Optional[str] = "brief",
+        self,
+        mms_id: str,
+        holding_id: str,
+        expand: Optional[str] = None,
+        user_id: Optional[str] = None,
+        limit: int = 10,
+        offset: int = 0,
+        current_library: Optional[str] = None,
+        current_location: Optional[str] = None,
+        q: Optional[str] = None,
+        order_by: Optional[str] = None,
+        direction: Optional[str] = "desc",
+        create_date_from: Optional[str] = None,
+        create_date_to: Optional[str] = None,
+        modify_date_from: Optional[str] = None,
+        receive_date_from: Optional[str] = None,
+        receive_date_to: Optional[str] = None,
+        expected_receive_date_from: Optional[str] = None,
+        expected_receive_date_to: Optional[str] = None,
+        view: Optional[str] = "brief",
     ):
         params = {
             "limit": limit,
@@ -64,16 +62,13 @@ class SubClientBibs(Client):
             "view": view,
         }
         response = await self.__get_req__(
-            f"{self.con_params['api_endpoint']}/{mms_id}/holdings/"
-            f"{holding_id}/items",
+            f"{self.con_params['api_endpoint']}/{mms_id}/holdings/" f"{holding_id}/items",
             params=params,
         )
 
         return response
 
-    async def get_portfolios(
-            self, mms_id: str, limit: int = 10, offset: int = 0
-    ):
+    async def get_portfolios(self, mms_id: str, limit: int = 10, offset: int = 0):
         params = {"limit": limit, "offset": offset}
         response = await self.__get_req__(
             f"{self.con_params['api_endpoint']}/{mms_id}/portfolios",
@@ -89,6 +84,5 @@ class SubClientBibs(Client):
         return response
 
     async def update_holding(self, mms_id: str, holding_id: str, record):
-        response = await self.__put_req__(f"/almaws/v1/bibs/{mms_id}/holdings/{holding_id}",
-                                          data=record, xml=True)
+        response = await self.__put_req__(f"/almaws/v1/bibs/{mms_id}/holdings/{holding_id}", data=record, xml=True)
         return response

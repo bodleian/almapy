@@ -1,19 +1,18 @@
-import httpx
-
 from typing import Any, Dict, Optional, Union
 
+import httpx
 from box import Box
-from pyrate_limiter import Duration, RequestRate, Limiter
+from pyrate_limiter import Duration, Limiter, RequestRate
 
 from almapy.utils import handle_http_error
 
 
 class Client:
     def __init__(
-            self,
-            session: httpx.AsyncClient,
-            con_params: Dict[str, Any],
-            rate_limit: int = 20
+        self,
+        session: httpx.AsyncClient,
+        con_params: Dict[str, Any],
+        rate_limit: int = 20,
     ) -> None:
         self.con_params = con_params
         self.session = session
@@ -21,12 +20,11 @@ class Client:
         self.limiter = Limiter(self.rate_limit)
 
     async def __get_req__(
-            self,
-            endpoint: str,
-            params: Optional[Dict[str, Any]] = None,
-            xml: bool = False,
+        self,
+        endpoint: str,
+        params: Optional[Dict[str, Any]] = None,
+        xml: bool = False,
     ) -> Union[Dict[Any, Any], str]:
-
         if params is None:
             params = {}
         else:
@@ -37,7 +35,7 @@ class Client:
             "Accept": f"application/{'xml' if xml else 'json'}",
         }
 
-        async with self.limiter.ratelimit('alma', delay=True):
+        async with self.limiter.ratelimit("alma", delay=True):
             r = await self.session.get(url, headers=headers, params=params)
             if r.status_code >= 400:
                 await handle_http_error(r)
@@ -50,23 +48,18 @@ class Client:
                 return Box(r.json())
 
     async def __post_req__(
-            self,
-            endpoint: str,
-            data: Union[Dict[str, Any], str],
-            xml: bool = False,
-            **kwargs: Any,
+        self,
+        endpoint: str,
+        data: Union[Dict[str, Any], str],
+        xml: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[Any, Any], str]:
-
         url = self.con_params["base_url"] + endpoint
 
         if kwargs.get("params", {}):
-            kwargs["params"] = {
-                k: v
-                for k, v in kwargs.get("params", {}).items()
-                if v is not None
-            }
+            kwargs["params"] = {k: v for k, v in kwargs.get("params", {}).items() if v is not None}
 
-        async with self.limiter.ratelimit('alma', delay=True):
+        async with self.limiter.ratelimit("alma", delay=True):
             r = await self.session.post(url, json=data, **kwargs)
             if r.status_code >= 400:
                 await handle_http_error(r)
@@ -82,13 +75,9 @@ class Client:
         url = self.con_params["base_url"] + endpoint
 
         if kwargs.get("params", {}):
-            kwargs["params"] = {
-                k: v
-                for k, v in kwargs.get("params", {}).items()
-                if v is not None
-            }
+            kwargs["params"] = {k: v for k, v in kwargs.get("params", {}).items() if v is not None}
 
-        async with self.limiter.ratelimit('alma', delay=True):
+        async with self.limiter.ratelimit("alma", delay=True):
             r = await self.session.delete(url, **kwargs)
             if r.status_code >= 400:
                 await handle_http_error(r)
@@ -96,28 +85,23 @@ class Client:
                 return r.status_code == 204
 
     async def __put_req__(
-            self,
-            endpoint: str,
-            data: Union[Dict[str, Any], str],
-            xml: bool = False,
-            **kwargs: Any,
+        self,
+        endpoint: str,
+        data: Union[Dict[str, Any], str],
+        xml: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[Any, Any], str]:
-
         url = self.con_params["base_url"] + endpoint
 
         if kwargs.get("params", {}):
-            kwargs["params"] = {
-                k: v
-                for k, v in kwargs.get("params", {}).items()
-                if v is not None
-            }
+            kwargs["params"] = {k: v for k, v in kwargs.get("params", {}).items() if v is not None}
 
         headers = {
             "Accept": f"application/{'xml' if xml else 'json'}",
-            "Content-Type": f"application/{'xml' if xml else 'json'}"
+            "Content-Type": f"application/{'xml' if xml else 'json'}",
         }
 
-        async with self.limiter.ratelimit('alma', delay=True):
+        async with self.limiter.ratelimit("alma", delay=True):
             if xml:
                 r = await self.session.put(url, data=data, headers=headers, **kwargs)
                 if r.status_code >= 400:

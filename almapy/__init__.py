@@ -1,6 +1,7 @@
 """An API wrapper library for Ex Libris' Alma"""
-import asyncio
 from typing import Any, Dict
+
+import asyncio
 
 import httpx
 from loguru import logger
@@ -14,16 +15,9 @@ logger.disable("almapy")
 
 
 class AlmaClient:
-    def __init__(
-        self,
-        apikey: str,
-        location: str = "Europe",
-        rate_limit: int = 20
-    ) -> None:
+    def __init__(self, apikey: str, location: str = "Europe", rate_limit: int = 20) -> None:
         self.rate_limit = rate_limit
-        self.con_params: Dict[str, Any] = {
-            "headers": {"Accept": "application/json"}
-        }
+        self.con_params: Dict[str, Any] = {"headers": {"Accept": "application/json"}}
 
         locations: Dict[str, str] = {
             "America": "https://api-na.hosted.exlibrisgroup.com",
@@ -33,9 +27,7 @@ class AlmaClient:
             "China": "https://api-cn.hosted.exlibrisgroup.com",
         }
         if location not in locations.keys():
-            raise ArgError(
-                msg=f'Invalid location. Must be one of {", ".join(locations.keys())}.'
-            )
+            raise ArgError(msg=f'Invalid location. Must be one of {", ".join(locations.keys())}.')
         self.con_params["location"] = location
         self.con_params["headers"] = {
             "Accept": "application/json",

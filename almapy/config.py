@@ -36,16 +36,12 @@ class SubClientConfigSets(Client):
             "offset": offset,
             "set_origin": set_origin,
         }
-        response = await self.__get_req__(
-            f"{self.con_params['api_endpoint']}", params=params
-        )
+        response = await self.__get_req__(f"{self.con_params['api_endpoint']}", params=params)
 
         return response
 
     async def get_set(self, set_id: str):
-        response = await self.__get_req__(
-            f"{self.con_params['api_endpoint']}/{set_id}"
-        )
+        response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{set_id}")
         return response
 
     async def create(
@@ -60,7 +56,6 @@ class SubClientConfigSets(Client):
         nz_set_from_iz_set: Optional[str] = None,
         indication_rule: Optional[str] = None,
     ):
-
         response = await self.__post_req__(
             f"{self.con_params['api_endpoint']}",
             data,
@@ -102,7 +97,6 @@ class SubClientConfigSets(Client):
         op: str,
         ignore_delete_errors: bool = False,
     ):
-
         if op not in ["add_members", "delete_members", "replace_members"]:
             raise ArgError(
                 "Manage Set Members 'op' parameter must be one of: 'add_members', 'delete_members', "
@@ -169,9 +163,7 @@ class SubClientConfigSets(Client):
 
         """
 
-        response = await self.__delete_req__(
-            f"{self.con_params['api_endpoint']}/{set_id}"
-        )
+        response = await self.__delete_req__(f"{self.con_params['api_endpoint']}/{set_id}")
         return response
 
 
@@ -189,19 +181,12 @@ class SubClientConfigLibraries(Client):
     async def get_libraries(
         self,
     ):
-        response = await self.__get_req__(
-            f"{self.con_params['api_endpoint']}"
-        )
+        response = await self.__get_req__(f"{self.con_params['api_endpoint']}")
 
         return response
 
-    async def get_circ_desks(
-        self,
-        library: str
-    ):
-        response = await self.__get_req__(
-            f"{self.con_params['api_endpoint']}/{library}/circ-desks/"
-        )
+    async def get_circ_desks(self, library: str):
+        response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{library}/circ-desks/")
 
         return response
 
@@ -218,30 +203,19 @@ class SubClientConfigLetters(Client):
         self.con_params["api_endpoint"] = "/almaws/v1/conf/letters"
 
     async def get_letters(self):
-        response = await self.__get_req__(
-            f"{self.con_params['api_endpoint']}"
-        )
+        response = await self.__get_req__(f"{self.con_params['api_endpoint']}")
         return response
 
     async def get_components(self):
-        response = await self.__get_req__(
-            f"{self.con_params['api_endpoint']}",
-            params={"type": "COMPONENT"}
-        )
+        response = await self.__get_req__(f"{self.con_params['api_endpoint']}", params={"type": "COMPONENT"})
         return response
 
     async def get_letter(self, letter_id: str):
-        response = await self.__get_req__(
-            f"{self.con_params['api_endpoint']}/{letter_id}"
-        )
+        response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{letter_id}")
         return response
 
     async def update_letter(self, letter_id: str, data: str):
-        response = await self.__put_req__(
-            f"{self.con_params['api_endpoint']}/{letter_id}",
-            data,
-            xml=True
-        )
+        response = await self.__put_req__(f"{self.con_params['api_endpoint']}/{letter_id}", data, xml=True)
         return response
 
 

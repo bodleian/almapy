@@ -60,7 +60,7 @@ def handle_http_error(response: httpx.Response) -> None:
             error = body["errorList"]["error"][0]
         code = error["errorCode"]
         message = error["errorMessage"]
-        if message == '':
+        if message == "":
             message = code
 
     if response.status_code == 429:
