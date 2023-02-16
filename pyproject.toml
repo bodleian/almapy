@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "almapy"
-version = "0.4"
+version = "0.4.0"
 description = ""
 authors = ["Ben Gable <ben.gable@bodleian.ox.ac.uk>"]
 
@@ -24,6 +24,11 @@ mypy = "^1.0.0"
 isort = "^5.12.0"
 ruff = "^0.0.247"
 
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.0.5"
+tag_format = "$version"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
