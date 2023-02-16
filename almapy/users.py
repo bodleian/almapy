@@ -20,8 +20,10 @@ class SubClientUserLoans(Client):
         response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{user_id}/loans")
         return response
 
-    async def create_loan(self, user_id: str, item_barcode: str, circ_desk: str, library: str):
+    async def create_loan(self, user_id: str, item_barcode: str, circ_desk: str, library: str, request_id: str = None):
         loan = {"circ_desk": {"value": circ_desk}, "library": {"value": library}}
+        if request_id:
+            loan["request_id"] = request_id
         response = await self.__post_req__(
             f"{self.con_params['api_endpoint']}/{user_id}/loans",
             json=loan,
