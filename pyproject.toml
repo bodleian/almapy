@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "almapy"
+version = "0.4"
+description = ""
+authors = ["Ben Gable <ben.gable@bodleian.ox.ac.uk>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+httpx = "^0.23.3"
+xmltodict = "^0.13.0"
+loguru = "^0.6.0"
+python-box = "^6.1.0"
+pyrate-limiter = "^2.8.5"
+
+[tool.poetry.group.dev.dependencies]
+deptry = "^0.8.0"
+jupyter = "^1.0.0"
+commitizen = "^2.42.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
