@@ -29,6 +29,7 @@ ruff = "^0.0.247"
 name = "cz_conventional_commits"
 version = "0.0.5"
 tag_format = "$version"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
