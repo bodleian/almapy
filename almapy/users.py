@@ -1,5 +1,6 @@
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
+from box import Box
 from httpx import AsyncClient
 
 from almapy.client import Client
@@ -48,12 +49,34 @@ class SubClientUserLoans(Client):
         return response
 
 
+class SubClientUserRequests(Client):
+    def __init__(
+        self,
+        session: AsyncClient,
+        con_params: Dict[str, Any],
+        rate_limit: int = 20,
+    ) -> None:
+        super().__init__(session, con_params, rate_limit)
+        self.con_params = con_params.copy()
+        self.con_params["api_endpoint"] = "/almaws/v1/users"
+
+    async def get_request(self, user_id: str, request_id: str, xml: bool = False):
+        if not xml:
+            response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{user_id}/requests/{request_id}")
+        else:
+            response = await self.__get_req__(
+                f"{self.con_params['api_endpoint']}/{user_id}/requests/{request_id}", xml=True
+            )
+        return response
+
+
 class SubClientUsers(Client):
     def __init__(self, session: AsyncClient, con_params: Dict[str, Any], rate_limit: int = 20) -> None:
         super().__init__(session, con_params, rate_limit)
         self.con_params = con_params.copy()
         self.con_params["api_endpoint"] = "/almaws/v1/users"
         self.loans = SubClientUserLoans(session, self.con_params, rate_limit)
+        self.requests = SubClientUserRequests(session, self.con_params, rate_limit)
 
     async def get_user(self, user_id: str, xml: bool = False):
         if not xml:
@@ -63,6 +86,10 @@ class SubClientUsers(Client):
             response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{user_id}", xml=True)
             return response
 
-    async def update_user(self, user_id: str, body: str):
-        response = await self.__put_req__(f"{self.con_params['api_endpoint']}/{user_id}", body, xml=True)
+    async def update_user(self, user_id: str, user: Union[str, Box], xml: bool = False):
+        if not xml:
+            response = await self.__put_req__(f"{self.con_params['api_endpoint']}/{user_id}", user)
+            return response
+        else:
+            response = await self.__put_req__(f"{self.con_params['api_endpoint']}/{user_id}", user, xml=True)
         return response
