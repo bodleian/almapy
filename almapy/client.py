@@ -3,8 +3,9 @@ from typing import Any, Dict, Optional, Union
 import httpx
 from box import Box
 from pyrate_limiter import Duration, Limiter, RequestRate
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from almapy.utils import handle_http_error
+from almapy.utils import TempAPIError, handle_http_error
 
 
 class Client:
@@ -19,6 +20,12 @@ class Client:
         self.rate_limit = RequestRate(rate_limit, Duration.SECOND)
         self.limiter = Limiter(self.rate_limit)
 
+    @retry(
+        reraise=True,
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, min=4, max=60),
+        retry=retry_if_exception_type(TempAPIError),
+    )
     async def __get_req__(
         self,
         endpoint: str,
@@ -47,6 +54,12 @@ class Client:
             else:
                 return Box(r.json())
 
+    @retry(
+        reraise=True,
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, min=4, max=60),
+        retry=retry_if_exception_type(TempAPIError),
+    )
     async def __post_req__(
         self,
         endpoint: str,
@@ -80,6 +93,12 @@ class Client:
 
             return Box(r.json())
 
+    @retry(
+        reraise=True,
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, min=4, max=60),
+        retry=retry_if_exception_type(TempAPIError),
+    )
     async def __delete_req__(self, endpoint: str, **kwargs: Any) -> bool:
         url = self.con_params["base_url"] + endpoint
 
@@ -93,6 +112,12 @@ class Client:
             else:
                 return r.status_code == 204
 
+    @retry(
+        reraise=True,
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, min=4, max=60),
+        retry=retry_if_exception_type(TempAPIError),
+    )
     async def __put_req__(
         self,
         endpoint: str,

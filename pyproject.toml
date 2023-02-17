@@ -11,6 +11,7 @@ xmltodict = "^0.13.0"
 loguru = "^0.6.0"
 python-box = "^6.1.0"
 pyrate-limiter = "^2.8.5"
+tenacity = "^8.2.1"
 
 [tool.poetry.group.dev.dependencies]
 deptry = "^0.8.0"
