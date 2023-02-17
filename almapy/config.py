@@ -1,11 +1,9 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
-import re
-
+from box import Box
 from httpx import AsyncClient
 
 from almapy.client import Client
-from almapy.utils import APIError, ArgError
 
 
 class SubClientConfigSets(Client):
@@ -46,7 +44,7 @@ class SubClientConfigSets(Client):
 
     async def create(
         self,
-        data: Dict[str, Any],
+        data: Box,
         population: Optional[str] = None,
         job_instance_id: Optional[str] = None,
         from_logical_set: Optional[str] = None,
@@ -87,69 +85,6 @@ class SubClientConfigSets(Client):
             params=params,
         )
 
-        return response
-
-    async def manage_members(
-        self,
-        set_data: Dict[str, Any],
-        member_data: List,
-        id_type: Optional[str],
-        op: str,
-        ignore_delete_errors: bool = False,
-    ):
-        if op not in ["add_members", "delete_members", "replace_members"]:
-            raise ArgError(
-                "Manage Set Members 'op' parameter must be one of: 'add_members', 'delete_members', "
-                "'replace_members'."
-            )
-
-        async def post_catch_missing_ids() -> Union[Dict, List[str]]:
-            if ignore_delete_errors:
-                try:
-                    resp = await self.__post_req__(
-                        f"{self.con_params['api_endpoint']}/{set_data['id']}",
-                        body,
-                        params={"id_type": id_type, "op": op},
-                    )
-                    return resp
-                except APIError as exc:
-                    missing_id_str = re.search(
-                        r"The following ID\(s\) are not members in the set: \[(.*)]\.",
-                        exc.message,
-                    )
-                    if missing_id_str:
-                        missing_ids = missing_id_str.group(1).split(",")
-                        return missing_ids
-                    else:
-                        raise exc
-            else:
-                resp = await self.__post_req__(
-                    f"{self.con_params['api_endpoint']}/{set_data['id']}",
-                    body,
-                    params={"id_type": id_type, "op": op},
-                )
-                return resp
-
-        if len(member_data) > 1000:
-            raise ArgError("can only manage 1000 set members at once")
-            # member_lists = chunks(member_data, 1000)
-            # response: Union[Dict, List[str]] = {}
-            # for member_list in member_lists:
-            #     data = set_data.copy(exclude=excludes)
-            #     data.members = {"member": list(member_list)}
-            #     body = data.dict()
-            #     response = await self.__post_req__(
-            #         f"{self.con_params['api_endpoint']}/{set_data.id}",
-            #         body,
-            #         params={"id_type": id_type, "op": op},
-            #     )
-            #     # First loop will replace all members, subsequent loops will add remaining members.
-            #     if op == "replace_members":
-            #         op = "add_members"
-        else:
-            set_data["members"] = {"member": member_data}
-            body = set_data
-            response = await post_catch_missing_ids()
         return response
 
     async def delete(self, set_id: str) -> bool:

@@ -4,6 +4,7 @@ import xml
 
 import httpx
 import xmltodict
+from glom import Coalesce, glom
 
 
 class ArgError(Exception):
@@ -39,7 +40,7 @@ class BarcodeNotFoundError(APIClientError):
 
 def handle_http_error(response: httpx.Response) -> None:
     # Sometimes the server ignores us and returns XML instead of JSON. Fun.
-    if response.headers.get("Content-Type") == "application/xml":
+    if "application/xml" in response.headers.get("Content-Type"):
         text = response.text
         # HTTP 503 ROUTING_ERROR may contain malformed XML as it does not escape &, which is not XML-legal. We catch
         # and fix this below.
@@ -48,18 +49,20 @@ def handle_http_error(response: httpx.Response) -> None:
         except xml.parsers.expat.ExpatError:
             text = re.sub(r"https://(.*)&(.*)", r"\g<1>&#38;\g<2>", text)
             body = xmltodict.parse(text)
-        error = body["web_service_result"]["errorList"]["error"]
-        code = error["errorCode"]
-        message = error["errorMessage"]
+        code, message = glom(
+            body, ("web_service_result.errorList.error", lambda x: (x["errorCode"], x["errorMessage"])), default=""
+        )
     else:
         body = json.loads(response.text)
         # There are two different error formats, depending on the API endpoint. Why? Who knows.
-        if "web_service_result" in body:
-            error = body["web_service_result"]["errorList"]["error"]
-        else:
-            error = body["errorList"]["error"][0]
-        code = error["errorCode"]
-        message = error["errorMessage"]
+        code, message = glom(
+            body,
+            (
+                Coalesce("web_service_result.errorList.error", "errorList.error"),
+                lambda x: (x[0]["errorCode"], x[0]["errorMessage"]),
+            ),
+            default="",
+        )
         if message == "":
             message = code
 
