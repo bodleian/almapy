@@ -24,7 +24,7 @@ class Client:
         endpoint: str,
         params: Optional[Dict[str, Any]] = None,
         xml: bool = False,
-    ) -> Union[Dict[Any, Any], str]:
+    ) -> Union[Box, str]:
         if params is None:
             params = {}
         else:
@@ -38,7 +38,7 @@ class Client:
         async with self.limiter.ratelimit("alma", delay=True):
             r = await self.session.get(url, headers=headers, params=params)
             if r.status_code >= 400:
-                await handle_http_error(r)
+                handle_http_error(r)
             else:
                 r.raise_for_status()
 
@@ -50,26 +50,35 @@ class Client:
     async def __post_req__(
         self,
         endpoint: str,
-        data: Union[Dict[str, Any], str],
+        data: Union[Box, str],
         xml: bool = False,
         **kwargs: Any,
-    ) -> Union[Dict[Any, Any], str]:
+    ) -> Union[Box, str]:
         url = self.con_params["base_url"] + endpoint
 
         if kwargs.get("params", {}):
             kwargs["params"] = {k: v for k, v in kwargs.get("params", {}).items() if v is not None}
 
-        async with self.limiter.ratelimit("alma", delay=True):
-            r = await self.session.post(url, json=data, **kwargs)
+        headers = {
+            "Accept": f"application/{'xml' if xml else 'json'}",
+            "Content-Type": f"application/{'xml' if xml else 'json'}",
+        }
+
+        if xml:
+            r = await self.session.post(url, data=data, headers=headers, **kwargs)
             if r.status_code >= 400:
-                await handle_http_error(r)
+                handle_http_error(r)
+            else:
+                r.raise_for_status()
+                return r.text
+        else:
+            r = await self.session.post(url, json=data.to_dict(), headers=headers, **kwargs)
+            if r.status_code >= 400:
+                handle_http_error(r)
             else:
                 r.raise_for_status()
 
-            if xml:
-                return r.text
-            else:
-                return Box(r.json())
+            return Box(r.json())
 
     async def __delete_req__(self, endpoint: str, **kwargs: Any) -> bool:
         url = self.con_params["base_url"] + endpoint
@@ -80,17 +89,17 @@ class Client:
         async with self.limiter.ratelimit("alma", delay=True):
             r = await self.session.delete(url, **kwargs)
             if r.status_code >= 400:
-                await handle_http_error(r)
+                handle_http_error(r)
             else:
                 return r.status_code == 204
 
     async def __put_req__(
         self,
         endpoint: str,
-        data: Union[Dict[str, Any], str],
+        data: Union[Box, str],
         xml: bool = False,
         **kwargs: Any,
-    ) -> Union[Dict[Any, Any], str]:
+    ) -> Union[Box, str]:
         url = self.con_params["base_url"] + endpoint
 
         if kwargs.get("params", {}):
@@ -105,15 +114,15 @@ class Client:
             if xml:
                 r = await self.session.put(url, data=data, headers=headers, **kwargs)
                 if r.status_code >= 400:
-                    await handle_http_error(r)
+                    handle_http_error(r)
                 else:
                     r.raise_for_status()
                     return r.text
             else:
-                r = await self.session.put(url, json=data, headers=headers, **kwargs)
+                r = await self.session.put(url, json=data.to_dict(), headers=headers, **kwargs)
                 if r.status_code >= 400:
-                    await handle_http_error(r)
+                    handle_http_error(r)
                 else:
                     r.raise_for_status()
 
-                return r.json()
+                return Box(r.json())

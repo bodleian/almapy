@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "almapy"
-version = "0.4.0"
+version = "0.1.0"
 description = ""
 authors = ["Ben Gable <ben.gable@bodleian.ox.ac.uk>"]
 
