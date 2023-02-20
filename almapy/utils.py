@@ -49,22 +49,18 @@ def handle_http_error(response: httpx.Response) -> None:
         except xml.parsers.expat.ExpatError:
             text = re.sub(r"https://(.*)&(.*)", r"\g<1>&#38;\g<2>", text)
             body = xmltodict.parse(text)
-        code, message = glom(
-            body, ("web_service_result.errorList.error", lambda x: (x["errorCode"], x["errorMessage"])), default=""
-        )
     else:
         body = json.loads(response.text)
-        # There are two different error formats, depending on the API endpoint. Why? Who knows.
-        code, message = glom(
-            body,
-            (
-                Coalesce("web_service_result.errorList.error", "errorList.error"),
-                lambda x: (x[0]["errorCode"], x[0]["errorMessage"]),
-            ),
-            default="",
-        )
-        if message == "":
-            message = code
+    # Some errors omit the web_service_result level in the JSON response. Why? Who knows.
+    code, message = glom(
+        body,
+        (
+            Coalesce("web_service_result.errorList.error.0", "errorList.error.0", "web_service_result.errorList.error"),
+            lambda x: (x["errorCode"], x["errorMessage"]),
+        ),
+    )
+    if message == "":
+        message = code
 
     if response.status_code == 429:
         raise ThresholdError(code, message)
