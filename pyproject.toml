@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "almapy"
-version = "1.0.1"
+version = "1.0.2"
 description = ""
 authors = ["Ben Gable <ben.gable@bodleian.ox.ac.uk>"]
 
@@ -29,7 +29,7 @@ ruff = "^0.0.247"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.0.1"
+version = "1.0.2"
 tag_format = "$version"
 version_files = [
     "pyproject.toml:^version"
