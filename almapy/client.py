@@ -63,7 +63,7 @@ class Client:
     async def __post_req__(
         self,
         endpoint: str,
-        data: Union[Box, str],
+        data: Union[Box, str, None] = None,
         xml: bool = False,
         **kwargs: Any,
     ) -> Union[Box, str]:
@@ -85,7 +85,11 @@ class Client:
                 r.raise_for_status()
                 return r.text
         else:
-            r = await self.session.post(url, json=data.to_dict(), headers=headers, **kwargs)
+            if data:
+                body = data.to_dict()
+            else:
+                body = None
+            r = await self.session.post(url, json=body, headers=headers, **kwargs)
             if r.status_code >= 400:
                 handle_http_error(r)
             else:
