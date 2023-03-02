@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "almapy"
-version = "1.0.3"
+version = "1.1.0"
 description = ""
 authors = ["Ben Gable <ben.gable@bodleian.ox.ac.uk>"]
 
@@ -9,16 +9,16 @@ python = "^3.8"
 httpx = "^0.23.3"
 xmltodict = "^0.13.0"
 loguru = "^0.6.0"
-python-box = "^7.0.0"
-pyrate-limiter = "^2.9.0"
+python-box = "^7.0.1"
+pyrate-limiter = "^2.10.0"
 tenacity = "^8.2.1"
 glom = "^23.1.1"
 
 [tool.poetry.group.dev.dependencies]
 deptry = "^0.8.0"
 jupyter = "^1.0.0"
-commitizen = "^2.42.0"
-pre-commit = "^3.0.4"
+commitizen = "^2.42.1"
+pre-commit = "^3.1.1"
 black = "^23.1.0"
 ssort = "^0.11.6"
 pyupgrade = "^3.3.1"
@@ -36,7 +36,7 @@ pytest-recording = "^0.12.2"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.0.3"
+version = "1.1.0"
 tag_format = "$version"
 version_files = [
     "pyproject.toml:^version"
