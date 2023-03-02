@@ -6,6 +6,7 @@ import asyncio
 import httpx
 from loguru import logger
 
+from almapy.analytics import SubClientAnalytics
 from almapy.bibs import SubClientBibs
 from almapy.config import SubClientConfig
 from almapy.users import SubClientUsers
@@ -44,6 +45,7 @@ class AlmaClient:
         self.users = SubClientUsers(self.session, self.con_params, self.rate_limit)
         self.config = SubClientConfig(self.session, self.con_params, self.rate_limit)
         self.bibs = SubClientBibs(self.session, self.con_params, self.rate_limit)
+        self.analytics = SubClientAnalytics(self.session, self.con_params, self.rate_limit)
 
     async def __aenter__(self):
         return self
