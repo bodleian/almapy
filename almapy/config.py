@@ -25,7 +25,7 @@ class SubClientConfigSets(Client):
         limit: int = 10,
         offset: int = 0,
         set_origin: str = "UI",
-    ):
+    ) -> Box:
         params = {
             "content_type": content_type,
             "set_type": set_type,
@@ -38,7 +38,7 @@ class SubClientConfigSets(Client):
 
         return response
 
-    async def get_set(self, set_id: str):
+    async def get_set(self, set_id: str) -> Box:
         response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{set_id}")
         return response
 
@@ -53,7 +53,7 @@ class SubClientConfigSets(Client):
         set2: Optional[str] = None,
         nz_set_from_iz_set: Optional[str] = None,
         indication_rule: Optional[str] = None,
-    ):
+    ) -> Box:
         response = await self.__post_req__(
             f"{self.con_params['api_endpoint']}",
             data,
@@ -75,7 +75,7 @@ class SubClientConfigSets(Client):
         set_id: str,
         limit: int = 100,
         offset: int = 0,
-    ):
+    ) -> Box:
         params = {
             "limit": limit,
             "offset": offset,
@@ -115,12 +115,12 @@ class SubClientConfigLibraries(Client):
 
     async def get_libraries(
         self,
-    ):
+    ) -> Box:
         response = await self.__get_req__(f"{self.con_params['api_endpoint']}")
 
         return response
 
-    async def get_circ_desks(self, library: str):
+    async def get_circ_desks(self, library: str) -> Box:
         response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{library}/circ-desks/")
 
         return response
@@ -137,19 +137,19 @@ class SubClientConfigLetters(Client):
         self.con_params = con_params.copy()
         self.con_params["api_endpoint"] = "/almaws/v1/conf/letters"
 
-    async def get_letters(self):
+    async def get_letters(self) -> Box:
         response = await self.__get_req__(f"{self.con_params['api_endpoint']}")
         return response
 
-    async def get_components(self):
+    async def get_components(self) -> Box:
         response = await self.__get_req__(f"{self.con_params['api_endpoint']}", params={"type": "COMPONENT"})
         return response
 
-    async def get_letter(self, letter_id: str):
+    async def get_letter(self, letter_id: str) -> Box:
         response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{letter_id}")
         return response
 
-    async def update_letter(self, letter_id: str, data: str):
+    async def update_letter(self, letter_id: str, data: str) -> Box:
         response = await self.__put_req__(f"{self.con_params['api_endpoint']}/{letter_id}", data, xml=True)
         return response
 

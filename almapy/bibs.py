@@ -1,5 +1,6 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
+from box import Box
 from httpx import AsyncClient
 
 from almapy.client import Client
@@ -16,7 +17,7 @@ class SubClientBibs(Client):
         self.con_params = con_params.copy()
         self.con_params["api_endpoint"] = "/almaws/v1/bibs"
 
-    async def get_item(self, item_barcode: str):
+    async def get_item(self, item_barcode: str) -> Union[Box, str]:
         response = await self.__get_req__("/almaws/v1/items", params={"item_barcode": item_barcode})
         return response
 
@@ -41,7 +42,7 @@ class SubClientBibs(Client):
         expected_receive_date_from: Optional[str] = None,
         expected_receive_date_to: Optional[str] = None,
         view: Optional[str] = "brief",
-    ):
+    ) -> Union[Box, str]:
         params = {
             "limit": limit,
             "offset": offset,
@@ -68,7 +69,7 @@ class SubClientBibs(Client):
 
         return response
 
-    async def get_portfolios(self, mms_id: str, limit: int = 10, offset: int = 0):
+    async def get_portfolios(self, mms_id: str, limit: int = 10, offset: int = 0) -> Union[Box, str]:
         params = {"limit": limit, "offset": offset}
         response = await self.__get_req__(
             f"{self.con_params['api_endpoint']}/{mms_id}/portfolios",
@@ -76,13 +77,13 @@ class SubClientBibs(Client):
         )
         return response
 
-    async def get_holding(self, mms_id: str, holding_id: str):
+    async def get_holding(self, mms_id: str, holding_id: str) -> str:
         response = await self.__get_req__(
             f"{self.con_params['api_endpoint']}/{mms_id}/holdings/{holding_id}",
             xml=True,
         )
         return response
 
-    async def update_holding(self, mms_id: str, holding_id: str, record):
+    async def update_holding(self, mms_id: str, holding_id: str, record: str) -> str:
         response = await self.__put_req__(f"/almaws/v1/bibs/{mms_id}/holdings/{holding_id}", data=record, xml=True)
         return response

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Literal, Optional, Union, overload
 
 import httpx
 from box import Box
@@ -19,6 +19,32 @@ class Client:
         self.session = session
         self.rate_limit = RequestRate(rate_limit, Duration.SECOND)
         self.limiter = Limiter(self.rate_limit)
+
+    @overload
+    async def __get_req__(
+        self,
+        endpoint: str,
+        xml: Literal[False],
+        params: Optional[Dict[str, Any]] = None,
+    ) -> Box:
+        ...
+
+    @overload
+    async def __get_req__(
+        self,
+        endpoint: str,
+        xml: Literal[True],
+        params: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        ...
+
+    @overload
+    async def __get_req__(
+        self,
+        endpoint: str,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> Box:
+        ...
 
     @retry(
         reraise=True,
@@ -54,6 +80,24 @@ class Client:
             else:
                 return Box(r.json())
 
+    @overload
+    async def __post_req__(
+        self,
+        endpoint: str,
+        data: Box,
+        xml: Literal[False],
+        **kwargs: Any,
+    ) -> Box:
+        ...
+
+    @overload
+    async def __post_req__(self, endpoint: str, data: str, xml: Literal[True], **kwargs: Any) -> str:
+        ...
+
+    @overload
+    async def __post_req__(self, endpoint: str, data: Optional[Box] = None, **kwargs: Any) -> Box:
+        ...
+
     @retry(
         reraise=True,
         stop=stop_after_attempt(5),
@@ -78,13 +122,17 @@ class Client:
         }
 
         if xml:
-            r = await self.session.post(url, data=data, headers=headers, **kwargs)
+            if type(data) != str:
+                raise ValueError("Body data must be a string when using xml")
+            r = await self.session.post(url, content=data, headers=headers, **kwargs)
             if r.status_code >= 400:
                 handle_http_error(r)
             else:
                 r.raise_for_status()
                 return r.text
         else:
+            if type(data) != Box:
+                raise ValueError("Body data must be a Box when using json")
             if data:
                 body = data.to_dict()
             else:
@@ -116,6 +164,24 @@ class Client:
             else:
                 return r.status_code == 204
 
+    @overload
+    async def __put_req__(
+        self,
+        endpoint: str,
+        data: Box,
+        xml: Literal[False],
+        **kwargs: Any,
+    ) -> Box:
+        ...
+
+    @overload
+    async def __put_req__(self, endpoint: str, data: str, xml: Literal[True], **kwargs: Any) -> str:
+        ...
+
+    @overload
+    async def __put_req__(self, endpoint: str, data: Optional[Box] = None, **kwargs: Any) -> Box:
+        ...
+
     @retry(
         reraise=True,
         stop=stop_after_attempt(5),
@@ -125,7 +191,7 @@ class Client:
     async def __put_req__(
         self,
         endpoint: str,
-        data: Union[Box, str],
+        data: Union[Box, str, None] = None,
         xml: bool = False,
         **kwargs: Any,
     ) -> Union[Box, str]:
@@ -141,13 +207,17 @@ class Client:
 
         async with self.limiter.ratelimit("alma", delay=True):
             if xml:
-                r = await self.session.put(url, data=data, headers=headers, **kwargs)
+                if type(data) != str:
+                    raise ValueError("Body data must be a string when using xml")
+                r = await self.session.put(url, content=data, headers=headers, **kwargs)
                 if r.status_code >= 400:
                     handle_http_error(r)
                 else:
                     r.raise_for_status()
                     return r.text
             else:
+                if type(data) != Box:
+                    raise ValueError("Body data must be a Box when using json")
                 r = await self.session.put(url, json=data.to_dict(), headers=headers, **kwargs)
                 if r.status_code >= 400:
                     handle_http_error(r)
