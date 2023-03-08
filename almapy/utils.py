@@ -1,3 +1,5 @@
+from typing import NoReturn
+
 import json
 import re
 import xml
@@ -6,41 +8,10 @@ import httpx
 import xmltodict
 from glom import Coalesce, glom
 
-
-class ArgError(Exception):
-    def __init__(self, msg: str) -> None:
-        super().__init__(msg)
-        self.message = "Invalid Argument: " + msg
+from almapy.exceptions import APIClientError, APIServerError, BarcodeNotFoundError, LoanLimitError, ThresholdError
 
 
-class APIClientError(Exception):
-    def __init__(self, code: str, msg: str) -> None:
-        super().__init__(msg)
-        self.code = code
-        self.error = msg
-        self.message = f"API Error {code}: {msg}"
-
-
-class APIServerError(APIClientError):
-    def __init__(self, code: str, msg: str) -> None:
-        super().__init__(code, msg)
-        self.message = f"Server Error {code}: {msg}"
-
-
-class ThresholdError(APIServerError):
-    def __init__(self, code: str, msg: str) -> None:
-        super().__init__(code, msg)
-        self.message = f"API Threshold Error {code}: {msg}"
-
-
-class BarcodeNotFoundError(APIClientError):
-    def __init__(self, code: str, msg: str) -> None:
-        super().__init__(code, msg)
-        self.barcode = msg.split(" ")[-1][0:-1]
-        self.message = f"Barcode not found: {self.barcode}"
-
-
-def handle_http_error(response: httpx.Response) -> None:
+def handle_http_error(response: httpx.Response) -> NoReturn:
     # Sometimes the server ignores us and returns XML instead of JSON. Fun.
     if "application/xml" in response.headers.get("Content-Type"):
         text = response.text
@@ -68,6 +39,8 @@ def handle_http_error(response: httpx.Response) -> None:
         raise ThresholdError(code, message)
     if code == "401689":
         raise BarcodeNotFoundError(code, message)
+    if code == "401161":
+        raise LoanLimitError(code, message)
     elif 600 > response.status_code > 500:
         raise APIServerError(code, message)
     else:
