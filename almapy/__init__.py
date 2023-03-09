@@ -9,8 +9,8 @@ from loguru import logger
 from almapy.analytics import SubClientAnalytics
 from almapy.bibs import SubClientBibs
 from almapy.config import SubClientConfig
+from almapy.exceptions import ArgError
 from almapy.users import SubClientUsers
-from almapy.utils import ArgError
 
 logger.disable("almapy")
 
