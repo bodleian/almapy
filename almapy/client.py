@@ -122,7 +122,7 @@ class Client:
         }
 
         if xml:
-            if type(data) != str:
+            if data and type(data) != str:
                 raise ValueError("Body data must be a string when using xml")
             r = await self.session.post(url, content=data, headers=headers, **kwargs)
             if r.status_code >= 400:
@@ -131,7 +131,7 @@ class Client:
                 r.raise_for_status()
                 return r.text
         else:
-            if type(data) != Box:
+            if data and type(data) != Box:
                 raise ValueError("Body data must be a Box when using json")
             if data:
                 body = data.to_dict()
