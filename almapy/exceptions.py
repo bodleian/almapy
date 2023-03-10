@@ -1,3 +1,6 @@
+import re
+
+
 class ArgError(Exception):
     def __init__(self, msg: str) -> None:
         super().__init__(msg)
@@ -34,3 +37,19 @@ class BarcodeNotFoundError(APIClientError):
 class LoanLimitError(APIClientError):
     def __init__(self, code: str, msg: str) -> None:
         super().__init__(code, msg)
+
+
+class LoanBlockedError(APIClientError):
+    def __init__(self, code: str, msg: str) -> None:
+        super().__init__(code, msg)
+        m = re.match(r"(?P<type>.*?) {2}- {3}(?P<description>.*?)\. (?P<note>.*) Scope: (?P<scope>.*)", msg)
+        if m:
+            self.type = m.group("type")
+            self.description = m.group("description")
+            self.note = m.group("note")
+            self.scope = m.group("scope")
+        else:
+            self.type = ""
+            self.description = ""
+            self.note = ""
+            self.scope = ""

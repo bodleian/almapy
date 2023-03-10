@@ -8,7 +8,14 @@ import httpx
 import xmltodict
 from glom import Coalesce, glom
 
-from almapy.exceptions import APIClientError, APIServerError, BarcodeNotFoundError, LoanLimitError, ThresholdError
+from almapy.exceptions import (
+    APIClientError,
+    APIServerError,
+    BarcodeNotFoundError,
+    LoanBlockedError,
+    LoanLimitError,
+    ThresholdError,
+)
 
 
 def handle_http_error(response: httpx.Response) -> NoReturn:
@@ -41,6 +48,8 @@ def handle_http_error(response: httpx.Response) -> NoReturn:
         raise BarcodeNotFoundError(code, message)
     if code == "401161":
         raise LoanLimitError(code, message)
+    if code == "401201":
+        raise LoanBlockedError(code, message)
     elif 600 > response.status_code > 500:
         raise APIServerError(code, message)
     else:
