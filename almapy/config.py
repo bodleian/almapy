@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from box import Box
 from httpx import AsyncClient
@@ -99,6 +99,21 @@ class SubClientConfigSets(Client):
         """
 
         response = await self.__delete_req__(f"{self.con_params['api_endpoint']}/{set_id}")
+        return response
+
+    async def manage_members(
+        self, set_id: str, member_id_list: List[str], *, id_type: str, op: str, fail_on_invalid: bool = True
+    ) -> Box:
+        if op not in ["add_members", "delete_members", "replace_members"]:
+            raise ValueError("op must be one of 'add_members', 'delete_members', 'replace_members'")
+        params = {
+            "id_type": id_type,
+            "op": op,
+            "fail_on_invalid": fail_on_invalid,
+        }
+        body = await self.get_set(set_id)
+        body.members = {"member": [{"id": member_id} for member_id in member_id_list]}
+        response = await self.__post_req__(f"{self.con_params['api_endpoint']}/{set_id}", body, params=params)
         return response
 
 

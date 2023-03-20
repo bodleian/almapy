@@ -24,6 +24,14 @@ class Client:
     async def __get_req__(
         self,
         endpoint: str,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> Box:
+        ...
+
+    @overload
+    async def __get_req__(
+        self,
+        endpoint: str,
         xml: Literal[False],
         params: Optional[Dict[str, Any]] = None,
     ) -> Box:
@@ -36,14 +44,6 @@ class Client:
         xml: Literal[True],
         params: Optional[Dict[str, Any]] = None,
     ) -> str:
-        ...
-
-    @overload
-    async def __get_req__(
-        self,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-    ) -> Box:
         ...
 
     @retry(
