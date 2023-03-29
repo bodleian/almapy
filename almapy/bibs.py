@@ -4,6 +4,8 @@ from box import Box
 from httpx import AsyncClient
 
 from almapy.client import Client
+from almapy.exceptions import APIClientError
+from almapy.users import CannotRenewError
 
 
 class SubClientBibs(Client):
@@ -16,6 +18,7 @@ class SubClientBibs(Client):
         super().__init__(session, con_params, rate_limit)
         self.con_params = con_params.copy()
         self.con_params["api_endpoint"] = "/almaws/v1/bibs"
+        self.loans = SubClientBibLoans(session, self.con_params, rate_limit)
 
     async def get_item(self, item_barcode: str) -> Union[Box, str]:
         response = await self.__get_req__("/almaws/v1/items", params={"item_barcode": item_barcode})
@@ -86,4 +89,155 @@ class SubClientBibs(Client):
 
     async def update_holding(self, mms_id: str, holding_id: str, record: str) -> str:
         response = await self.__put_req__(f"/almaws/v1/bibs/{mms_id}/holdings/{holding_id}", data=record, xml=True)
+        return response
+
+    async def scan_in(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_pid: str,
+        *,
+        library: Optional[str] = None,
+        department: Optional[str] = None,
+        circ_desk: Optional[str] = None,
+        work_order_type: Optional[str] = None,
+        status: Optional[str] = None,
+        external_id: bool = False,
+        request_id: Optional[str] = None,
+        auto_print_slip: bool = False,
+        place_on_hold_shelf: bool = False,
+        confirm: bool = False,
+        register_in_house_use: bool = False,
+        done: bool = False,
+        xml: bool = False,
+    ) -> Union[Box, str]:
+        params = {
+            "op": "scan",
+            "library": library,
+            "department": department,
+            "work_order_type": work_order_type,
+            "circ_desk": circ_desk,
+            "status": status,
+            "done": done,
+            "external_id": external_id,
+            "request_id": request_id,
+            "auto_print_slip": auto_print_slip,
+            "place_on_hold_shelf": place_on_hold_shelf,
+            "confirm": confirm,
+            "register_in_house_use": register_in_house_use,
+        }
+        response = await self.__post_req__(
+            f"/almaws/v1/bibs/{mms_id}/holdings/{holding_id}/items/{item_pid}", params=params, xml=xml
+        )
+        return response
+
+
+class SubClientBibLoans(Client):
+    def __init__(
+        self,
+        session: AsyncClient,
+        con_params: Dict[str, Any],
+        rate_limit: int = 20,
+    ) -> None:
+        super().__init__(session, con_params, rate_limit)
+        self.con_params = con_params.copy()
+        self.con_params["api_endpoint"] = "/almaws/v1/bibs"
+
+    async def get_loans(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        limit: int = 100,
+        offset: int = 0,
+        order_by: str = "due_date",
+        direction: str = "asc",
+        loan_status: str = "Active",
+    ) -> Box:
+        if loan_status not in ["Active", "Complete"]:
+            raise ValueError("loan_status must be 'Active' or 'Complete'")
+        params = {
+            "limit": limit,
+            "offset": offset,
+            "order_by": order_by,
+            "direction": direction,
+            "loan_status": loan_status,
+        }
+        response = await self.__get_req__(
+            f"{self.con_params['api_endpoint']}/{mms_id}/holdings/{holding_id}/items/{item_id}/loans", params=params
+        )
+        return response
+
+    async def create_loan(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        user_id: str,
+        circ_desk: str,
+        library: str,
+        request_id: Optional[str] = None,
+    ) -> Box:
+        loan = Box({"circ_desk": {"value": circ_desk}, "library": {"value": library}})
+        if request_id:
+            loan.request_id = {"value": request_id}
+        response = await self.__post_req__(
+            f"{self.con_params['api_endpoint']}/{mms_id}/holdings/{holding_id}/items/{item_id}/loans",
+            data=loan,
+            params={"user_id": user_id},
+        )
+        return response
+
+    async def get_loan(self, mms_id: str, holding_id: str, item_id: str, loan_id: str) -> Box:
+        response = await self.__get_req__(
+            f"{self.con_params['api_endpoint']}/{mms_id}/holdings/" f"{holding_id}/items/{item_id}/loans/{loan_id}"
+        )
+        return response
+
+    async def renew_loan(self, mms_id: str, holding_id: str, item_id: str, loan_id: str) -> Box:
+        try:
+            response = await self.__post_req__(
+                f"{self.con_params['api_endpoint']}/{mms_id}/holdings/" f"{holding_id}/items/{item_id}/loans/{loan_id}",
+                params={"op": "renew"},
+            )
+            return response
+        except APIClientError as e:
+            if e.code == "401822":
+                raise CannotRenewError(e.error, loan_id) from e
+            else:
+                raise
+
+    async def change_loan_due_date(
+        self, mms_id: str, holding_id: str, item_id: str, loan_id: str, due_date: str
+    ) -> Box:
+        loan = Box({"due_date": due_date})
+        response = await self.__put_req__(
+            f"{self.con_params['api_endpoint']}/{mms_id}/holdings/" f"{holding_id}/items/{item_id}/loans/{loan_id}",
+            data=loan,
+        )
+        return response
+
+    async def get_bib_loans(
+        self,
+        mms_id: str,
+        limit: int = 100,
+        offset: int = 0,
+        order_by: str = "due_date",
+        direction: str = "asc",
+        loan_status: str = "Active",
+    ) -> Box:
+        if loan_status not in ["Active", "Complete"]:
+            raise ValueError("loan_status must be 'Active' or 'Complete'")
+        params = {
+            "limit": limit,
+            "offset": offset,
+            "order_by": order_by,
+            "direction": direction,
+            "loan_status": loan_status,
+        }
+        response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{mms_id}/loans", params=params)
+        return response
+
+    async def get_bib_loan(self, mms_id: str, loan_id: str) -> Box:
+        response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{mms_id}/loans/{loan_id}")
         return response
