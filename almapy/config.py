@@ -136,7 +136,17 @@ class SubClientConfigLibraries(Client):
         return response
 
     async def get_circ_desks(self, library: str) -> Box:
-        response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{library}/circ-desks/")
+        response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{library}/circ-desks")
+
+        return response
+
+    async def get_locations(self, library: str) -> Box:
+        response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{library}/locations")
+
+        return response
+
+    async def get_location(self, library: str, location: str) -> Box:
+        response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{library}/locations/{location}")
 
         return response
 
