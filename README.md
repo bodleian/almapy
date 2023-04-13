@@ -16,6 +16,11 @@ Convenient domain-separated methods are available for a lot of common endpoints,
 All functions will return either XML strings or a [Box](https://github.com/cdgriffith/Box) for JSON. The latter is to make interacting with Ex Libris' rather XMLish JSON a _bit_ less verbose. In the longer term it might be nice to have more specific classes, but this is a lot of work.
 
 ## Quickstart
+```bash
+poetry add almapy --git https://gitlab.bodleian.ox.ac.uk/bodl3011/almapy.git
+```
+
+
 ```python
 import asyncio
 from almapy import AlmaClient
