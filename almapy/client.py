@@ -121,29 +121,30 @@ class Client:
             "Content-Type": f"application/{'xml' if xml else 'json'}",
         }
 
-        if xml:
-            if data and type(data) != str:
-                raise ValueError("Body data must be a string when using xml")
-            r = await self.session.post(url, content=data, headers=headers, **kwargs)
-            if r.status_code >= 400:
-                handle_http_error(r)
+        async with self.limiter.ratelimit("alma", delay=True):
+            if xml:
+                if data and type(data) != str:
+                    raise ValueError("Body data must be a string when using xml")
+                r = await self.session.post(url, content=data, headers=headers, **kwargs)
+                if r.status_code >= 400:
+                    handle_http_error(r)
+                else:
+                    r.raise_for_status()
+                    return r.text
             else:
-                r.raise_for_status()
-                return r.text
-        else:
-            if data and type(data) != Box:
-                raise ValueError("Body data must be a Box when using json")
-            if data:
-                body = data.to_dict()
-            else:
-                body = None
-            r = await self.session.post(url, json=body, headers=headers, **kwargs)
-            if r.status_code >= 400:
-                handle_http_error(r)
-            else:
-                r.raise_for_status()
+                if data and type(data) != Box:
+                    raise ValueError("Body data must be a Box when using json")
+                if data:
+                    body = data.to_dict()
+                else:
+                    body = None
+                r = await self.session.post(url, json=body, headers=headers, **kwargs)
+                if r.status_code >= 400:
+                    handle_http_error(r)
+                else:
+                    r.raise_for_status()
 
-            return Box(r.json())
+                return Box(r.json())
 
     @retry(
         reraise=True,
