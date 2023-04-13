@@ -50,3 +50,9 @@ if __name__ == "__main__":
     asyncio.run(main())
 
 ```
+
+## TODO
+- [ ] Better documentation
+- [ ] More endpoints
+- [ ] Specific response types
+- [ ] Logging
