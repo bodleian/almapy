@@ -2,6 +2,7 @@ from typing import Any, Dict, Literal, Optional, Union, overload
 
 import httpx
 from box import Box
+from loguru import logger
 from pyrate_limiter import Duration, Limiter, RequestRate
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
@@ -69,6 +70,7 @@ class Client:
         }
 
         async with self.limiter.ratelimit("alma", delay=True):
+            logger.debug("GET: " + url)
             r = await self.session.get(url, headers=headers, params=params)
             if r.status_code >= 400:
                 handle_http_error(r)
@@ -121,30 +123,33 @@ class Client:
             "Content-Type": f"application/{'xml' if xml else 'json'}",
         }
 
-        async with self.limiter.ratelimit("alma", delay=True):
-            if xml:
-                if data and type(data) != str:
-                    raise ValueError("Body data must be a string when using xml")
+        if xml:
+            if data and type(data) != str:
+                raise ValueError("Body data must be a string when using xml")
+            async with self.limiter.ratelimit("alma", delay=True):
+                logger.debug("POST: " + url)
                 r = await self.session.post(url, content=data, headers=headers, **kwargs)
-                if r.status_code >= 400:
-                    handle_http_error(r)
-                else:
-                    r.raise_for_status()
-                    return r.text
+            if r.status_code >= 400:
+                handle_http_error(r)
             else:
-                if data and type(data) != Box:
-                    raise ValueError("Body data must be a Box when using json")
-                if data:
-                    body = data.to_dict()
-                else:
-                    body = None
+                r.raise_for_status()
+                return r.text
+        else:
+            if data and type(data) != Box:
+                raise ValueError("Body data must be a Box when using json")
+            if data:
+                body = data.to_dict()
+            else:
+                body = None
+            async with self.limiter.ratelimit("alma", delay=True):
+                logger.debug("POST: " + url)
                 r = await self.session.post(url, json=body, headers=headers, **kwargs)
-                if r.status_code >= 400:
-                    handle_http_error(r)
-                else:
-                    r.raise_for_status()
+            if r.status_code >= 400:
+                handle_http_error(r)
+            else:
+                r.raise_for_status()
 
-                return Box(r.json())
+            return Box(r.json())
 
     @retry(
         reraise=True,
@@ -159,6 +164,7 @@ class Client:
             kwargs["params"] = {k: v for k, v in kwargs.get("params", {}).items() if v is not None}
 
         async with self.limiter.ratelimit("alma", delay=True):
+            logger.debug("DEL: " + url)
             r = await self.session.delete(url, **kwargs)
             if r.status_code >= 400:
                 handle_http_error(r)
@@ -206,23 +212,26 @@ class Client:
             "Content-Type": f"application/{'xml' if xml else 'json'}",
         }
 
-        async with self.limiter.ratelimit("alma", delay=True):
-            if xml:
-                if type(data) != str:
-                    raise ValueError("Body data must be a string when using xml")
+        if xml:
+            if type(data) != str:
+                raise ValueError("Body data must be a string when using xml")
+            async with self.limiter.ratelimit("alma", delay=True):
+                logger.debug("PUT: " + url)
                 r = await self.session.put(url, content=data, headers=headers, **kwargs)
-                if r.status_code >= 400:
-                    handle_http_error(r)
-                else:
-                    r.raise_for_status()
-                    return r.text
+            if r.status_code >= 400:
+                handle_http_error(r)
             else:
-                if type(data) != Box:
-                    raise ValueError("Body data must be a Box when using json")
+                r.raise_for_status()
+                return r.text
+        else:
+            if type(data) != Box:
+                raise ValueError("Body data must be a Box when using json")
+            async with self.limiter.ratelimit("alma", delay=True):
+                logger.debug("PUT: " + url)
                 r = await self.session.put(url, json=data.to_dict(), headers=headers, **kwargs)
-                if r.status_code >= 400:
-                    handle_http_error(r)
-                else:
-                    r.raise_for_status()
+            if r.status_code >= 400:
+                handle_http_error(r)
+            else:
+                r.raise_for_status()
 
-                return Box(r.json())
+            return Box(r.json())
