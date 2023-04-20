@@ -15,9 +15,11 @@ class APIClientError(Exception):
         self.message = f"API Error {code}: {msg}"
 
 
-class APIServerError(APIClientError):
+class APIServerError(Exception):
     def __init__(self, code: str, msg: str) -> None:
-        super().__init__(code, msg)
+        super().__init__(msg)
+        self.code = code
+        self.error = msg
         self.message = f"Server Error {code}: {msg}"
 
 
