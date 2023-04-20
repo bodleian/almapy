@@ -19,7 +19,7 @@ from almapy.exceptions import (
 
 
 def handle_http_error(response: httpx.Response) -> NoReturn:
-    # Sometimes the server ignores us and returns XML instead of JSON. Fun.
+    # Server errors are often returned as XML, even iif we asked for JSON. Fun.
     if "application/xml" in response.headers.get("Content-Type"):
         text = response.text
         # HTTP 503 ROUTING_ERROR may contain malformed XML as it does not escape &, which is not XML-legal. We catch
@@ -41,6 +41,8 @@ def handle_http_error(response: httpx.Response) -> NoReturn:
     )
     if message == "":
         message = code
+    else:
+        message: str = message.strip()
 
     if response.status_code == 429:
         raise ThresholdError(code, message)
