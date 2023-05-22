@@ -24,6 +24,19 @@ class SubClientBibs(Client):
         response = await self.__get_req__("/almaws/v1/items", params={"item_barcode": item_barcode})
         return response
 
+    async def update_item(
+        self, mms_id: str, holding_id: str, item_pid: str, item: Dict[str, Any], xml: bool = False
+    ) -> Union[Box, str]:
+        url = f"/almaws/v1/bibs/{mms_id}/holdings/{holding_id}/items/{item_pid}"
+        if not xml:
+            assert isinstance(item, Box)
+            response = await self.__put_req__(url, item)
+            return response
+        else:
+            assert isinstance(item, str)
+            response = await self.__put_req__(url, item, xml=True)
+        return response
+
     async def get_items(
         self,
         mms_id: str,
