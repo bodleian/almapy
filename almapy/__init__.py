@@ -38,9 +38,10 @@ class AlmaClient:
 
         limits = httpx.Limits(max_keepalive_connections=20, max_connections=200, keepalive_expiry=120)
         timeout = httpx.Timeout(30, connect=60, read=120)
+        transport = httpx.AsyncHTTPTransport(retries=3, limits=limits)
 
         self.session = httpx.AsyncClient(
-            headers=self.con_params["headers"], limits=limits, follow_redirects=True, timeout=timeout
+            headers=self.con_params["headers"], transport=transport, follow_redirects=True, timeout=timeout
         )
 
         self.users = SubClientUsers(self.session, self.con_params, self.rate_limit)

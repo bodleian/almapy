@@ -49,9 +49,9 @@ class Client:
 
     @retry(
         reraise=True,
-        stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=1, min=4, max=60),
-        retry=retry_if_exception_type((APIServerError, ThresholdError)),
+        stop=stop_after_attempt(7),
+        wait=wait_exponential(multiplier=2, min=4, max=90),
+        retry=retry_if_exception_type((APIServerError, ThresholdError, httpx.ConnectTimeout)),
     )
     async def __get_req__(
         self,
@@ -103,8 +103,8 @@ class Client:
     @retry(
         reraise=True,
         stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=1, min=4, max=60),
-        retry=retry_if_exception_type((APIServerError, ThresholdError)),
+        wait=wait_exponential(multiplier=2, min=4, max=90),
+        retry=retry_if_exception_type((APIServerError, ThresholdError, httpx.ConnectTimeout)),
     )
     async def __post_req__(
         self,
@@ -154,8 +154,8 @@ class Client:
     @retry(
         reraise=True,
         stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=1, min=4, max=60),
-        retry=retry_if_exception_type((APIServerError, ThresholdError)),
+        wait=wait_exponential(multiplier=2, min=4, max=90),
+        retry=retry_if_exception_type((APIServerError, ThresholdError, httpx.ConnectTimeout)),
     )
     async def __delete_req__(self, endpoint: str, **kwargs: Any) -> bool:
         url = self.con_params["base_url"] + endpoint
@@ -192,8 +192,8 @@ class Client:
     @retry(
         reraise=True,
         stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=1, min=4, max=60),
-        retry=retry_if_exception_type((APIServerError, ThresholdError)),
+        wait=wait_exponential(multiplier=2, min=4, max=90),
+        retry=retry_if_exception_type((APIServerError, ThresholdError, httpx.ConnectTimeout)),
     )
     async def __put_req__(
         self,
