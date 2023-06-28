@@ -77,9 +77,13 @@ class SubClientUserLoans(Client):
             else:
                 raise
 
-    async def change_loan_due_date(self, user_id: str, loan_id: str, due_date: str) -> Box:
+    async def change_loan_due_date(self, user_id: str, loan_id: str, due_date: str, notify_user: bool = False) -> Box:
         loan = Box({"due_date": due_date})
-        response = await self.__put_req__(f"{self.con_params['api_endpoint']}/{user_id}/loans/{loan_id}", data=loan)
+        response = await self.__put_req__(
+            f"{self.con_params['api_endpoint']}/{user_id}/loans/{loan_id}",
+            data=loan,
+            params={"notify_user": notify_user},
+        )
         return response
 
 
