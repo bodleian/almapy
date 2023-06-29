@@ -1,11 +1,22 @@
 from typing import Any, Dict, Optional, Union
 
+import re
+
 from box import Box
 from httpx import AsyncClient
 
 from almapy.client import Client
-from almapy.exceptions import APIClientError
+from almapy.exceptions import APIClientError, RequestFailedError
 from almapy.users import CannotRenewError
+
+
+class InvalidCodeError(APIClientError):
+    def __init__(self, msg: str) -> None:
+        super().__init__("401873", msg)
+        self.message = msg
+
+    def __str__(self):
+        return self.message
 
 
 class SubClientBibs(Client):
@@ -28,14 +39,21 @@ class SubClientBibs(Client):
         self, mms_id: str, holding_id: str, item_pid: str, item: Dict[str, Any], xml: bool = False
     ) -> Union[Box, str]:
         url = f"/almaws/v1/bibs/{mms_id}/holdings/{holding_id}/items/{item_pid}"
-        if not xml:
-            assert isinstance(item, Box)
-            response = await self.__put_req__(url, item)
+        try:
+            if not xml:
+                assert isinstance(item, Box)
+                response = await self.__put_req__(url, item)
+                return response
+            else:
+                assert isinstance(item, str)
+                response = await self.__put_req__(url, item, xml=True)
             return response
-        else:
-            assert isinstance(item, str)
-            response = await self.__put_req__(url, item, xml=True)
-        return response
+        except RequestFailedError as e:
+            m = re.match(r"Request failed: Invalid (?P<type>\w+) code: (P?<code>.+)", e.message)
+            if m:
+                raise InvalidCodeError(f"Invalid {m.group('type')} '{m.group('code')}") from e
+            else:
+                raise
 
     async def get_items(
         self,

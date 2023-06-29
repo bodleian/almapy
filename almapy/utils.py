@@ -14,6 +14,7 @@ from almapy.exceptions import (
     BarcodeNotFoundError,
     LoanBlockedError,
     LoanLimitError,
+    RequestFailedError,
     ThresholdError,
 )
 
@@ -46,12 +47,14 @@ def handle_http_error(response: httpx.Response) -> NoReturn:
 
     if response.status_code == 429:
         raise ThresholdError(code, message)
-    if code == "401689":
+    elif code == "401689":
         raise BarcodeNotFoundError(code, message)
-    if code == "401161":
+    elif code == "401161":
         raise LoanLimitError(code, message)
-    if code == "401201":
+    elif code == "401201":
         raise LoanBlockedError(code, message)
+    elif code == "401873":
+        raise RequestFailedError(code, message)
     elif 600 > response.status_code > 500:
         raise APIServerError(code, message)
     else:

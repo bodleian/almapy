@@ -3,24 +3,24 @@ import re
 
 class ArgError(Exception):
     def __init__(self, msg: str) -> None:
-        super().__init__(msg)
         self.message = "Invalid Argument: " + msg
+        super().__init__(self.message)
 
 
 class APIClientError(Exception):
     def __init__(self, code: str, msg: str) -> None:
-        super().__init__(msg)
         self.code = code
         self.error = msg
         self.message = f"API Error {code}: {msg}"
+        super().__init__(self.message)
 
 
 class APIServerError(Exception):
     def __init__(self, code: str, msg: str) -> None:
-        super().__init__(msg)
         self.code = code
         self.error = msg
         self.message = f"Server Error {code}: {msg}"
+        super().__init__(self.message)
 
 
 class ThresholdError(APIServerError):
@@ -55,3 +55,22 @@ class LoanBlockedError(APIClientError):
             self.description = ""
             self.note = ""
             self.scope = ""
+
+
+class InvalidFieldError(APIClientError):
+    def __init__(self, code: str, msg: str) -> None:
+        m = re.match(r"Given field (?P<field_name>\w+) has invalid value (?P<field_value>\w+),.*", msg)
+        if m:
+            self.field_name = m.group("field_name")
+            self.field_value = m.group("field_value")
+            super().__init__(code, f"Invalid field value '{self.field_value}' for field '{self.field_name}'")
+        else:
+            self.field_name = ""
+            self.field_value = ""
+            super().__init__(code, msg)
+
+
+class RequestFailedError(APIClientError):
+    def __init__(self, code: str, msg: str) -> None:
+        super().__init__(code, msg)
+        self.message = msg
