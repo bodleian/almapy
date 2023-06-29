@@ -49,7 +49,7 @@ class SubClientBibs(Client):
                 response = await self.__put_req__(url, item, xml=True)
             return response
         except RequestFailedError as e:
-            m = re.match(r"Request failed: Invalid (?P<type>\w+) code: (P?<code>.+)", e.message)
+            m = re.match(r"Request failed: Invalid (?P<type>\w+) code: (?P<code>.+)", e.message)
             if m:
                 raise InvalidCodeError(f"Invalid {m.group('type')} '{m.group('code')}") from e
             else:
