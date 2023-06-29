@@ -9,18 +9,18 @@ class ArgError(Exception):
 
 class APIClientError(Exception):
     def __init__(self, code: str, msg: str) -> None:
+        super().__init__(msg)
         self.code = code
         self.error = msg
         self.message = f"API Error {code}: {msg}"
-        super().__init__(self.message)
 
 
 class APIServerError(Exception):
     def __init__(self, code: str, msg: str) -> None:
+        super().__init__(msg)
         self.code = code
         self.error = msg
         self.message = f"Server Error {code}: {msg}"
-        super().__init__(self.message)
 
 
 class ThresholdError(APIServerError):
