@@ -51,7 +51,7 @@ class SubClientBibs(Client):
         except RequestFailedError as e:
             m = re.match(r"Request failed: Invalid (?P<type>\w+) code: (?P<code>.+)", e.message)
             if m:
-                raise InvalidCodeError(f"Invalid {m.group('type')} '{m.group('code')}") from e
+                raise InvalidCodeError(f"Invalid {m.group('type')} '{m.group('code')}'") from e
             else:
                 raise
 
