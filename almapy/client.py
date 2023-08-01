@@ -4,7 +4,7 @@ import httpx
 from box import Box
 from loguru import logger
 from pyrate_limiter import Duration, Limiter, RequestRate
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential_jitter
 
 from almapy.utils import APIServerError, ThresholdError, handle_http_error
 
@@ -50,7 +50,7 @@ class Client:
     @retry(
         reraise=True,
         stop=stop_after_attempt(7),
-        wait=wait_exponential(multiplier=2, min=4, max=90),
+        wait=wait_exponential_jitter(initial=1, max=120, exp_base=2, jitter=3),
         retry=retry_if_exception_type((APIServerError, ThresholdError, httpx.ConnectTimeout)),
     )
     async def __get_req__(
@@ -103,7 +103,7 @@ class Client:
     @retry(
         reraise=True,
         stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=2, min=4, max=90),
+        wait=wait_exponential_jitter(initial=1, max=120, exp_base=2, jitter=3),
         retry=retry_if_exception_type((APIServerError, ThresholdError, httpx.ConnectTimeout)),
     )
     async def __post_req__(
@@ -154,7 +154,7 @@ class Client:
     @retry(
         reraise=True,
         stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=2, min=4, max=90),
+        wait=wait_exponential_jitter(initial=1, max=120, exp_base=2, jitter=3),
         retry=retry_if_exception_type((APIServerError, ThresholdError, httpx.ConnectTimeout)),
     )
     async def __delete_req__(self, endpoint: str, **kwargs: Any) -> bool:
@@ -192,7 +192,7 @@ class Client:
     @retry(
         reraise=True,
         stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=2, min=4, max=90),
+        wait=wait_exponential_jitter(initial=1, max=120, exp_base=2, jitter=3),
         retry=retry_if_exception_type((APIServerError, ThresholdError, httpx.ConnectTimeout)),
     )
     async def __put_req__(
