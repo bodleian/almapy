@@ -58,6 +58,8 @@ def handle_http_error(response: httpx.Response) -> NoReturn:
         raise RequestFailedError(code, message)
     elif code == "40166404":
         raise InvalidFieldError(code, message)
+    elif code == "401163":
+        raise LoanBlockedError(code, message)
     elif 600 > response.status_code > 500:
         raise APIServerError(code, message)
     else:
