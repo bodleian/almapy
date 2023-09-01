@@ -51,7 +51,9 @@ class Client:
         reraise=True,
         stop=stop_after_attempt(7),
         wait=wait_exponential_jitter(initial=1, max=120, exp_base=2, jitter=3),
-        retry=retry_if_exception_type((APIServerError, ThresholdError, httpx.ConnectTimeout)),
+        retry=retry_if_exception_type(
+            (APIServerError, ThresholdError, httpx.ConnectTimeout, httpx.RemoteProtocolError)
+        ),
     )
     async def __get_req__(
         self,
@@ -104,7 +106,9 @@ class Client:
         reraise=True,
         stop=stop_after_attempt(5),
         wait=wait_exponential_jitter(initial=1, max=120, exp_base=2, jitter=3),
-        retry=retry_if_exception_type((APIServerError, ThresholdError, httpx.ConnectTimeout)),
+        retry=retry_if_exception_type(
+            (APIServerError, ThresholdError, httpx.ConnectTimeout, httpx.RemoteProtocolError)
+        ),
     )
     async def __post_req__(
         self,
@@ -155,7 +159,9 @@ class Client:
         reraise=True,
         stop=stop_after_attempt(5),
         wait=wait_exponential_jitter(initial=1, max=120, exp_base=2, jitter=3),
-        retry=retry_if_exception_type((APIServerError, ThresholdError, httpx.ConnectTimeout)),
+        retry=retry_if_exception_type(
+            (APIServerError, ThresholdError, httpx.ConnectTimeout, httpx.RemoteProtocolError)
+        ),
     )
     async def __delete_req__(self, endpoint: str, **kwargs: Any) -> bool:
         url = self.con_params["base_url"] + endpoint
@@ -193,7 +199,9 @@ class Client:
         reraise=True,
         stop=stop_after_attempt(5),
         wait=wait_exponential_jitter(initial=1, max=120, exp_base=2, jitter=3),
-        retry=retry_if_exception_type((APIServerError, ThresholdError, httpx.ConnectTimeout)),
+        retry=retry_if_exception_type(
+            (APIServerError, ThresholdError, httpx.ConnectTimeout, httpx.RemoteProtocolError)
+        ),
     )
     async def __put_req__(
         self,
