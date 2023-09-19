@@ -143,3 +143,20 @@ class SubClientUsers(Client):
                 raise UserMissingFieldError(e.error, user_id) from e
             else:
                 raise
+
+    async def create_user(self, user: Union[str, Box], xml: bool = False) -> Union[Box, str]:
+        url = f"{self.con_params['api_endpoint']}"
+        try:
+            if not xml:
+                assert isinstance(user, Box)
+                response = await self.__post_req__(url, user)
+                return response
+            else:
+                assert isinstance(user, str)
+                response = await self.__post_req__(url, user, xml=True)
+            return response
+        except APIClientError as e:
+            if e.code == "401664":
+                raise UserMissingFieldError(e.error, user.primary_identifier) from e
+            else:
+                raise
