@@ -3,6 +3,7 @@ from typing import NoReturn
 import json
 import re
 import xml
+from json import JSONDecodeError
 
 import httpx
 import xmltodict
@@ -20,19 +21,28 @@ from almapy.exceptions import (
 )
 
 
+def parse_xml(text: str):
+    try:
+        body = xmltodict.parse(text)
+    except xml.parsers.expat.ExpatError:
+        text = re.sub(r"https://(.*)&(.*)", r"\g<1>&#38;\g<2>", text)
+        body = xmltodict.parse(text)
+    return body
+
+
 def handle_http_error(response: httpx.Response) -> NoReturn:
-    # Server errors are often returned as XML, even iif we asked for JSON. Fun.
+    # Server errors are often returned as XML, even if we asked for JSON. Fun.
     if "application/xml" in response.headers.get("Content-Type"):
-        text = response.text
         # HTTP 503 ROUTING_ERROR may contain malformed XML as it does not escape &, which is not XML-legal. We catch
         # and fix this below.
-        try:
-            body = xmltodict.parse(text)
-        except xml.parsers.expat.ExpatError:
-            text = re.sub(r"https://(.*)&(.*)", r"\g<1>&#38;\g<2>", text)
-            body = xmltodict.parse(text)
+        body = parse_xml(response.text)
     else:
-        body = json.loads(response.text)
+        try:
+            body = json.loads(response.text)
+        except JSONDecodeError:
+            print(response.text)
+            print(response.headers)
+
     # Some errors omit the web_service_result level in the JSON response. Why? Who knows.
     code, message = glom(
         body,
