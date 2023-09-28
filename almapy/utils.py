@@ -50,6 +50,7 @@ def handle_http_error(response: httpx.Response) -> NoReturn:
             ),
         )
     except GlomError as e:
+        print(response.text)
         if response.status_code > 499:
             raise APIServerError(str(response.status_code), "Unknown error") from e
         else:
