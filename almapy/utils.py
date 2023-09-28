@@ -3,11 +3,10 @@ from typing import NoReturn
 import json
 import re
 import xml
-from json import JSONDecodeError
 
 import httpx
 import xmltodict
-from glom import Coalesce, glom
+from glom import Coalesce, GlomError, glom
 
 from almapy.exceptions import (
     APIClientError,
@@ -32,25 +31,30 @@ def parse_xml(text: str):
 
 def handle_http_error(response: httpx.Response) -> NoReturn:
     # Server errors are often returned as XML, even if we asked for JSON. Fun.
-    if "application/xml" in response.headers.get("Content-Type"):
+    if "xml" in response.headers.get("Content-Type"):
         # HTTP 503 ROUTING_ERROR may contain malformed XML as it does not escape &, which is not XML-legal. We catch
         # and fix this below.
         body = parse_xml(response.text)
     else:
-        try:
-            body = json.loads(response.text)
-        except JSONDecodeError:
-            print(response.text)
-            print(response.headers)
+        body = json.loads(response.text)
 
     # Some errors omit the web_service_result level in the JSON response. Why? Who knows.
-    code, message = glom(
-        body,
-        (
-            Coalesce("web_service_result.errorList.error.0", "errorList.error.0", "web_service_result.errorList.error"),
-            lambda x: (x["errorCode"], x["errorMessage"]),
-        ),
-    )
+    try:
+        code, message = glom(
+            body,
+            (
+                Coalesce(
+                    "web_service_result.errorList.error.0", "errorList.error.0", "web_service_result.errorList.error"
+                ),
+                lambda x: (x["errorCode"], x["errorMessage"]),
+            ),
+        )
+    except GlomError as e:
+        if response.status_code > 499:
+            raise APIServerError(str(response.status_code), "Unknown error") from e
+        else:
+            raise APIClientError(str(response.status_code), "Unknown error") from e
+
     if message == "":
         message = code
     else:
