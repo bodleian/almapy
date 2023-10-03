@@ -30,6 +30,7 @@ class SubClientBibs(Client):
         self.con_params = con_params.copy()
         self.con_params["api_endpoint"] = "/almaws/v1/bibs"
         self.loans = SubClientBibLoans(session, self.con_params, rate_limit)
+        self.requests = SubClientBibRequests(session, self.con_params, rate_limit)
 
     async def get_item(self, item_barcode: str) -> Union[Box, str]:
         response = await self.__get_req__("/almaws/v1/items", params={"item_barcode": item_barcode})
@@ -272,3 +273,35 @@ class SubClientBibLoans(Client):
     async def get_bib_loan(self, mms_id: str, loan_id: str) -> Box:
         response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{mms_id}/loans/{loan_id}")
         return response
+
+
+class SubClientBibRequests(Client):
+    def __init__(
+        self,
+        session: AsyncClient,
+        con_params: Dict[str, Any],
+        rate_limit: int = 20,
+    ) -> None:
+        super().__init__(session, con_params, rate_limit)
+        self.con_params = con_params.copy()
+        self.con_params["api_endpoint"] = "/almaws/v1/bibs"
+
+    async def get_requests(
+        self, mms_id: str, holding_id: str, item_id: str, request_type: str = "all_types", status: str = "active"
+    ):
+        if request_type not in ["all_types", "HOLD", "DIGITIZATION", "BOOKING"]:
+            raise ValueError("request_type must be 'all_types', 'HOLD', 'DIGITIZATION' or 'BOOKING'")
+        params = {"request_type": request_type, "status": status}
+
+        response = await self.__get_req__(
+            f"{self.con_params['api_endpoint']}/{mms_id}/{holding_id}/{item_id}/requests", params=params
+        )
+        return response
+
+    async def cancel_request(
+        self, mms_id: str, holding_id: str, item_id: str, request_id: str, reason: str, note: str, notify_user: bool
+    ):
+        params = {"reason": reason, "note": note, "notify_user": notify_user}
+        await self.__delete_req__(
+            f"{self.con_params['api_endpoint']}/{mms_id}/{holding_id}/{item_id}/requests/{request_id}", params=params
+        )
