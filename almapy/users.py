@@ -27,6 +27,16 @@ class CannotRenewError(APIClientError):
         return self.message
 
 
+class UserNotFoundError(APIClientError):
+    def __init__(self, msg: str, user_id: str) -> None:
+        super().__init__("401861", msg)
+        self.user_id = user_id
+        self.message = msg
+
+    def __str__(self):
+        return self.message
+
+
 class SubClientUserLoans(Client):
     def __init__(
         self,
@@ -112,8 +122,14 @@ class SubClientUsers(Client):
         self.requests = SubClientUserRequests(session, self.con_params, rate_limit)
 
     async def get_user(self, user_id: str, xml: bool = False) -> Union[Box, str]:
-        response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{user_id}", xml=xml)
-        return response
+        try:
+            response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{user_id}", xml=xml)
+            return response
+        except APIClientError as e:
+            if e.code == "401861":
+                raise UserNotFoundError(e.error, user_id) from e
+            else:
+                raise
 
     @overload
     async def update_user(self, user_id: str, user: str, xml: Literal[True]) -> str:

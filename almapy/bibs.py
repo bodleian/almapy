@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, TypedDict, Union
 
 import re
 
@@ -8,6 +8,27 @@ from httpx import AsyncClient
 from almapy.client import Client
 from almapy.exceptions import APIClientError, RequestFailedError
 from almapy.users import CannotRenewError
+
+
+class Request(TypedDict):
+    request_type: str
+    description: str
+    manual_description: str
+    holding_id: str
+    pickup_location_type: str
+    pickup_location_library: str
+    pickup_location_circulation_desk: str
+    target_destination: Dict[str, str]
+    material_type: Dict[str, str]
+    last_interest_date: Dict[str, str]
+    partial_digitization: bool
+    chapter_or_article_title: str
+    volume: str
+    issue: str
+    part: str
+    date_of_publication: str
+    chapter_or_article_author: str
+    required_pages_range: Dict[str, str]
 
 
 class InvalidCodeError(APIClientError):
@@ -293,10 +314,9 @@ class SubClientBibRequests(Client):
             raise ValueError("request_type must be 'all_types', 'HOLD', 'DIGITIZATION' or 'BOOKING'")
         params = {"request_type": request_type, "status": status}
 
-        response = await self.__get_req__(
+        return await self.__get_req__(
             f"{self.con_params['api_endpoint']}/{mms_id}/{holding_id}/{item_id}/requests", params=params
         )
-        return response
 
     async def cancel_request(
         self, mms_id: str, holding_id: str, item_id: str, request_id: str, reason: str, note: str, notify_user: bool
@@ -304,4 +324,19 @@ class SubClientBibRequests(Client):
         params = {"reason": reason, "note": note, "notify_user": notify_user}
         await self.__delete_req__(
             f"{self.con_params['api_endpoint']}/{mms_id}/{holding_id}/{item_id}/requests/{request_id}", params=params
+        )
+
+    async def create_request(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        user_id: str,
+        request: Request,
+        user_id_type: str = "all_unique",
+        allow_same_request: bool = False,
+    ):
+        params = {"user_id": user_id, "user_id_type": user_id_type, "allow_same_request": allow_same_request}
+        return await self.__post_req__(
+            f"{self.con_params['api_endpoint']}/{mms_id}/{holding_id}/{item_id}/requests", params=params
         )
