@@ -52,11 +52,17 @@ class SubClientUserLoans(Client):
         self, user_id: str, limit: int = 100, offset: int = 0, order_by: str = "due_date", direction: str = "asc"
     ) -> Box:
         params = {"limit": limit, "offset": offset, "order_by": order_by, "direction": direction}
-        response = await self.__get_req__(
-            f"{self.con_params['api_endpoint']}/{user_id}/loans",
-            params=params,
-        )
-        return response
+        try:
+            response = await self.__get_req__(
+                f"{self.con_params['api_endpoint']}/{user_id}/loans",
+                params=params,
+            )
+            return response
+        except APIClientError as e:
+            if e.code == "401861":
+                raise UserNotFoundError(e.error, user_id) from e
+            else:
+                raise
 
     async def create_loan(
         self, user_id: str, item_barcode: str, circ_desk: str, library: str, request_id: Optional[str] = None
