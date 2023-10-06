@@ -74,3 +74,7 @@ class RequestFailedError(APIClientError):
     def __init__(self, code: str, msg: str) -> None:
         super().__init__(code, msg)
         self.message = msg
+
+
+class ParallelLoanError(APIClientError):
+    pass

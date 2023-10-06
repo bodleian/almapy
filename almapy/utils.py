@@ -15,6 +15,7 @@ from almapy.exceptions import (
     InvalidFieldError,
     LoanBlockedError,
     LoanLimitError,
+    ParallelLoanError,
     RequestFailedError,
     ThresholdError,
 )
@@ -75,6 +76,8 @@ def handle_http_error(response: httpx.Response) -> NoReturn:
         raise InvalidFieldError(code, message)
     elif code == "401163":
         raise LoanBlockedError(code, message)
+    elif code == "401198":
+        raise ParallelLoanError(code, message)
     elif 600 > response.status_code > 500:
         raise APIServerError(code, message)
     else:

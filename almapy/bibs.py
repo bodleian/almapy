@@ -29,6 +29,10 @@ class Request(TypedDict):
     date_of_publication: str
     chapter_or_article_author: str
     required_pages_range: Dict[str, str]
+    full_chapter: str
+    comment: str
+    request_status: str
+    copyrights_declaration_signed_by_patron: bool
 
 
 class InvalidCodeError(APIClientError):
@@ -315,7 +319,7 @@ class SubClientBibRequests(Client):
         params = {"request_type": request_type, "status": status}
 
         return await self.__get_req__(
-            f"{self.con_params['api_endpoint']}/{mms_id}/{holding_id}/{item_id}/requests", params=params
+            f"{self.con_params['api_endpoint']}/{mms_id}/holdings/{holding_id}/items/{item_id}/requests", params=params
         )
 
     async def cancel_request(
@@ -323,7 +327,8 @@ class SubClientBibRequests(Client):
     ):
         params = {"reason": reason, "note": note, "notify_user": notify_user}
         await self.__delete_req__(
-            f"{self.con_params['api_endpoint']}/{mms_id}/{holding_id}/{item_id}/requests/{request_id}", params=params
+            f"{self.con_params['api_endpoint']}/{mms_id}/holdings/{holding_id}/items/{item_id}/requests/{request_id}",
+            params=params,
         )
 
     async def create_request(
@@ -338,5 +343,7 @@ class SubClientBibRequests(Client):
     ):
         params = {"user_id": user_id, "user_id_type": user_id_type, "allow_same_request": allow_same_request}
         return await self.__post_req__(
-            f"{self.con_params['api_endpoint']}/{mms_id}/{holding_id}/{item_id}/requests", params=params
+            f"{self.con_params['api_endpoint']}/{mms_id}/holdings/{holding_id}/items/{item_id}/requests",
+            params=params,
+            json=request,
         )
