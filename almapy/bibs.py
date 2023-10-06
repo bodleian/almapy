@@ -323,7 +323,14 @@ class SubClientBibRequests(Client):
         )
 
     async def cancel_request(
-        self, mms_id: str, holding_id: str, item_id: str, request_id: str, reason: str, note: str, notify_user: bool
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        request_id: str,
+        reason: str,
+        notify_user: bool,
+        note: Optional[str] = None,
     ):
         params = {"reason": reason, "note": note, "notify_user": notify_user}
         await self.__delete_req__(
@@ -345,5 +352,5 @@ class SubClientBibRequests(Client):
         return await self.__post_req__(
             f"{self.con_params['api_endpoint']}/{mms_id}/holdings/{holding_id}/items/{item_id}/requests",
             params=params,
-            json=request,
+            data=request,
         )
