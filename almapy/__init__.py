@@ -49,7 +49,7 @@ class AlmaClient:
         self.config = SubClientConfig(self.session, self.con_params, self.rate_limit)
         self.bibs = SubClientBibs(self.session, self.con_params, self.rate_limit)
         self.analytics = SubClientAnalytics(self.session, self.con_params, self.rate_limit)
-        self.analytics = SubClientAcquisitions(self.session, self.con_params, self.rate_limit)
+        self.acq = SubClientAcquisitions(self.session, self.con_params, self.rate_limit)
 
     async def __aenter__(self):
         return self
