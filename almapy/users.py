@@ -4,7 +4,7 @@ from box import Box
 from httpx import AsyncClient
 
 from almapy.client import Client
-from almapy.utils import APIClientError
+from almapy.utils import APIClientError, Request
 
 
 class UserMissingFieldError(APIClientError):
@@ -117,6 +117,25 @@ class SubClientUserRequests(Client):
     async def get_request(self, user_id: str, request_id: str, xml: bool = False) -> Union[Box, str]:
         response = await self.__get_req__(f"{self.con_params['api_endpoint']}/{user_id}/requests/{request_id}", xml=xml)
         return response
+
+    async def create_request(
+        self,
+        user_id: str,
+        request: Request,
+        user_id_type: str = "all_unique",
+        allow_same_request: bool = False,
+        *,
+        mms_id: str,
+        item_id: str,
+    ):
+        if (mms_id and item_id) or (not mms_id and not item_id):
+            raise ValueError("must provide exactly one of mms_id or item_id")
+        params = {"mms_id": mms_id, "user_id_type": user_id_type, "allow_same_request": allow_same_request}
+        return await self.__post_req__(
+            f"{self.con_params['api_endpoint']}/{user_id}/requests",
+            params=params,
+            data=request,
+        )
 
 
 class SubClientUsers(Client):

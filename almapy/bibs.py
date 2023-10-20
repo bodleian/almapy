@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, TypedDict, Union
+from typing import Any, Dict, Optional, Union
 
 import re
 
@@ -8,31 +8,7 @@ from httpx import AsyncClient
 from almapy.client import Client
 from almapy.exceptions import APIClientError, RequestFailedError
 from almapy.users import CannotRenewError
-
-
-class Request(TypedDict):
-    request_type: str
-    description: str
-    manual_description: str
-    holding_id: str
-    pickup_location_type: str
-    pickup_location_library: str
-    pickup_location_circulation_desk: str
-    target_destination: Dict[str, str]
-    material_type: Dict[str, str]
-    last_interest_date: Dict[str, str]
-    partial_digitization: bool
-    chapter_or_article_title: str
-    volume: str
-    issue: str
-    part: str
-    date_of_publication: str
-    chapter_or_article_author: str
-    required_pages_range: Dict[str, str]
-    full_chapter: str
-    comment: str
-    request_status: str
-    copyrights_declaration_signed_by_patron: bool
+from almapy.utils import Request
 
 
 class InvalidCodeError(APIClientError):
