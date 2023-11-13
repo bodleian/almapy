@@ -137,6 +137,11 @@ class SubClientUserRequests(Client):
             data=request,
         )
 
+    async def update_request(self, user_id: str, request_id: str, request: Request):
+        return await self.__put_req__(
+            f"{self.con_params['api_endpoint']}/{user_id}/requests/{request_id}", data=request
+        )
+
 
 class SubClientUsers(Client):
     def __init__(self, session: AsyncClient, con_params: Dict[str, Any], rate_limit: int = 20) -> None:
