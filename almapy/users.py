@@ -103,6 +103,7 @@ class SubClientUserLoans(Client):
         return response
 
 
+
 class SubClientUserRequests(Client):
     def __init__(
         self,
@@ -149,6 +150,7 @@ class SubClientUsers(Client):
         self.con_params = con_params.copy()
         self.con_params["api_endpoint"] = "/almaws/v1/users"
         self.loans = SubClientUserLoans(session, self.con_params, rate_limit)
+        self.fines = SubClientUserFines(session, self.con_params, rate_limit)
         self.requests = SubClientUserRequests(session, self.con_params, rate_limit)
 
     async def get_user(self, user_id: str, xml: bool = False) -> Union[Box, str]:
