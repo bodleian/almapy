@@ -102,7 +102,26 @@ class SubClientUserLoans(Client):
         )
         return response
 
+class SubClientUserFines(Client):
+    def __init__(
+        self,
+        session: AsyncClient,
+        con_params: Dict[str, Any],
+        rate_limit: int = 20,
+    ) -> None:
+        super().__init__(session, con_params, rate_limit)
+        self.con_params = con_params.copy()
+        self.con_params["api_endpoint"] = "/almaws/v1/users"
 
+    async def get_fines(
+        self, user_id: str, user_id_type: str = "all_unique", status: str = "ACTIVE"
+    ) -> Box:
+        params = {"user_id": user_id, "user_id_type": user_id_type, "status": status}
+        response = await self.__get_req__(
+            f"{self.con_params['api_endpoint']}/{user_id}/fees",
+            params=params,
+        )
+        return response
 
 class SubClientUserRequests(Client):
     def __init__(
