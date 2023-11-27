@@ -124,6 +124,10 @@ class SubClientBibs(Client):
         response = await self.__put_req__(f"/almaws/v1/bibs/{mms_id}/holdings/{holding_id}", data=record, xml=True)
         return response
 
+    async def create_holding(self, mms_id, record: str) -> str:
+        response = await self.__post_req__(f"/almaws/v1/bibs/{mms_id}/holdings", data=record, xml=True)
+        return response
+
     async def scan_in(
         self,
         mms_id: str,
