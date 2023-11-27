@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "almapy"
-version = "4.10.0"
+version = "4.11.0"
 description = ""
 authors = ["Ben Gable <ben.gable@bodleian.ox.ac.uk>"]
 
@@ -35,7 +35,7 @@ pytest-recording = "^0.12.2"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "4.10.0"
+version = "4.11.0"
 tag_format = "$version"
 version_files = [
     "pyproject.toml:^version"
