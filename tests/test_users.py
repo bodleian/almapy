@@ -2,7 +2,7 @@
 
 import pytest
 from environs import Env
-from gracy.replays.storages._base import GracyReplay
+from gracy import GracyReplay
 from gracy.replays.storages.sqlite import SQLiteReplayStorage
 
 from almapy import AlmaClient
@@ -30,7 +30,7 @@ class TestUserLoans:
     @pytest.mark.asyncio()
     async def test_get_loans(client: AlmaClient) -> None:
         """Test whether the get_loans method works."""
-        resp = await client.user.loans.get_loans("ben.olis", loan_status="Complete")
+        resp = await client.users.loans.get_loans("ben.olis", loan_status="Complete")
         assert resp.item_loan
 
 
@@ -41,5 +41,5 @@ class TestUser:
     @pytest.mark.asyncio()
     async def test_get_user(client: AlmaClient) -> None:
         """Test whether the get_user method retrieves a user correctly."""
-        resp = await client.user.get_user("ben.olis")
+        resp = await client.users.get_user("ben.olis")
         assert resp.primary_id == "ben.olis"

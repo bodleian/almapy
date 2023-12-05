@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import timedelta
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Literal
@@ -26,7 +27,9 @@ from almapy.exceptions import APIServerError, ThresholdError
 
 if TYPE_CHECKING:
     import httpx
-    from gracy.replays.storages._base import GracyReplay
+    from gracy import GracyReplay
+
+logging.getLogger("httpx").setLevel(logging.CRITICAL)
 
 
 class AlmaClient(Gracy[AlmaEndpoint]):
