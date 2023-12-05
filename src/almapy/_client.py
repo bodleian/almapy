@@ -101,7 +101,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
         })
         return client
 
-    user: AlmaClientUserNS
+    users: AlmaClientUserNS
     bibs: AlmaClientBibNS
     acq: AlmaClientAcqNS
     config: AlmaClientConfigNS
