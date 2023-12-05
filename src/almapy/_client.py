@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -21,6 +22,7 @@ from almapy._config import AlmaClientConfigNS  # noqa: TCH001
 from almapy._endpoints import AlmaEndpoint
 from almapy._users import AlmaClientUserNS  # noqa: TCH001
 from almapy._utils import AlmaErrorValidator
+from almapy.exceptions import APIServerError, ThresholdError
 
 if TYPE_CHECKING:
     import httpx
@@ -31,8 +33,8 @@ class AlmaClient(Gracy[AlmaEndpoint]):
     """An API wrapper client for Alma."""
 
     class Config:
-        BASE_URL = ""
-        REQUEST_TIMEOUT = 15.0
+        BASE_URL = ""  # We set it dynamically instead, based on country.
+        REQUEST_TIMEOUT = 30.0
         SETTINGS = GracyConfig(
             allowed_status_code={HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND},
             parser={
@@ -42,11 +44,13 @@ class AlmaClient(Gracy[AlmaEndpoint]):
             retry=GracefulRetry(
                 delay=1,
                 max_attempts=5,
-                delay_modifier=2,
+                delay_modifier=3,
                 retry_on={
                     HTTPStatus.BAD_GATEWAY,
                     HTTPStatus.SERVICE_UNAVAILABLE,
                     HTTPStatus.TOO_MANY_REQUESTS,
+                    APIServerError,
+                    ThresholdError,
                 },
                 log_before=None,
                 log_after=LogEvent(LogLevel.WARNING),
@@ -54,10 +58,11 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                 behavior="break",
             ),
             throttling=GracefulThrottle(
-                rules=ThrottleRule(
-                    url_pattern=r".*",
-                    max_requests=25,
-                ),
+                rules=[
+                    ThrottleRule(
+                        url_pattern=r".*", max_requests=25, per_time_range=timedelta(seconds=1)
+                    ),
+                ],
                 log_limit_reached=LogEvent(LogLevel.ERROR),
                 log_wait_over=LogEvent(LogLevel.WARNING),
             ),
