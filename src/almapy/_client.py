@@ -1,0 +1,102 @@
+from __future__ import annotations
+
+from http import HTTPStatus
+from typing import TYPE_CHECKING, Any, Literal
+
+from box import Box
+from gracy import (
+    GracefulRetry,
+    GracefulThrottle,
+    Gracy,
+    GracyConfig,
+    LogEvent,
+    LogLevel,
+    ThrottleRule,
+)
+from httpx import URL, Headers
+
+from almapy._acq import AlmaClientAcqNS  # noqa: TCH001
+from almapy._bibs import AlmaClientBibNS  # noqa: TCH001
+from almapy._config import AlmaClientConfigNS  # noqa: TCH001
+from almapy._endpoints import AlmaEndpoint
+from almapy._users import AlmaClientUserNS  # noqa: TCH001
+from almapy._utils import AlmaErrorValidator
+
+if TYPE_CHECKING:
+    import httpx
+    from gracy.replays.storages._base import GracyReplay
+
+
+class AlmaClient(Gracy[AlmaEndpoint]):
+    """An API wrapper client for Alma."""
+
+    class Config:
+        BASE_URL = ""
+        REQUEST_TIMEOUT = 15.0
+        SETTINGS = GracyConfig(
+            allowed_status_code={HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND},
+            parser={
+                HTTPStatus.OK: lambda resp: Box(resp.json()),
+            },
+            log_errors=LogEvent(LogLevel.ERROR),
+            retry=GracefulRetry(
+                delay=1,
+                max_attempts=5,
+                delay_modifier=2,
+                retry_on={
+                    HTTPStatus.BAD_GATEWAY,
+                    HTTPStatus.SERVICE_UNAVAILABLE,
+                    HTTPStatus.TOO_MANY_REQUESTS,
+                },
+                log_before=None,
+                log_after=LogEvent(LogLevel.WARNING),
+                log_exhausted=LogEvent(LogLevel.CRITICAL),
+                behavior="break",
+            ),
+            throttling=GracefulThrottle(
+                rules=ThrottleRule(
+                    url_pattern=r".*",
+                    max_requests=25,
+                ),
+                log_limit_reached=LogEvent(LogLevel.ERROR),
+                log_wait_over=LogEvent(LogLevel.WARNING),
+            ),
+            validators=AlmaErrorValidator(),
+        )
+
+    def __init__(
+        self,
+        apikey: str,
+        location: Literal["America", "Europe", "Asia Pacific", "Canada", "China"] = "Europe",
+        replay: GracyReplay | None = None,
+        *,
+        debug: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        self._apikey = apikey
+        locations = {
+            "America": "https://api-na.hosted.exlibrisgroup.com",
+            "Europe": "https://api-eu.hosted.exlibrisgroup.com",
+            "Asia Pacific": "https://api-ap.hosted.exlibrisgroup.com",
+            "Canada": "https://api-ca.hosted.exlibrisgroup.com",
+            "China": "https://api-cn.hosted.exlibrisgroup.com",
+        }
+        if location not in locations:
+            msg = f'Invalid location. Must be one of {", ".join(locations.keys())}.'
+            raise ValueError(msg)
+        self._location_url = URL(locations[location] + "/almaws/v1")
+        super().__init__(replay, debug, **kwargs)
+
+    def _create_client(self, **kwargs: Any) -> httpx.AsyncClient:
+        client = super()._create_client(**kwargs)
+        client.base_url = self._location_url
+        client.headers = Headers({
+            "Accept": "application/json",
+            "Authorization": f"apikey {self._apikey}",
+        })
+        return client
+
+    user: AlmaClientUserNS
+    bibs: AlmaClientBibNS
+    acq: AlmaClientAcqNS
+    config: AlmaClientConfigNS

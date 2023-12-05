@@ -1,0 +1,489 @@
+from __future__ import annotations
+
+import re
+from http import HTTPStatus
+from typing import TYPE_CHECKING, Any, Literal
+
+from gracy import Gracy, GracyNamespace, graceful, parsed_response
+
+from almapy._endpoints import AlmaEndpoint
+from almapy.exceptions import APIClientError, CannotRenewError, InvalidCodeError, RequestFailedError
+
+if TYPE_CHECKING:
+    from almapy._utils import RESP_TYPE, Request
+
+
+class AlmaClientBibLoansNS(GracyNamespace[AlmaEndpoint]):
+    """Namespace for bib requests, exposed at AlmaClient.bibs.requests."""
+
+    async def get_loans(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        limit: int = 100,
+        offset: int = 0,
+        order_by: Literal[
+            "loan_date", "due_date", "barcode", "title", "author", "return_date"
+        ] = "due_date",
+        direction: Literal["asc", "desc"] = "asc",
+        loan_status: Literal["Active", "Complete"] = "Active",
+    ) -> RESP_TYPE:
+        """Retrieves loans for a specific item.
+
+        Args:
+            mms_id (str): The item's parent bib record MMS ID.
+            holding_id (str): The item's parent holding record ID.
+            item_id (str): The item PID.
+            limit (int, optional): The maximum number of loans to return. Defaults to 100.
+            offset (int, optional): The number of loans to skip. Defaults to 0.
+            order_by (str, optional): The field by which to sort the returned loans.
+                Options are "loan_date", "due_date", "barcode", "title", "author" and "return_date".
+                Defaults to "due_date".
+            direction (str, optional): The direction in which to sort the returned loans.
+                Options are "asc" and "desc".
+                Defaults to "asc".
+            loan_status (str, optional): The status of the loans to return.
+                Options are "Active" and "Complete".
+                Defaults to "Active".
+
+        Returns:
+            Dict[str, Any]: A response dict with the requested loan information.
+
+        Raises:
+            APIClientError: If there is an error with the input.
+            APIServerError: If there is an error with the server.
+
+        """
+        params = {
+            "limit": limit,
+            "offset": offset,
+            "order_by": order_by,
+            "direction": direction,
+            "loan_status": loan_status,
+        }
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.ITEM_LOANS,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
+            params=params,
+        )
+        return resp
+
+    async def create_loan(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        user_id: str,
+        circ_desk: str,
+        library: str,
+        request_id: str | None = None,
+    ) -> RESP_TYPE:
+        """Creates a loan for a specific copy of an item.
+
+        Args:
+            mms_id (str): The item's parent bib record MMS ID.
+            holding_id (str): The item's parent holding record ID.
+            item_id (str): The item PID.
+            user_id (str): The user identifier.
+            circ_desk (str): The circulation desk from which to loan the item.
+            library (str): The library at which to loan the item.
+            request_id (str, optional): The request identifier associated with the loan, if any.
+
+        Returns:
+            Dict[str, Any]: A response dict with the requested loan information.
+
+        Raises:
+            APIClientError: If there is an error with the input.
+            APIServerError: If there is an error with the server.
+
+        """
+        loan = {"circ_desk": {"value": circ_desk}, "library": {"value": library}}
+        if request_id:
+            loan["request_id"] = {"value": request_id}
+        resp: RESP_TYPE = await self.post(
+            AlmaEndpoint.ITEM_LOANS,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
+            data=loan,
+            params={"user_id": user_id},
+        )
+        return resp
+
+    async def get_loan(self, mms_id: str, holding_id: str, item_id: str, loan_id: str) -> RESP_TYPE:
+        """Get the details of a specific loan on a specific copy of an item.
+
+        Args:
+            mms_id (str): The item's parent bib record MMS ID.
+            holding_id (str): The item's parent holding record ID.
+            item_id (str): The item PID.
+            loan_id (str): The loan ID.
+
+        Returns:
+            Dict[str, Any]: A response dict with the requested loan information.
+
+        Raises:
+            APIClientError: If there is an error with the input.
+            APIServerError: If there is an error with the server.
+
+        """
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.ITEM_LOAN,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id, "LOAN_ID": loan_id},
+        )
+        return resp
+
+    async def renew_loan(
+        self, mms_id: str, holding_id: str, item_id: str, loan_id: str
+    ) -> RESP_TYPE:
+        """Renew a loan on a specific copy of an item.
+
+        Args:
+            mms_id (str): The item's parent bib record MMS ID.
+            holding_id (str): The item's parent holding record ID.
+            item_id (str): The item PID.
+            loan_id (str): The loan ID.
+
+        Returns:
+            Dict[str, Any]: The updated loan information.
+
+        Raises:
+            CannotRenewError: If the item cannot be renewed for any reason.
+            APIClientError: If there is an error with the input.
+            APIServerError: If there is an error with the server.
+
+        """
+        try:
+            resp: RESP_TYPE = await self.post(
+                AlmaEndpoint.ITEM_LOAN,
+                {
+                    "MMS_ID": mms_id,
+                    "HOLDING_ID": holding_id,
+                    "ITEM_PID": item_id,
+                    "LOAN_ID": loan_id,
+                },
+                params={"op": "renew"},
+            )
+        except APIClientError as e:
+            if e.code == "401822":
+                raise CannotRenewError(e.error, loan_id) from e
+            raise
+        return resp
+
+    async def change_loan_due_date(
+        self, mms_id: str, holding_id: str, item_id: str, loan_id: str, due_date: str
+    ) -> RESP_TYPE:
+        """Changes the due date of a loan on a specific copy of an item.
+
+        Args:
+            mms_id (str): The item's parent bib record MMS ID.
+            holding_id (str): The item's parent holding record ID.
+            item_id (str): The item PID.
+            loan_id (str): The loan ID.
+            due_date (str): Due date in the format YYYY-MM-DD.
+
+        Returns:
+            Dict[str, Any]: The updated loan information.
+
+        Raises:
+            CannotRenewError: If the item cannot be renewed for any reason.
+            APIClientError: If there is an error with the input.
+            APIServerError: If there is an error with the server.
+
+        """
+        loan = {"due_date": due_date}
+        resp: RESP_TYPE = await self.put(
+            AlmaEndpoint.ITEM_LOAN,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id, "LOAN_ID": loan_id},
+            data=loan,
+        )
+        return resp
+
+    async def get_bib_loans(
+        self,
+        mms_id: str,
+        limit: int = 100,
+        offset: int = 0,
+        order_by: Literal[
+            "loan_date", "due_date", "barcode", "title", "author", "return_date"
+        ] = "due_date",
+        direction: Literal["asc", "desc"] = "asc",
+        loan_status: Literal["Active", "Complete"] = "Active",
+    ) -> RESP_TYPE:
+        params = {
+            "limit": limit,
+            "offset": offset,
+            "order_by": order_by,
+            "direction": direction,
+            "loan_status": loan_status,
+        }
+        resp: RESP_TYPE = await self.get(AlmaEndpoint.BIB_LOANS, {"MMS_ID": mms_id}, params=params)
+        return resp
+
+    async def get_bib_loan(self, mms_id: str, loan_id: str) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.BIB_LOAN, {"MMS_ID": mms_id, "LOAN_ID": loan_id}
+        )
+        return resp
+
+
+class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
+    async def get_requests(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        request_type: Literal["all_types", "HOLD", "DIGITIZATION", "BOOKING"] = "all_types",
+        status: Literal["active", "history"] = "active",
+    ) -> RESP_TYPE:
+        params = {"request_type": request_type, "status": status}
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.ITEM_REQUESTS,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
+            params=params,
+        )
+        return resp
+
+    @graceful(parser={HTTPStatus.NO_CONTENT: lambda r: True, "default": lambda r: False})
+    async def cancel_request(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        request_id: str,
+        reason: str,
+        *,
+        notify_user: bool,
+        note: str | None = None,
+    ) -> bool:
+        params = {"reason": reason, "note": note, "notify_user": notify_user}
+        resp: bool = await self.delete(
+            AlmaEndpoint.ITEM_REQUEST,
+            {
+                "MMS_ID": mms_id,
+                "HOLDING_ID": holding_id,
+                "ITEM_PID": item_id,
+                "REQUEST_ID": request_id,
+            },
+            params=params,
+        )
+        return resp
+
+    async def create_request(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        user_id: str,
+        request: Request,
+        user_id_type: str = "all_unique",
+        *,
+        allow_same_request: bool = False,
+    ) -> RESP_TYPE:
+        params = {
+            "user_id": user_id,
+            "user_id_type": user_id_type,
+            "allow_same_request": allow_same_request,
+        }
+        resp: RESP_TYPE = await self.post(
+            AlmaEndpoint.ITEM_REQUESTS,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
+            params=params,
+            data=request,
+        )
+        return resp
+
+
+class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
+    """Namespace for user functionality, exposing a number of sub-namespace via attrs.
+
+    - loans
+    - requests
+    """
+
+    def __init__(self, parent: Gracy[AlmaEndpoint], **kwargs: Any):
+        super().__init__(parent, **kwargs)
+        self.loans = AlmaClientBibLoansNS(parent)
+        self.requests = AlmaClientBibRequestsNS(parent)
+
+    async def get_item(self, item_barcode: str) -> RESP_TYPE:
+        """Get item information by barcode.
+
+        Args:
+            item_barcode (str): The item barcode.
+
+        Returns:
+            Dict[str, Any]: The item dict
+
+        Raises:
+            APIClientError: If an error occurred while making the API request.
+        """
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.BARCODE, params={"item_barcode": item_barcode}
+        )
+        return resp
+
+    async def update_item(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_pid: str,
+        item: dict[str, Any],
+    ) -> RESP_TYPE:
+        """Get item information by barcode.
+
+        Args:
+            mms_id (str): The MMS ID.
+            holding_id (str): The Holding ID.
+            item_pid (str): The Item PID.
+            item (Dict[str, Any]): The updated item data.
+
+        Returns:
+            Dict[str, Any]: The item dict
+
+        Raises:
+            InvalidCodeError: If a field contained an invalid code (e.g. Library).
+            APIClientError: If another error occurred while making the API request.
+        """
+        try:
+            resp: RESP_TYPE = await self.put(
+                AlmaEndpoint.ITEM,
+                {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
+                json=item,
+            )
+        except RequestFailedError as e:
+            m = re.match(r"Request failed: Invalid (?P<type>\w+) code: (?P<code>.+)", e.message)
+            if m:
+                msg = f"Invalid {m.group('type')} '{m.group('code')}'"
+                raise InvalidCodeError(msg) from e
+            raise
+        return resp
+
+    async def get_items(
+        self,
+        mms_id: str,
+        holding_id: str,
+        expand: str | None = None,
+        user_id: str | None = None,
+        limit: int = 10,
+        offset: int = 0,
+        current_library: str | None = None,
+        current_location: str | None = None,
+        q: str | None = None,
+        order_by: str | None = None,
+        direction: Literal["asc", "desc"] = "desc",
+        create_date_from: str | None = None,
+        create_date_to: str | None = None,
+        modify_date_from: str | None = None,
+        receive_date_from: str | None = None,
+        receive_date_to: str | None = None,
+        expected_receive_date_from: str | None = None,
+        expected_receive_date_to: str | None = None,
+        view: Literal["brief", "label"] = "brief",
+    ) -> RESP_TYPE:
+        params = {
+            "limit": limit,
+            "offset": offset,
+            "expand": expand,
+            "user_id": user_id,
+            "current_library": current_library,
+            "current_location": current_location,
+            "q": q,
+            "order_by": order_by,
+            "direction": direction,
+            "create_date_from": create_date_from,
+            "create_date_to": create_date_to,
+            "modify_date_from": modify_date_from,
+            "receive_date_from": receive_date_from,
+            "receive_date_to": receive_date_to,
+            "expected_receive_date_from": expected_receive_date_from,
+            "expected_receive_date_to": expected_receive_date_to,
+            "view": view,
+        }
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.ITEMS, {"MMS_ID": mms_id, "HOLDING_ID": holding_id}, params=params
+        )
+        return resp
+
+    async def get_portfolios(self, mms_id: str, limit: int = 10, offset: int = 0) -> RESP_TYPE:
+        params = {"limit": limit, "offset": offset}
+        resp: RESP_TYPE = await self.get(AlmaEndpoint.PORTFOLIOS, {"MMS_ID": mms_id}, params=params)
+        return resp
+
+    @parsed_response(str)
+    @graceful(
+        parser={
+            "default": lambda r: r.text,
+        },
+    )
+    async def get_holding(self, mms_id: str, holding_id: str) -> str:
+        resp: str = await self.get(
+            AlmaEndpoint.HOLDING,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
+            headers={"Accept": "application/xml"},
+        )
+        return resp
+
+    @parsed_response(str)
+    @graceful(
+        parser={
+            "default": lambda r: r.text,
+        },
+    )
+    async def update_holding(self, mms_id: str, holding_id: str, record: str) -> str:
+        resp: str = await self.put(
+            AlmaEndpoint.HOLDING,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
+            headers={"Accept": "application/xml", "Content-Type": "application/xml"},
+            data=record,
+        )
+        return resp
+
+    async def create_holding(self, mms_id: str, record: str) -> str:
+        resp: str = await self.post(
+            AlmaEndpoint.HOLDING,
+            {"MMS_ID": mms_id},
+            headers={"Accept": "application/xml", "Content-Type": "application/xml"},
+            data=record,
+        )
+        return resp
+
+    async def scan_in(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_pid: str,
+        *,
+        library: str | None = None,
+        department: str | None = None,
+        circ_desk: str | None = None,
+        work_order_type: str | None = None,
+        status: str | None = None,
+        external_id: bool = False,
+        request_id: str | None = None,
+        auto_print_slip: bool = False,
+        place_on_hold_shelf: bool = False,
+        confirm: bool = False,
+        register_in_house_use: bool = False,
+        done: bool = False,
+    ) -> RESP_TYPE:
+        params = {
+            "op": "scan",
+            "library": library,
+            "department": department,
+            "work_order_type": work_order_type,
+            "circ_desk": circ_desk,
+            "status": status,
+            "done": done,
+            "external_id": external_id,
+            "request_id": request_id,
+            "auto_print_slip": auto_print_slip,
+            "place_on_hold_shelf": place_on_hold_shelf,
+            "confirm": confirm,
+            "register_in_house_use": register_in_house_use,
+        }
+        resp: RESP_TYPE = await self.post(
+            AlmaEndpoint.ITEM,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
+            params=params,
+        )
+        return resp
