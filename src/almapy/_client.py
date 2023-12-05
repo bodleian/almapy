@@ -43,7 +43,6 @@ class AlmaClient(Gracy[AlmaEndpoint]):
             parser={
                 HTTPStatus.OK: lambda resp: Box(resp.json()),
             },
-            log_errors=LogEvent(LogLevel.ERROR),
             retry=GracefulRetry(
                 delay=1,
                 max_attempts=5,
@@ -57,7 +56,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                 },
                 log_before=None,
                 log_after=LogEvent(LogLevel.WARNING),
-                log_exhausted=LogEvent(LogLevel.CRITICAL),
+                log_exhausted=LogEvent(LogLevel.ERROR),
                 behavior="break",
             ),
             throttling=GracefulThrottle(
@@ -66,8 +65,6 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                         url_pattern=r".*", max_requests=25, per_time_range=timedelta(seconds=1)
                     ),
                 ],
-                log_limit_reached=LogEvent(LogLevel.ERROR),
-                log_wait_over=LogEvent(LogLevel.WARNING),
             ),
             validators=AlmaErrorValidator(),
         )
@@ -78,6 +75,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
         location: Literal["America", "Europe", "Asia Pacific", "Canada", "China"] = "Europe",
         replay: GracyReplay | None = None,
         *,
+        rate_limit: int = 25,
         debug: bool = False,
         **kwargs: Any,
     ) -> None:
@@ -93,6 +91,11 @@ class AlmaClient(Gracy[AlmaEndpoint]):
             msg = f'Invalid location. Must be one of {", ".join(locations.keys())}.'
             raise ValueError(msg)
         self._location_url = URL(locations[location] + "/almaws/v1")
+        self.Config.SETTINGS.throttling.rules = [
+            ThrottleRule(
+                url_pattern=r".*", max_requests=rate_limit, per_time_range=timedelta(seconds=1)
+            )
+        ]
         super().__init__(replay, debug, **kwargs)
 
     def _create_client(self, **kwargs: Any) -> httpx.AsyncClient:
