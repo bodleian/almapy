@@ -39,7 +39,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
         BASE_URL = ""  # We set it dynamically instead, based on country.
         REQUEST_TIMEOUT = 30.0
         SETTINGS = GracyConfig(
-            allowed_status_code={HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND},
+            allowed_status_code={HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND, HTTPStatus.FOUND},
             parser={
                 HTTPStatus.OK: lambda resp: Box(resp.json()),
             },
@@ -105,6 +105,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
             "Accept": "application/json",
             "Authorization": f"apikey {self._apikey}",
         })
+        client.follow_redirects = True
         return client
 
     users: AlmaClientUserNS
