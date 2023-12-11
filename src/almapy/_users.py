@@ -167,6 +167,23 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
         self.fines = AlmaClientUserFinesNS(parent)
         self.requests = AlmaClientUserRequestsNS(parent)
 
+    async def get_users(
+        self,
+        limit: int = 10,
+        offset: int = 0,
+        *,
+        q: str | None = None,
+        order_by: Literal["last_name", "first_name", "primary_id"] | None,
+        expand: bool = False,
+    ) -> RESP_TYPE:
+        params = {"limit": limit, "offset": offset, expand: expand}
+        if q:
+            params["q"] = q
+        if order_by:
+            params["order_by"] = order_by
+        resp: RESP_TYPE = await self.get(AlmaEndpoint.USERS, params=params)
+        return resp
+
     async def get_user(self, user_id: str) -> RESP_TYPE:
         """Get user information by user ID.
 
