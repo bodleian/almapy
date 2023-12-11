@@ -78,12 +78,11 @@ class AlmaErrorValidator(GracefulValidator):
 
 def _get_error_class(
     status_code: int,
-    error_mapping: dict[HTTPStatus | str, type[APIServerError | APIClientError]],
 ) -> type[APIServerError | APIClientError] | None:
     if status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
-        return error_mapping[HTTPStatus.INTERNAL_SERVER_ERROR]
+        return APIServerError
     if status_code >= HTTPStatus.BAD_REQUEST:
-        return error_mapping[HTTPStatus.BAD_REQUEST]
+        return APIClientError
     return None
 
 
@@ -123,8 +122,6 @@ def _handle_error(response: httpx.Response) -> None:
         return
 
     error_mapping: dict[HTTPStatus | str, type[APIServerError | APIClientError]] = {
-        HTTPStatus.INTERNAL_SERVER_ERROR: APIServerError,
-        HTTPStatus.BAD_REQUEST: APIClientError,
         "401689": BarcodeNotFoundError,
         "401161": LoanLimitError,
         "401201": LoanBlockedError,
@@ -134,9 +131,7 @@ def _handle_error(response: httpx.Response) -> None:
         "401198": ParallelLoanError,
     }
 
-    error_class = _get_error_class(response.status_code, error_mapping) or error_mapping.get(
-        str(code)
-    )
+    error_class = error_mapping.get(str(code)) or _get_error_class(response.status_code)
 
     if error_class:
         raise error_class(code, message)
