@@ -176,11 +176,13 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
         order_by: Literal["last_name", "first_name", "primary_id"] | None = None,
         expand: bool = False,
     ) -> RESP_TYPE:
-        params = {"limit": limit, "offset": offset, expand: expand}
+        params = {"limit": limit, "offset": offset}
         if q:
             params["q"] = q
         if order_by:
             params["order_by"] = order_by
+        if expand:
+            params["expand"] = "full"
         resp: RESP_TYPE = await self.get(AlmaEndpoint.USERS, params=params)
         return resp
 
