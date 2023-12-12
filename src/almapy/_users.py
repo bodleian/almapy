@@ -173,7 +173,7 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
         offset: int = 0,
         *,
         q: str | None = None,
-        order_by: Literal["last_name", "first_name", "primary_id"] | None,
+        order_by: Literal["last_name", "first_name", "primary_id"] | None = None,
         expand: bool = False,
     ) -> RESP_TYPE:
         params = {"limit": limit, "offset": offset, expand: expand}
