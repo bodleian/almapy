@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from box import Box
 from gracy import (
-    ConcurrentRequestLimit,
     GracefulRetry,
     GracefulThrottle,
     Gracy,
@@ -16,7 +15,7 @@ from gracy import (
     LogLevel,
     ThrottleRule,
 )
-from httpx import URL, Headers, Limits
+from httpx import URL, Headers, Limits, Timeout
 
 from almapy._acq import AlmaClientAcqNS  # noqa: TCH001
 from almapy._bibs import AlmaClientBibNS  # noqa: TCH001
@@ -67,11 +66,6 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                     ),
                 ],
             ),
-            concurrent_requests=ConcurrentRequestLimit(
-                limit=1000,  # How many concurrent requests
-                log_limit_reached=LogEvent(LogLevel.WARNING),
-                log_limit_freed=LogEvent(LogLevel.INFO),
-            ),
             validators=AlmaErrorValidator(),
         )
 
@@ -82,7 +76,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
         replay: GracyReplay | None = None,
         *,
         rate_limit: int = 25,
-        concurrent_requests: int = 1000,
+        concurrent_requests: int = 200,
         debug: bool = False,
         **kwargs: Any,
     ) -> None:
@@ -117,6 +111,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
         client.limits = Limits(
             max_keepalive_connections=20, max_connections=200, keepalive_expiry=120
         )
+        client.timeout = Timeout(30, connect=60, read=120)
         return client
 
     users: AlmaClientUserNS
