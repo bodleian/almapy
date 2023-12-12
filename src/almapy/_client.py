@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from box import Box
 from gracy import (
+    ConcurrentRequestLimit,
     GracefulRetry,
     GracefulThrottle,
     Gracy,
@@ -37,7 +38,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
 
     class Config:
         BASE_URL = ""  # We set it dynamically instead, based on country.
-        REQUEST_TIMEOUT = 30.0
+        REQUEST_TIMEOUT = 60.0
         SETTINGS = GracyConfig(
             allowed_status_code={HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND, HTTPStatus.FOUND},
             parser={
@@ -66,6 +67,11 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                     ),
                 ],
             ),
+            concurrent_requests=ConcurrentRequestLimit(
+                limit=1000,  # How many concurrent requests
+                log_limit_reached=LogEvent(LogLevel.WARNING),
+                log_limit_freed=LogEvent(LogLevel.INFO),
+            ),
             validators=AlmaErrorValidator(),
         )
 
@@ -76,6 +82,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
         replay: GracyReplay | None = None,
         *,
         rate_limit: int = 25,
+        concurrent_requests: int = 1000,
         debug: bool = False,
         **kwargs: Any,
     ) -> None:
@@ -96,6 +103,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                 url_pattern=r".*", max_requests=rate_limit, per_time_range=timedelta(seconds=1)
             )
         ]
+        self.Config.SETTINGS.concurrent_requests.limit = concurrent_requests
         super().__init__(replay, debug, **kwargs)
 
     def _create_client(self, **kwargs: Any) -> httpx.AsyncClient:
