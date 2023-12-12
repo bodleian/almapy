@@ -16,7 +16,7 @@ from gracy import (
     LogLevel,
     ThrottleRule,
 )
-from httpx import URL, Headers
+from httpx import URL, Headers, Limits
 
 from almapy._acq import AlmaClientAcqNS  # noqa: TCH001
 from almapy._bibs import AlmaClientBibNS  # noqa: TCH001
@@ -114,6 +114,9 @@ class AlmaClient(Gracy[AlmaEndpoint]):
             "Authorization": f"apikey {self._apikey}",
         })
         client.follow_redirects = True
+        client.limits = Limits(
+            max_keepalive_connections=20, max_connections=200, keepalive_expiry=120
+        )
         return client
 
     users: AlmaClientUserNS
