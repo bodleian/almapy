@@ -104,7 +104,7 @@ class AlmaClientBibLoansNS(GracyNamespace[AlmaEndpoint]):
         resp: RESP_TYPE = await self.post(
             AlmaEndpoint.ITEM_LOANS,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
-            data=loan,
+            json=loan,
             params={"user_id": user_id},
         )
         return resp
@@ -194,7 +194,7 @@ class AlmaClientBibLoansNS(GracyNamespace[AlmaEndpoint]):
         resp: RESP_TYPE = await self.put(
             AlmaEndpoint.ITEM_LOAN,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id, "LOAN_ID": loan_id},
-            data=loan,
+            json=loan,
         )
         return resp
 
@@ -290,7 +290,7 @@ class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
             AlmaEndpoint.ITEM_REQUESTS,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
             params=params,
-            data=request,
+            json=request,
         )
         return resp
 
@@ -437,7 +437,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             AlmaEndpoint.HOLDING,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
-            data=record,
+            content=record,
         )
         return resp
 
@@ -446,7 +446,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             AlmaEndpoint.HOLDING,
             {"MMS_ID": mms_id},
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
-            data=record,
+            content=record,
         )
         return resp
 

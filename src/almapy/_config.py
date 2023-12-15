@@ -154,7 +154,7 @@ class AlmaClientConfigLettersNS(GracyNamespace[AlmaEndpoint]):
         resp: RESP_TYPE = await self.put(
             AlmaEndpoint.LETTER,
             {"LETTER_ID": letter_id},
-            data=data,
+            content=data,
             headers={"Content-Type": "application/xml"},
         )
         return resp
