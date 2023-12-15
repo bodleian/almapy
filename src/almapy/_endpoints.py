@@ -28,6 +28,7 @@ class AlmaEndpoint(BaseEndpoint):
 
     SETS = "/conf/sets"
     SET = "/conf/sets/{SET_ID}"
+    SET_MEMBERS = "/conf/sets/{SET_ID}/members"
     LIBRARIES = "/conf/libraries"
     LOCATIONS = "/conf/libraries/{LIBRARY_CODE}/locations"
     LOCATION = "/conf/libraries/{LIBRARY_CODE}/locations/{LOCATION_CODE}"

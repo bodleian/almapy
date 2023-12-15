@@ -78,7 +78,7 @@ class AlmaClientConfigSetsNS(GracyNamespace[AlmaEndpoint]):
             "offset": offset,
         }
         resp: RESP_TYPE = await self.get(
-            AlmaEndpoint.SET,
+            AlmaEndpoint.SET_MEMBERS,
             {"SET_ID": set_id},
             params=params,
         )
