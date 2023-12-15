@@ -19,6 +19,7 @@ from gracy import (
 from httpx import URL, Headers, Limits, PoolTimeout, Timeout
 
 from almapy._acq import AlmaClientAcqNS  # noqa: TCH001
+from almapy._analytics import AlmaClientAnalyticsNS  # noqa: TCH001
 from almapy._bibs import AlmaClientBibNS  # noqa: TCH001
 from almapy._config import AlmaClientConfigNS  # noqa: TCH001
 from almapy._endpoints import AlmaEndpoint
@@ -125,3 +126,4 @@ class AlmaClient(Gracy[AlmaEndpoint]):
     bibs: AlmaClientBibNS
     acq: AlmaClientAcqNS
     config: AlmaClientConfigNS
+    analytics: AlmaClientAnalyticsNS
