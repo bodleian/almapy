@@ -255,7 +255,9 @@ class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
         notify_user: bool,
         note: str | None = None,
     ) -> bool:
-        params = {"reason": reason, "note": note, "notify_user": notify_user}
+        params = {"reason": reason, "notify_user": notify_user}
+        if note:
+            params["note"] = note
         resp: bool = await self.delete(
             AlmaEndpoint.ITEM_REQUEST,
             {
@@ -399,6 +401,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             "expected_receive_date_to": expected_receive_date_to,
             "view": view,
         }
+        params = {k: v for k, v in params.items() if v is not None}
         resp: RESP_TYPE = await self.get(
             AlmaEndpoint.ITEMS, {"MMS_ID": mms_id, "HOLDING_ID": holding_id}, params=params
         )
@@ -481,6 +484,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             "confirm": confirm,
             "register_in_house_use": register_in_house_use,
         }
+        params = {k: v for k, v in params.items() if v is not None}
         resp: RESP_TYPE = await self.post(
             AlmaEndpoint.ITEM,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
