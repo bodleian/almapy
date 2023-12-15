@@ -6,7 +6,7 @@ authors = ["Ben Gable <ben.gable@bodleian.ox.ac.uk>"]
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
-httpx = "^0.25.0"
+httpx = "0.24.1"
 xmltodict = "^0.13.0"
 python-box = "^7.1.1"
 glom = "^23.5.0"

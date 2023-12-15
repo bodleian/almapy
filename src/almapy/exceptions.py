@@ -47,9 +47,6 @@ class BarcodeNotFoundError(APIClientError):
 class LoanLimitError(APIClientError):
     """Raised when an item could not be loaned due to a limit on number of simultaneous loans."""
 
-    def __init__(self, code: str, msg: str) -> None:
-        super().__init__(code, msg)
-
 
 class LoanBlockedError(APIClientError):
     """Raised when an item could not be loaned due to a block on the user.
@@ -108,10 +105,6 @@ class InvalidFieldError(APIClientError):
 class RequestFailedError(APIClientError):
     """Generic exception for when request creation failed."""
 
-    def __init__(self, code: str, msg: str) -> None:
-        super().__init__(code, msg)
-        self.message = msg
-
 
 class ParallelLoanError(APIClientError):
     """Raised when an item was unable to be loaned because they have a loan on another copy."""
@@ -128,9 +121,6 @@ class UserMissingFieldError(APIClientError):
         super().__init__("401664", msg)
         self.user_id = user_id
         self.message = msg
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class CannotRenewError(APIClientError):
@@ -174,3 +164,7 @@ class InvalidCodeError(APIClientError):
 
     def __str__(self) -> str:
         return self.message
+
+
+class ScanItemRetrievalError(APIClientError):
+    """Raised by scan in endpoint when the scan succeeds but item info is not returned [?]."""
