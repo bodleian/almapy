@@ -16,7 +16,7 @@ from gracy import (
     LogLevel,
     ThrottleRule,
 )
-from httpx import URL, Headers, Limits, PoolTimeout, Timeout
+from httpx import URL, Headers, Limits, PoolTimeout, ReadTimeout, Timeout
 
 from almapy._acq import AlmaClientAcqNS  # noqa: TCH001
 from almapy._analytics import AlmaClientAnalyticsNS  # noqa: TCH001
@@ -56,6 +56,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                     APIServerError,
                     ThresholdError,
                     PoolTimeout,
+                    ReadTimeout,
                 },
                 log_before=None,
                 log_after=LogEvent(LogLevel.WARNING),
@@ -70,7 +71,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                 ],
             ),
             concurrent_requests=ConcurrentRequestLimit(
-                limit=199,  # How many concurrent requests
+                limit=199,
                 log_limit_reached=LogEvent(LogLevel.WARNING),
                 log_limit_freed=LogEvent(LogLevel.INFO),
             ),
