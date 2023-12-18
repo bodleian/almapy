@@ -36,4 +36,4 @@ class AlmaEndpoint(BaseEndpoint):
     LETTERS = "/conf/letters"
     LETTER = "/conf/letters/{LETTER_ID}"
 
-    REPORTS = "/reports"
+    REPORTS = "/analytics/reports"

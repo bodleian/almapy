@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import xmltodict
-from gracy import GracyNamespace
+from gracy import GracyNamespace, graceful, parsed_response
 
 from almapy._endpoints import AlmaEndpoint
 
@@ -15,6 +15,12 @@ def headers_to_dict(headers: list[dict[str, Any]]) -> dict[str, Any]:
 class AlmaClientAnalyticsNS(GracyNamespace[AlmaEndpoint]):
     """Namespace for analytics functionality."""
 
+    @parsed_response(str)
+    @graceful(
+        parser={
+            "default": lambda r: r.text,
+        },
+    )
     async def get_raw_report(
         self,
         path: str,
@@ -42,20 +48,20 @@ class AlmaClientAnalyticsNS(GracyNamespace[AlmaEndpoint]):
         limit: int = 100,
         header_override: dict[str, str] | None = None,
         report_filter: str | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> list[dict[str, str]]:
         initial_response = await self.get_raw_report(path, limit, report_filter=report_filter)
-        parsed_response = xmltodict.parse(initial_response)
-        finished = parsed_response["report"]["QueryResult"]["IsFinished"]
-        result = parsed_response["report"]["QueryResult"]["ResultXml"]["rowset"]["Row"]
-        headers = parsed_response["report"]["QueryResult"]["ResultXml"]["rowset"]["xsd:schema"][
+        parsed_resp = xmltodict.parse(initial_response)
+        finished = parsed_resp["report"]["QueryResult"]["IsFinished"]
+        result = parsed_resp["report"]["QueryResult"]["ResultXml"]["rowset"]["Row"]
+        headers = parsed_resp["report"]["QueryResult"]["ResultXml"]["rowset"]["xsd:schema"][
             "xsd:complexType"
         ]["xsd:sequence"]["xsd:element"]
         headers = headers_to_dict(headers)
         if header_override:
             headers.update(header_override)
+        token = parsed_resp["report"]["QueryResult"]["ResumptionToken"]
 
         while finished == "false":
-            token = parsed_response["report"]["QueryResult"]["ResumptionToken"]
             resp = await self.get_raw_report(path, limit, token=token, report_filter=report_filter)
             parsed_resp = xmltodict.parse(resp)
             finished = parsed_resp["report"]["QueryResult"]["IsFinished"]
