@@ -16,7 +16,14 @@ from gracy import (
     LogLevel,
     ThrottleRule,
 )
-from httpx import URL, Headers, Limits, PoolTimeout, ReadTimeout, Timeout
+from httpx import (
+    URL,
+    Headers,
+    Limits,
+    PoolTimeout,
+    Timeout,
+    TimeoutException,
+)
 
 from almapy._acq import AlmaClientAcqNS  # noqa: TCH001
 from almapy._analytics import AlmaClientAnalyticsNS  # noqa: TCH001
@@ -56,7 +63,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                     APIServerError,
                     ThresholdError,
                     PoolTimeout,
-                    ReadTimeout,
+                    TimeoutException,
                 },
                 log_before=None,
                 log_after=LogEvent(LogLevel.WARNING),
