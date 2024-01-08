@@ -324,6 +324,25 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
+    async def get_item_by_pid(self, mms_id: str, holding_id: str, item_pid: str) -> RESP_TYPE:
+        """Get item information by barcode.
+
+        Args:
+            mms_id (str): The MMS ID.
+            holding_id (str): The Holding ID.
+            item_pid (str): The Item PID.
+
+        Returns:
+            Dict[str, Any]: The item dict
+
+        Raises:
+            APIClientError: If an error occurred while making the API request.
+        """
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.ITEM, {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid}
+        )
+        return resp
+
     async def update_item(
         self,
         mms_id: str,
