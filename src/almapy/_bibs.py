@@ -469,6 +469,45 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
+    @parsed_response(str)
+    @graceful(
+        parser={
+            "default": lambda r: r.text,
+        },
+    )
+    async def get_bib(
+        self,
+        mms_id: str,
+        *,
+        view: Literal["full", "brief", "local_fields"] = "full",
+        expand_physical: bool = False,
+        expand_electronic: bool = False,
+        expand_digital: bool = False,
+        expand_requests: bool = False,
+    ) -> str:
+        expand_params = []
+        if expand_physical:
+            expand_params.append("p_avail")
+        if expand_electronic:
+            expand_params.append("e_avail")
+        if expand_digital:
+            expand_params.append("d_avail")
+        if expand_requests:
+            expand_params.append("requests")
+
+        expand_param_string = ",".join(expand_params)
+        params = {"view": view}
+        if expand_param_string:
+            params["expand"] = expand_param_string
+
+        resp: str = await self.get(
+            AlmaEndpoint.BIB,
+            {"MMS_ID": mms_id},
+            params=params,
+            headers={"Accept": "application/xml"},
+        )
+        return resp
+
     async def scan_in(
         self,
         mms_id: str,

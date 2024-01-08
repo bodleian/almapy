@@ -19,6 +19,7 @@ class AlmaEndpoint(BaseEndpoint):
     HOLDING = "/bibs/{MMS_ID}/holdings/{HOLDING_ID}"
     ITEM_LOANS = "/bibs/{MMS_ID}/holdings/{HOLDING_ID}/items/{ITEM_PID}/loans"
     ITEM_LOAN = "/bibs/{MMS_ID}/holdings/{HOLDING_ID}/items/{ITEM_PID}/loans/{LOAN_ID}"
+    BIB = "/bibs/{MMS_ID}"
     BIB_LOANS = "/bibs/{MMS_ID}/loans"
     BIB_LOAN = "/bibs/{MMS_ID}/loans/{LOAN_ID]"
     ITEM_REQUESTS = "/bibs/{MMS_ID}/holdings/{HOLDING_ID}/items/{ITEM_PID}/requests"
