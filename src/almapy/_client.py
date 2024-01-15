@@ -21,6 +21,7 @@ from httpx import (
     Headers,
     Limits,
     PoolTimeout,
+    ReadTimeout,
     Timeout,
     TimeoutException,
 )
@@ -64,6 +65,8 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                     ThresholdError,
                     PoolTimeout,
                     TimeoutException,
+                    ReadTimeout,
+                    TimeoutError,
                 },
                 log_before=None,
                 log_after=LogEvent(LogLevel.WARNING),
