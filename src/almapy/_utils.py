@@ -93,6 +93,8 @@ def process_response(response: httpx.Response) -> tuple[str, str] | None:
 
     if "xml" in response.headers.get("Content-Type"):
         body = _parse_xml(response.text)
+    elif response.headers.get("Content-Type") == "text/plain":
+        raise APIServerError(str(response.status_code), response.text)
     else:
         body = json.loads(response.text)
 

@@ -20,8 +20,6 @@ from httpx import (
     URL,
     Headers,
     Limits,
-    PoolTimeout,
-    ReadTimeout,
     Timeout,
     TimeoutException,
 )
@@ -49,7 +47,15 @@ class AlmaClient(Gracy[AlmaEndpoint]):
         BASE_URL = ""  # We set it dynamically instead, based on country.
         REQUEST_TIMEOUT = 60.0
         SETTINGS = GracyConfig(
-            allowed_status_code={HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND, HTTPStatus.FOUND},
+            allowed_status_code={
+                HTTPStatus.BAD_REQUEST,
+                HTTPStatus.NOT_FOUND,
+                HTTPStatus.FOUND,
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                HTTPStatus.BAD_GATEWAY,
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                HTTPStatus.GATEWAY_TIMEOUT,
+            },
             parser={
                 HTTPStatus.OK: lambda resp: Box(resp.json()),
             },
@@ -58,15 +64,9 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                 max_attempts=5,
                 delay_modifier=3,
                 retry_on={
-                    HTTPStatus.BAD_GATEWAY,
-                    HTTPStatus.SERVICE_UNAVAILABLE,
-                    HTTPStatus.TOO_MANY_REQUESTS,
                     APIServerError,
                     ThresholdError,
-                    PoolTimeout,
                     TimeoutException,
-                    ReadTimeout,
-                    TimeoutError,
                 },
                 log_before=None,
                 log_after=LogEvent(LogLevel.WARNING),

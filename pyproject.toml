@@ -10,7 +10,7 @@ httpx = "0.24.1"
 xmltodict = "^0.13.0"
 python-box = "^7.1.1"
 glom = "^23.5.0"
-gracy = "^1.31.0"
+gracy = "^1.32.1"
 
 [tool.poetry.group.dev.dependencies]
 deptry = "^0.8.0"
