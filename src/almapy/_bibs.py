@@ -462,7 +462,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
 
     async def create_holding(self, mms_id: str, record: str) -> str:
         resp: str = await self.post(
-            AlmaEndpoint.HOLDING,
+            AlmaEndpoint.HOLDINGS,
             {"MMS_ID": mms_id},
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
             content=record,
