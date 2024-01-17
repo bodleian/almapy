@@ -460,6 +460,12 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
+    @parsed_response(str)
+    @graceful(
+        parser={
+            "default": lambda r: r.text,
+        },
+    )
     async def create_holding(self, mms_id: str, record: str) -> str:
         resp: str = await self.post(
             AlmaEndpoint.HOLDINGS,
