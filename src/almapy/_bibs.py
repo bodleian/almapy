@@ -243,6 +243,36 @@ class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
+    get_requests_for_item = get_requests
+
+    async def get_requests_for_bib(
+        self,
+        mms_id: str,
+        request_type: Literal["all_types", "HOLD", "DIGITIZATION", "BOOKING"] = "all_types",
+        status: Literal["active", "history"] = "active",
+    ) -> RESP_TYPE:
+        params = {"request_type": request_type, "status": status}
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.BIB_REQUESTS,
+            {"MMS_ID": mms_id},
+            params=params,
+        )
+        return resp
+
+    async def get_request(
+        self, mms_id: str, holding_id: str, item_id: str, request_id: str
+    ) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.ITEM_REQUEST,
+            {
+                "MMS_ID": mms_id,
+                "HOLDING_ID": holding_id,
+                "ITEM_PID": item_id,
+                "REQUEST_ID": request_id,
+            },
+        )
+        return resp
+
     @graceful(parser={HTTPStatus.NO_CONTENT: lambda r: True, "default": lambda r: False})
     async def cancel_request(
         self,
