@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from http import HTTPStatus
+from typing import TYPE_CHECKING, Any, Literal
 
-from gracy import Gracy, GracyNamespace
+from gracy import Gracy, GracyNamespace, graceful
 
 from almapy._endpoints import AlmaEndpoint
 
@@ -49,4 +50,26 @@ class AlmaClientAcqNS(GracyNamespace[AlmaEndpoint]):
             params=params,
             json=updated_item,
         )
+        return resp
+
+    @graceful(parser={HTTPStatus.NO_CONTENT: lambda r: True, "default": lambda r: False})
+    async def cancel_po_line(
+        self,
+        po_line_id: str,
+        reason_code: str,
+        *,
+        comment: str | None = None,
+        inform_vendor: bool = False,
+        override: bool = False,
+        bib_handling: Literal["retain", "delete", "suppress"] = "retain",
+    ) -> bool:
+        params = {
+            "reason": reason_code,
+            "inform_vendor": inform_vendor,
+            "override": override,
+            "bib": bib_handling,
+        }
+        if comment:
+            params["comment"] = comment
+        resp: bool = self.delete(AlmaEndpoint.PO_LINE, {"PO_LINE_ID": po_line_id}, params=params)
         return resp
