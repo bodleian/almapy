@@ -28,7 +28,7 @@ class AlmaEndpoint(BaseEndpoint):
     ITEM_REQUEST = "/bibs/{MMS_ID}/holdings/{HOLDING_ID}/items/{ITEM_PID}/requests/{REQUEST_ID}"
 
     PO_LINE = "/acq/po-lines/{PO_LINE_ID}"
-    PO_LINE_ITEM = "/acq/po-lines/{{PO_LINE_ID}/items/{ITEM_PID}"
+    PO_LINE_ITEM = "/acq/po-lines/{PO_LINE_ID}/items/{ITEM_PID}"
 
     SETS = "/conf/sets"
     SET = "/conf/sets/{SET_ID}"
