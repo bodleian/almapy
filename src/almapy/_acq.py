@@ -44,7 +44,7 @@ class AlmaClientAcqNS(GracyNamespace[AlmaEndpoint]):
             params["department"] = department
         if department_library:
             params["department_library"] = department_library
-        resp: RESP_TYPE = await self.get(
+        resp: RESP_TYPE = await self.post(
             AlmaEndpoint.PO_LINE_ITEM,
             {"PO_LINE_ID": po_line_id, "ITEM_PID": item_pid},
             params=params,
