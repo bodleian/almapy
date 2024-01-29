@@ -52,7 +52,8 @@ class AlmaClientAnalyticsNS(GracyNamespace[AlmaEndpoint]):
         initial_response = await self.get_raw_report(path, limit, report_filter=report_filter)
         parsed_resp = xmltodict.parse(initial_response)
         finished = parsed_resp["report"]["QueryResult"]["IsFinished"]
-        result = parsed_resp["report"]["QueryResult"]["ResultXml"]["rowset"]["Row"]
+        rowset = result = parsed_resp["report"]["QueryResult"]["ResultXml"]["rowset"]
+        result = rowset.get("Row", [])
         headers = parsed_resp["report"]["QueryResult"]["ResultXml"]["rowset"]["xsd:schema"][
             "xsd:complexType"
         ]["xsd:sequence"]["xsd:element"]
