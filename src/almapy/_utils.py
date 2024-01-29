@@ -28,6 +28,7 @@ from almapy.exceptions import (
     ParallelLoanError,
     RequestFailedError,
     ScanItemRetrievalError,
+    ThresholdError,
 )
 
 if TYPE_CHECKING:
@@ -80,6 +81,8 @@ class AlmaErrorValidator(GracefulValidator):
 def _get_error_class(
     status_code: int,
 ) -> type[APIServerError | APIClientError] | None:
+    if status_code == HTTPStatus.TOO_MANY_REQUESTS:
+        return ThresholdError
     if status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
         return APIServerError
     if status_code >= HTTPStatus.BAD_REQUEST:

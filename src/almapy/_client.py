@@ -55,6 +55,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                 HTTPStatus.BAD_GATEWAY,
                 HTTPStatus.SERVICE_UNAVAILABLE,
                 HTTPStatus.GATEWAY_TIMEOUT,
+                HTTPStatus.TOO_MANY_REQUESTS,
             },
             parser={
                 HTTPStatus.OK: lambda resp: Box(resp.json()),
@@ -68,8 +69,8 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                     ThresholdError,
                     TimeoutException,
                 },
-                log_before=None,
-                log_after=LogEvent(LogLevel.WARNING),
+                log_before=LogEvent(LogLevel.WARNING),
+                log_after=None,
                 log_exhausted=LogEvent(LogLevel.ERROR),
                 behavior="break",
             ),
