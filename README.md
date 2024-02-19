@@ -21,7 +21,7 @@ All methods return JSON in the form of a [Box](https://github.com/cdgriffith/Box
 
 ## Quickstart
 ```bash
-poetry add almapy --git https://gitlab.bodleian.ox.ac.uk/bodl3011/almapy.git
+poetry add  "git+https://gitlab.bodleian.ox.ac.uk/bodl3011/almapy.git"
 ```
 
 
