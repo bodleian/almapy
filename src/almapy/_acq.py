@@ -23,6 +23,22 @@ class AlmaClientAcqNS(GracyNamespace[AlmaEndpoint]):
         resp: RESP_TYPE = await self.get(AlmaEndpoint.PO_LINE, {"PO_LINE_ID": po_line_id})
         return resp
 
+    async def update_po_line(
+        self,
+        po_line_id: str,
+        updated_po_line: dict[str, Any],
+        *,
+        update_inventory: bool = False,
+        redistribute_funds: bool = False,
+    ) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.put(
+            AlmaEndpoint.PO_LINE,
+            {"PO_LINE_ID": po_line_id},
+            params={"update_inventory": update_inventory, "redistribute_funds": redistribute_funds},
+            json=updated_po_line,
+        )
+        return resp
+
     async def receive_existing_item(
         self,
         po_line_id: str,
