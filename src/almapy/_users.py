@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 from typing import TYPE_CHECKING, Any, Literal
 
 from gracy import Gracy, GracyNamespace
@@ -248,4 +249,27 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
             if e.code == "401664":
                 raise UserMissingFieldError(e.error, user["primary_id"]) from e
             raise
+        return resp
+
+    async def create_user_attachment(
+        self,
+        user_id: str,
+        file_name: str,
+        content: str,
+        *,
+        note: str = "",
+        description: str = "",
+        url: str = "",
+    ) -> RESP_TYPE:
+        encoded_content = base64.b64encode(bytes(content, "utf-8")).decode("utf-8")
+        attachment = {
+            "file_name": file_name,
+            "content": encoded_content,
+            "description": description,
+            "note": note,
+            "url": url,
+        }
+        resp: RESP_TYPE = await self.post(
+            AlmaEndpoint.USER_ATTACHMENTS, {"USER_ID": user_id}, json=attachment
+        )
         return resp

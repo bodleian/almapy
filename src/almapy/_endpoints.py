@@ -11,6 +11,7 @@ class AlmaEndpoint(BaseEndpoint):
     USER_FEES = "/users/{USER_ID}/fees"
     USER_REQUESTS = "/users/{USER_ID}/requests"
     USER_REQUEST = "/users/{USER_ID}/requests/{REQUEST_ID}"
+    USER_ATTACHMENTS = "/users/{USER_ID}/attachments"
 
     BARCODE = "/items"
     ITEM = "/bibs/{MMS_ID}/holdings/{HOLDING_ID}/items/{ITEM_PID}"
