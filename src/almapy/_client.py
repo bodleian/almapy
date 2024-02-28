@@ -83,8 +83,8 @@ class AlmaClient(Gracy[AlmaEndpoint]):
             ),
             concurrent_requests=ConcurrentRequestLimit(
                 limit=199,
-                log_limit_reached=LogEvent(LogLevel.WARNING),
-                log_limit_freed=LogEvent(LogLevel.INFO),
+                log_limit_reached=None,
+                log_limit_freed=None,
             ),
             validators=AlmaErrorValidator(),
         )
