@@ -168,3 +168,7 @@ class InvalidCodeError(APIClientError):
 
 class ScanItemRetrievalError(APIClientError):
     """Raised by scan in endpoint when the scan succeeds but item info is not returned [?]."""
+
+
+class NoItemsCanFulfillRequestError(APIClientError):
+    """Raised when creating a request that no items can fulfill."""
