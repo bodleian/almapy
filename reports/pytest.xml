@@ -1,1 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="0.076" timestamp="2023-12-05T14:44:13.432796" hostname="Narya"><testcase classname="tests.test_users.TestUserLoans" name="test_get_loans" time="0.030" /></testsuite></testsuites>
