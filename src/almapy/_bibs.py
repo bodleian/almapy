@@ -373,6 +373,22 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
+    async def create_item(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item: dict[str, Any],
+        *,
+        generate_description: bool = False,
+    ) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.post(
+            AlmaEndpoint.ITEMS,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
+            params={"generate_description": generate_description},
+            json=item,
+        )
+        return resp
+
     async def update_item(
         self,
         mms_id: str,
@@ -502,6 +518,43 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             {"MMS_ID": mms_id},
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
             content=record,
+        )
+        return resp
+
+    @parsed_response(str)
+    @graceful(parser={"default": lambda r: r.text})
+    async def create_bib(
+        self,
+        record: str,
+        *,
+        from_nz_mms_id: str | None = None,
+        from_cz_mms_id: str | None = None,
+        normalization: str | None = None,
+        validate: bool = False,
+        override_warning: bool = True,
+        check_match: bool = False,
+        import_profile: str | None = None,
+    ) -> str:
+        params = {
+            "validate": validate,
+            "override_warning": override_warning,
+            "check_match": check_match,
+        }
+        if from_nz_mms_id:
+            params["from_nz_mms_id"] = from_nz_mms_id
+        if from_cz_mms_id:
+            params["to_cz_mms_id"] = from_cz_mms_id
+        if normalization:
+            params["normalization"] = normalization
+        if import_profile:
+            params["import_profile"] = import_profile
+
+        resp: str = await self.post(
+            AlmaEndpoint.BIBS,
+            {},
+            content=record,
+            params=params,
+            headers={"Accept": "application/xml"},
         )
         return resp
 
