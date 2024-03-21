@@ -554,7 +554,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             {},
             content=record,
             params=params,
-            headers={"Accept": "application/xml"},
+            headers={"Accept": "application/xml", "Content-Type": "application/xml"},
         )
         return resp
 
