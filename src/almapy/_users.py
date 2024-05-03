@@ -123,6 +123,24 @@ class AlmaClientUserRequestsNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
+    async def get_requests(
+        self,
+        user_id: str,
+        *,
+        request_type: Literal["HOLD", "DIGITIZATION", "BOOKING"] | None = None,
+        user_id_type: str = "all_unique",
+        limit: int = 10,
+        offset: int = 0,
+        status: Literal["active", "history"] = "active",
+    ) -> RESP_TYPE:
+        params = {"user_id_type": user_id_type, "offset": offset, "limit": limit, "status": status}
+        if request_type:
+            params["request_type"] = request_type
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.USER_REQUESTS, {"USER_ID": user_id}, params=params
+        )
+        return resp
+
     async def create_request(
         self,
         user_id: str,

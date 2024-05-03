@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import operator
 import re
 import xml
 from http import HTTPStatus
@@ -111,7 +112,7 @@ def process_response(response: httpx.Response) -> tuple[str, str] | None:
                     "errorList.error.0",
                     "web_service_result.errorList.error",
                 ),
-                lambda x: (x["errorCode"], x["errorMessage"]),
+                operator.itemgetter("errorCode", "errorMessage"),
             ),
         )
     except GlomError as e:
