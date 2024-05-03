@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import base64
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Literal
 
-from gracy import Gracy, GracyNamespace
+from gracy import Gracy, GracyNamespace, graceful
 
 from almapy._endpoints import AlmaEndpoint
 from almapy.exceptions import (
@@ -168,6 +169,26 @@ class AlmaClientUserRequestsNS(GracyNamespace[AlmaEndpoint]):
     async def update_request(self, user_id: str, request_id: str, request: Request) -> RESP_TYPE:
         resp: RESP_TYPE = await self.put(
             AlmaEndpoint.USER_REQUEST, {"USER_ID": user_id, "REQUEST_ID": request_id}, json=request
+        )
+        return resp
+
+    @graceful(parser={HTTPStatus.NO_CONTENT: lambda r: True, "default": lambda r: False})
+    async def cancel_request(
+        self,
+        user_id: str,
+        request_id: str,
+        reason: str,
+        *,
+        notify_user: bool,
+        note: str | None = None,
+    ) -> bool:
+        params = {"reason": reason, "notify_user": notify_user}
+        if note:
+            params["note"] = note
+        resp: bool = await self.delete(
+            AlmaEndpoint.USER_REQUEST,
+            {"USER_ID": user_id, "REQUEST_ID": request_id},
+            params=params,
         )
         return resp
 
