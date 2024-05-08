@@ -61,7 +61,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                 HTTPStatus.OK: lambda resp: Box(resp.json()),
             },
             retry=GracefulRetry(
-                delay=1,
+                delay=2,
                 max_attempts=5,
                 delay_modifier=3,
                 retry_on={
