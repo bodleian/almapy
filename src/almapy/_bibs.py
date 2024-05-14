@@ -443,243 +443,234 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
+    async def get_items(
+        self,
+        mms_id: str,
+        holding_id: str,
+        expand: str | None = None,
+        user_id: str | None = None,
+        limit: int = 10,
+        offset: int = 0,
+        current_library: str | None = None,
+        current_location: str | None = None,
+        q: str | None = None,
+        order_by: str | None = None,
+        direction: Literal["asc", "desc"] = "desc",
+        create_date_from: str | None = None,
+        create_date_to: str | None = None,
+        modify_date_from: str | None = None,
+        receive_date_from: str | None = None,
+        receive_date_to: str | None = None,
+        expected_receive_date_from: str | None = None,
+        expected_receive_date_to: str | None = None,
+        view: Literal["brief", "label"] = "brief",
+    ) -> RESP_TYPE:
+        params = {
+            "limit": limit,
+            "offset": offset,
+            "expand": expand,
+            "user_id": user_id,
+            "current_library": current_library,
+            "current_location": current_location,
+            "q": q,
+            "order_by": order_by,
+            "direction": direction,
+            "create_date_from": create_date_from,
+            "create_date_to": create_date_to,
+            "modify_date_from": modify_date_from,
+            "receive_date_from": receive_date_from,
+            "receive_date_to": receive_date_to,
+            "expected_receive_date_from": expected_receive_date_from,
+            "expected_receive_date_to": expected_receive_date_to,
+            "view": view,
+        }
+        params = {k: v for k, v in params.items() if v is not None}
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.ITEMS, {"MMS_ID": mms_id, "HOLDING_ID": holding_id}, params=params
+        )
+        return resp
 
-async def get_items(
-    self,
-    mms_id: str,
-    holding_id: str,
-    expand: str | None = None,
-    user_id: str | None = None,
-    limit: int = 10,
-    offset: int = 0,
-    current_library: str | None = None,
-    current_location: str | None = None,
-    q: str | None = None,
-    order_by: str | None = None,
-    direction: Literal["asc", "desc"] = "desc",
-    create_date_from: str | None = None,
-    create_date_to: str | None = None,
-    modify_date_from: str | None = None,
-    receive_date_from: str | None = None,
-    receive_date_to: str | None = None,
-    expected_receive_date_from: str | None = None,
-    expected_receive_date_to: str | None = None,
-    view: Literal["brief", "label"] = "brief",
-) -> RESP_TYPE:
-    params = {
-        "limit": limit,
-        "offset": offset,
-        "expand": expand,
-        "user_id": user_id,
-        "current_library": current_library,
-        "current_location": current_location,
-        "q": q,
-        "order_by": order_by,
-        "direction": direction,
-        "create_date_from": create_date_from,
-        "create_date_to": create_date_to,
-        "modify_date_from": modify_date_from,
-        "receive_date_from": receive_date_from,
-        "receive_date_to": receive_date_to,
-        "expected_receive_date_from": expected_receive_date_from,
-        "expected_receive_date_to": expected_receive_date_to,
-        "view": view,
-    }
-    params = {k: v for k, v in params.items() if v is not None}
-    resp: RESP_TYPE = await self.get(
-        AlmaEndpoint.ITEMS, {"MMS_ID": mms_id, "HOLDING_ID": holding_id}, params=params
-    )
-    return resp
+    async def get_portfolios(self, mms_id: str, limit: int = 10, offset: int = 0) -> RESP_TYPE:
+        params = {"limit": limit, "offset": offset}
+        resp: RESP_TYPE = await self.get(AlmaEndpoint.PORTFOLIOS, {"MMS_ID": mms_id}, params=params)
+        return resp
 
-
-async def get_portfolios(self, mms_id: str, limit: int = 10, offset: int = 0) -> RESP_TYPE:
-    params = {"limit": limit, "offset": offset}
-    resp: RESP_TYPE = await self.get(AlmaEndpoint.PORTFOLIOS, {"MMS_ID": mms_id}, params=params)
-    return resp
-
-
-@parsed_response(str)
-@graceful(
-    parser={
-        "default": lambda r: r.text,
-    },
-)
-async def get_holding(self, mms_id: str, holding_id: str) -> str:
-    resp: str = await self.get(
-        AlmaEndpoint.HOLDING,
-        {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
-        headers={"Accept": "application/xml"},
-    )
-    return resp
-
-
-@parsed_response(str)
-@graceful(
-    parser={
-        "default": lambda r: r.text,
-    },
-)
-async def update_holding(self, mms_id: str, holding_id: str, record: str) -> str:
-    resp: str = await self.put(
-        AlmaEndpoint.HOLDING,
-        {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
-        headers={"Accept": "application/xml", "Content-Type": "application/xml"},
-        content=record,
-    )
-    return resp
-
-
-@parsed_response(str)
-@graceful(
-    parser={
-        "default": lambda r: r.text,
-    },
-)
-async def create_holding(self, mms_id: str, record: str) -> str:
-    resp: str = await self.post(
-        AlmaEndpoint.HOLDINGS,
-        {"MMS_ID": mms_id},
-        headers={"Accept": "application/xml", "Content-Type": "application/xml"},
-        content=record,
-    )
-    return resp
-
-
-@graceful(parser={HTTPStatus.NO_CONTENT: lambda r: True, "default": lambda r: False})
-async def delete_holding(
-    self,
-    mms_id: str,
-    holding_id: str,
-    *,
-    handle_bib: Literal["retain", "delete", "suppress"] = "retain",
-):
-    resp: bool = await self.delete(
-        AlmaEndpoint.HOLDING,
-        {
-            "MMS_ID": mms_id,
-            "HOLDING_ID": holding_id,
+    @parsed_response(str)
+    @graceful(
+        parser={
+            "default": lambda r: r.text,
         },
-        params={"bib": handle_bib},
     )
-    return resp
+    async def get_holding(self, mms_id: str, holding_id: str) -> str:
+        resp: str = await self.get(
+            AlmaEndpoint.HOLDING,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
+            headers={"Accept": "application/xml"},
+        )
+        return resp
 
-
-@parsed_response(str)
-@graceful(parser={"default": lambda r: r.text})
-async def create_bib(
-    self,
-    record: str,
-    *,
-    from_nz_mms_id: str | None = None,
-    from_cz_mms_id: str | None = None,
-    normalization: str | None = None,
-    validate: bool = False,
-    override_warning: bool = True,
-    check_match: bool = False,
-    import_profile: str | None = None,
-) -> str:
-    params = {
-        "validate": validate,
-        "override_warning": override_warning,
-        "check_match": check_match,
-    }
-    if from_nz_mms_id:
-        params["from_nz_mms_id"] = from_nz_mms_id
-    if from_cz_mms_id:
-        params["to_cz_mms_id"] = from_cz_mms_id
-    if normalization:
-        params["normalization"] = normalization
-    if import_profile:
-        params["import_profile"] = import_profile
-
-    resp: str = await self.post(
-        AlmaEndpoint.BIBS,
-        {},
-        content=record,
-        params=params,
-        headers={"Accept": "application/xml", "Content-Type": "application/xml"},
+    @parsed_response(str)
+    @graceful(
+        parser={
+            "default": lambda r: r.text,
+        },
     )
-    return resp
+    async def update_holding(self, mms_id: str, holding_id: str, record: str) -> str:
+        resp: str = await self.put(
+            AlmaEndpoint.HOLDING,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
+            headers={"Accept": "application/xml", "Content-Type": "application/xml"},
+            content=record,
+        )
+        return resp
 
-
-@parsed_response(str)
-@graceful(
-    parser={
-        "default": lambda r: r.text,
-    },
-)
-async def get_bib(
-    self,
-    mms_id: str,
-    *,
-    view: Literal["full", "brief", "local_fields"] = "full",
-    expand_physical: bool = False,
-    expand_electronic: bool = False,
-    expand_digital: bool = False,
-    expand_requests: bool = False,
-) -> str:
-    expand_params = []
-    if expand_physical:
-        expand_params.append("p_avail")
-    if expand_electronic:
-        expand_params.append("e_avail")
-    if expand_digital:
-        expand_params.append("d_avail")
-    if expand_requests:
-        expand_params.append("requests")
-
-    expand_param_string = ",".join(expand_params)
-    params = {"view": view}
-    if expand_param_string:
-        params["expand"] = expand_param_string
-
-    resp: str = await self.get(
-        AlmaEndpoint.BIB,
-        {"MMS_ID": mms_id},
-        params=params,
-        headers={"Accept": "application/xml"},
+    @parsed_response(str)
+    @graceful(
+        parser={
+            "default": lambda r: r.text,
+        },
     )
-    return resp
+    async def create_holding(self, mms_id: str, record: str) -> str:
+        resp: str = await self.post(
+            AlmaEndpoint.HOLDINGS,
+            {"MMS_ID": mms_id},
+            headers={"Accept": "application/xml", "Content-Type": "application/xml"},
+            content=record,
+        )
+        return resp
 
+    @graceful(parser={HTTPStatus.NO_CONTENT: lambda r: True, "default": lambda r: False})
+    async def delete_holding(
+        self,
+        mms_id: str,
+        holding_id: str,
+        *,
+        handle_bib: Literal["retain", "delete", "suppress"] = "retain",
+    ):
+        resp: bool = await self.delete(
+            AlmaEndpoint.HOLDING,
+            {
+                "MMS_ID": mms_id,
+                "HOLDING_ID": holding_id,
+            },
+            params={"bib": handle_bib},
+        )
+        return resp
 
-async def scan_in(
-    self,
-    mms_id: str,
-    holding_id: str,
-    item_pid: str,
-    *,
-    library: str | None = None,
-    department: str | None = None,
-    circ_desk: str | None = None,
-    work_order_type: str | None = None,
-    status: str | None = None,
-    external_id: bool = False,
-    request_id: str | None = None,
-    auto_print_slip: bool = False,
-    place_on_hold_shelf: bool = False,
-    confirm: bool = False,
-    register_in_house_use: bool = False,
-    done: bool = False,
-) -> RESP_TYPE:
-    params = {
-        "op": "scan",
-        "library": library,
-        "department": department,
-        "work_order_type": work_order_type,
-        "circ_desk": circ_desk,
-        "status": status,
-        "done": done,
-        "external_id": external_id,
-        "request_id": request_id,
-        "auto_print_slip": auto_print_slip,
-        "place_on_hold_shelf": place_on_hold_shelf,
-        "confirm": confirm,
-        "register_in_house_use": register_in_house_use,
-    }
-    params = {k: v for k, v in params.items() if v is not None}
-    resp: RESP_TYPE = await self.post(
-        AlmaEndpoint.ITEM,
-        {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
-        params=params,
+    @parsed_response(str)
+    @graceful(parser={"default": lambda r: r.text})
+    async def create_bib(
+        self,
+        record: str,
+        *,
+        from_nz_mms_id: str | None = None,
+        from_cz_mms_id: str | None = None,
+        normalization: str | None = None,
+        validate: bool = False,
+        override_warning: bool = True,
+        check_match: bool = False,
+        import_profile: str | None = None,
+    ) -> str:
+        params = {
+            "validate": validate,
+            "override_warning": override_warning,
+            "check_match": check_match,
+        }
+        if from_nz_mms_id:
+            params["from_nz_mms_id"] = from_nz_mms_id
+        if from_cz_mms_id:
+            params["to_cz_mms_id"] = from_cz_mms_id
+        if normalization:
+            params["normalization"] = normalization
+        if import_profile:
+            params["import_profile"] = import_profile
+
+        resp: str = await self.post(
+            AlmaEndpoint.BIBS,
+            {},
+            content=record,
+            params=params,
+            headers={"Accept": "application/xml", "Content-Type": "application/xml"},
+        )
+        return resp
+
+    @parsed_response(str)
+    @graceful(
+        parser={
+            "default": lambda r: r.text,
+        },
     )
-    return resp
+    async def get_bib(
+        self,
+        mms_id: str,
+        *,
+        view: Literal["full", "brief", "local_fields"] = "full",
+        expand_physical: bool = False,
+        expand_electronic: bool = False,
+        expand_digital: bool = False,
+        expand_requests: bool = False,
+    ) -> str:
+        expand_params = []
+        if expand_physical:
+            expand_params.append("p_avail")
+        if expand_electronic:
+            expand_params.append("e_avail")
+        if expand_digital:
+            expand_params.append("d_avail")
+        if expand_requests:
+            expand_params.append("requests")
+
+        expand_param_string = ",".join(expand_params)
+        params = {"view": view}
+        if expand_param_string:
+            params["expand"] = expand_param_string
+
+        resp: str = await self.get(
+            AlmaEndpoint.BIB,
+            {"MMS_ID": mms_id},
+            params=params,
+            headers={"Accept": "application/xml"},
+        )
+        return resp
+
+    async def scan_in(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_pid: str,
+        *,
+        library: str | None = None,
+        department: str | None = None,
+        circ_desk: str | None = None,
+        work_order_type: str | None = None,
+        status: str | None = None,
+        external_id: bool = False,
+        request_id: str | None = None,
+        auto_print_slip: bool = False,
+        place_on_hold_shelf: bool = False,
+        confirm: bool = False,
+        register_in_house_use: bool = False,
+        done: bool = False,
+    ) -> RESP_TYPE:
+        params = {
+            "op": "scan",
+            "library": library,
+            "department": department,
+            "work_order_type": work_order_type,
+            "circ_desk": circ_desk,
+            "status": status,
+            "done": done,
+            "external_id": external_id,
+            "request_id": request_id,
+            "auto_print_slip": auto_print_slip,
+            "place_on_hold_shelf": place_on_hold_shelf,
+            "confirm": confirm,
+            "register_in_house_use": register_in_house_use,
+        }
+        params = {k: v for k, v in params.items() if v is not None}
+        resp: RESP_TYPE = await self.post(
+            AlmaEndpoint.ITEM,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
+            params=params,
+        )
+        return resp
