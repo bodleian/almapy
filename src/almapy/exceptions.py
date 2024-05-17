@@ -110,6 +110,10 @@ class ParallelLoanError(APIClientError):
     """Raised when an item was unable to be loaned because they have a loan on another copy."""
 
 
+class ParallelRequestError(APIClientError):
+    """Raised when an item could not be requested because they have a request on another copy."""
+
+
 class UserMissingFieldError(APIClientError):
     """Some fields in the user object are mandatory and Alma throws an error if they are absent.
 

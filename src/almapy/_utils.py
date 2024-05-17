@@ -28,6 +28,7 @@ from almapy.exceptions import (
     LoanLimitError,
     NoItemsCanFulfillRequestError,
     ParallelLoanError,
+    ParallelRequestError,
     RequestFailedError,
     ScanItemRetrievalError,
     ThresholdError,
@@ -139,6 +140,7 @@ def _handle_error(response: httpx.Response) -> None:
         "401198": ParallelLoanError,
         "402504": ScanItemRetrievalError,
         "401129": NoItemsCanFulfillRequestError,
+        "401136": ParallelRequestError,
     }
 
     error_class = error_mapping.get(str(code)) or _get_error_class(response.status_code)
