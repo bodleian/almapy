@@ -56,6 +56,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                 HTTPStatus.SERVICE_UNAVAILABLE,
                 HTTPStatus.GATEWAY_TIMEOUT,
                 HTTPStatus.TOO_MANY_REQUESTS,
+                HTTPStatus.FORBIDDEN,
             },
             parser={
                 HTTPStatus.OK: lambda resp: Box(resp.json()),
