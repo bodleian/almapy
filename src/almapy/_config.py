@@ -4,6 +4,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Literal
 
 from gracy import Gracy, GracyNamespace, graceful
+from typing_extensions import assert_never
 
 from almapy._endpoints import AlmaEndpoint
 
@@ -160,6 +161,86 @@ class AlmaClientConfigLettersNS(GracyNamespace[AlmaEndpoint]):
         return resp
 
 
+class AlmaClientConfigJobsNS(GracyNamespace[AlmaEndpoint]):
+    async def get_jobs(
+        self,
+        limit: int = 10,
+        offset: int = 0,
+        *,
+        category: str | None = None,
+        job_type: Literal["MANUAL", "SCHEDULED", "OTHER"] | None = None,
+        profile_id: str | None = None,
+    ) -> RESP_TYPE:
+        params = {"limit": limit, "offset": offset}
+        if category:
+            params["category"] = category
+        if job_type:
+            params["job_type"] = job_type
+        if profile_id:
+            params["profile_id"] = profile_id
+        resp: RESP_TYPE = await self.get(AlmaEndpoint.JOBS, params=params)
+        return resp
+
+    async def get_job(self, job_id: str) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.get(AlmaEndpoint.JOB, {"JOB_ID": job_id})
+        return resp
+
+    async def submit_job(
+        self, job_id: str, job: dict[str, str | dict[str, str | dict[str, str]]]
+    ) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.post(AlmaEndpoint.JOB, {"JOB_ID": job_id}, json=job)
+        return resp
+
+    async def get_job_instances(
+        self,
+        job_id: str,
+        limit: int = 10,
+        offset: int = 0,
+        submit_date_from: str | None = None,
+        submit_date_to: str | None = None,
+        status: str | None = None,
+    ) -> RESP_TYPE:
+        params = {"limit": limit, "offset": offset}
+        if submit_date_to:
+            params["submit_date_to"] = submit_date_to
+        if submit_date_from:
+            params["submit_date_from"] = submit_date_from
+        if status:
+            params["status"] = status
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.JOB_INSTANCES, {"JOB_ID": job_id}, params=params
+        )
+        return resp
+
+    async def get_job_instance(self, job_id: str, instance_id: str) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.JOB_INSTANCE, {"JOB_ID": job_id, "INSTANCE_ID": instance_id}
+        )
+        return resp
+
+    async def get_job_instance_matches(
+        self,
+        job_id: str,
+        instance_id: str,
+        single_or_multi: Literal["single", "multi"],
+        limit: int = 10,
+        offset: int = 0,
+    ) -> RESP_TYPE:
+        params = {"limit": limit, "offset": offset}
+        if single_or_multi == "multi":
+            params["population"] = "MULTI_MATCHES"
+        elif single_or_multi == "single":
+            params["population"] = "SINGLE_MATCHES"
+        else:
+            assert_never(single_or_multi)
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.JOB_INSTANCE_MATCHES,
+            {"JOB_ID": job_id, "INSTANCE_ID": instance_id},
+            params=params,
+        )
+        return resp
+
+
 class AlmaClientConfigNS(GracyNamespace[AlmaEndpoint]):
     """Namespace for config/admin functionality, exposing a number of sub-namespace via attrs.
 
@@ -173,3 +254,4 @@ class AlmaClientConfigNS(GracyNamespace[AlmaEndpoint]):
         self.sets = AlmaClientConfigSetsNS(parent)
         self.libraries = AlmaClientConfigLibrariesNS(parent)
         self.letters = AlmaClientConfigLettersNS(parent)
+        self.jobs = AlmaClientConfigJobsNS(parent)

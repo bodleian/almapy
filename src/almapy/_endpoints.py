@@ -41,5 +41,10 @@ class AlmaEndpoint(BaseEndpoint):
     CIRC_DESKS = "/conf/libraries/{LIBRARY_CODE}/circ-desks"
     LETTERS = "/conf/letters"
     LETTER = "/conf/letters/{LETTER_ID}"
+    JOBS = "/conf/jobs"
+    JOB = "/conf/jobs/{JOB_ID}"
+    JOB_INSTANCES = "/conf/jobs/{JOB_ID}/instances"
+    JOB_INSTANCE = "/conf/jobs/{JOB_ID}/instances/{INSTANCE_ID}"
+    JOB_INSTANCE_MATCHES = "/conf/jobs/{JOB_ID}/instances/{INSTANCE_ID}/matches"
 
     REPORTS = "/analytics/reports"
