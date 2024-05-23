@@ -188,7 +188,9 @@ class AlmaClientConfigJobsNS(GracyNamespace[AlmaEndpoint]):
     async def submit_job(
         self, job_id: str, job: dict[str, str | dict[str, str | dict[str, str]]]
     ) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.post(AlmaEndpoint.JOB, {"JOB_ID": job_id}, json=job)
+        resp: RESP_TYPE = await self.post(
+            AlmaEndpoint.JOB, {"JOB_ID": job_id}, json=job, params={"op": "run"}
+        )
         return resp
 
     async def get_job_instances(
