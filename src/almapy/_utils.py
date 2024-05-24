@@ -29,6 +29,7 @@ from almapy.exceptions import (
     NoItemsCanFulfillRequestError,
     ParallelLoanError,
     ParallelRequestError,
+    POUpdateFailedError,
     RequestFailedError,
     ScanItemRetrievalError,
     ThresholdError,
@@ -141,6 +142,7 @@ def _handle_error(response: httpx.Response) -> None:
         "402504": ScanItemRetrievalError,
         "401129": NoItemsCanFulfillRequestError,
         "401136": ParallelRequestError,
+        "401876": POUpdateFailedError,
     }
 
     error_class = error_mapping.get(str(code)) or _get_error_class(response.status_code)

@@ -176,3 +176,12 @@ class ScanItemRetrievalError(APIClientError):
 
 class NoItemsCanFulfillRequestError(APIClientError):
     """Raised when creating a request that no items can fulfill."""
+
+
+class POUpdateFailedError(APIClientError):
+    """Raised when a PO could not be updated for any reason."""
+
+    def __init__(self, msg: str) -> None:
+        msg = msg.removeprefix("Failed to update the PO Line. Errors:").strip()
+        super().__init__("401876", msg)
+        self.message = msg
