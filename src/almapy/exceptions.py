@@ -7,20 +7,20 @@ class APIClientError(Exception):
     """Base exception for generic client-caused errors (HTTP 400s)."""
 
     def __init__(self, code: str, msg: str) -> None:
-        super().__init__(msg)
+        super().__init__(f"{msg} [{code}]")
         self.code = code
         self.error = msg
-        self.message = f"API Error {code}: {msg}"
+        self.message = f"{msg} [{code}]"
 
 
 class APIServerError(Exception):
     """Base exception for generic server-related errors (HTTP 500s)."""
 
     def __init__(self, code: str, msg: str) -> None:
-        super().__init__(msg)
+        super().__init__(f"{msg} [{code}]")
         self.code = code
         self.error = msg
-        self.message = f"Server Error {code}: {msg}"
+        self.message = f"{msg} [{code}]"
 
 
 class ThresholdError(APIServerError):
