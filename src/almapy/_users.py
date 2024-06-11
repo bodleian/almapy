@@ -89,7 +89,7 @@ class AlmaClientUserLoansNS(GracyNamespace[AlmaEndpoint]):
         self, user_id: str, loan_id: str, due_date: str, *, notify_user: bool = False
     ) -> RESP_TYPE:
         body = {"due_date": due_date}
-        resp: RESP_TYPE = await self.get(
+        resp: RESP_TYPE = await self.put(
             AlmaEndpoint.USER_LOAN,
             {"USER_ID": user_id, "LOAN_ID": loan_id},
             params={"notify_user": notify_user},
