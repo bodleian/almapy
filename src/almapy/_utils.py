@@ -26,6 +26,7 @@ from almapy.exceptions import (
     InvalidFieldError,
     LoanBlockedError,
     LoanLimitError,
+    MMSIdNotFoundError,
     NoItemsCanFulfillRequestError,
     ParallelLoanError,
     ParallelRequestError,
@@ -143,6 +144,7 @@ def _handle_error(response: httpx.Response) -> None:
         "401129": NoItemsCanFulfillRequestError,
         "401136": ParallelRequestError,
         "401876": POUpdateFailedError,
+        "402203": MMSIdNotFoundError,
     }
 
     error_class = error_mapping.get(str(code)) or _get_error_class(response.status_code)

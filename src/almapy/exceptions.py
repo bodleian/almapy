@@ -44,6 +44,19 @@ class BarcodeNotFoundError(APIClientError):
         self.message = f"Barcode not found: {self.barcode}"
 
 
+class MMSIdNotFoundError(APIClientError):
+    """Raised when the specified MMS ID was not found on Alma.
+
+    Attributes:
+        mms (str): The MMS ID that was not found.
+    """
+
+    def __init__(self, code: str, msg: str) -> None:
+        super().__init__(code, msg)
+        self.mms = msg.split(" ")[3]
+        self.message = f"MMS ID not found: {self.mms}"
+
+
 class LoanLimitError(APIClientError):
     """Raised when an item could not be loaned due to a limit on number of simultaneous loans."""
 
