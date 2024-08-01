@@ -11,7 +11,6 @@ from almapy.exceptions import (
     APIClientError,
     CannotRenewError,
     UserMissingFieldError,
-    UserNotFoundError,
 )
 
 if TYPE_CHECKING:
@@ -239,12 +238,7 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
             UserNotFoundError: If the user identifier is not found.
             APIClientError: If another error occurred while making the API request.
         """
-        try:
-            resp: RESP_TYPE = await self.get(AlmaEndpoint.USER, {"USER_ID": user_id})
-        except APIClientError as e:
-            if e.code == "401861":
-                raise UserNotFoundError(e.error, user_id) from e
-            raise
+        resp: RESP_TYPE = await self.get(AlmaEndpoint.USER, {"USER_ID": user_id})
         return resp
 
     async def update_user(self, user_id: str, user: dict[str, Any]) -> RESP_TYPE:

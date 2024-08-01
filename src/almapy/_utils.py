@@ -34,6 +34,7 @@ from almapy.exceptions import (
     RequestFailedError,
     ScanItemRetrievalError,
     ThresholdError,
+    UserNotFoundError,
 )
 
 if TYPE_CHECKING:
@@ -145,6 +146,7 @@ def _handle_error(response: httpx.Response) -> None:
         "401136": ParallelRequestError,
         "401876": POUpdateFailedError,
         "402203": MMSIdNotFoundError,
+        "401861": UserNotFoundError,
     }
 
     error_class = error_mapping.get(str(code)) or _get_error_class(response.status_code)

@@ -163,9 +163,16 @@ class UserNotFoundError(APIClientError):
         user_id (str): The primary ID of the user.
     """
 
-    def __init__(self, msg: str, user_id: str) -> None:
-        super().__init__("401861", msg)
-        self.user_id = user_id
+    def __init__(self, code: str, msg: str) -> None:
+        super().__init__(code, msg)
+        m = re.match(
+            r"User with identifier (?P<identifier>[A-Za-z0-9]+) was not found.",
+            msg,
+        )
+        if m:
+            self.user_id = m.group("identifier")
+        else:
+            self.user_id = ""
         self.message = msg
 
     def __str__(self) -> str:
