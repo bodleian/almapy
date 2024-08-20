@@ -32,9 +32,11 @@ class AlmaClientAnalyticsNS(GracyNamespace[AlmaEndpoint]):
         params = {
             "path": path,
             "limit": limit,
-            "token": token,
-            "filter": report_filter,
         }
+        if report_filter:
+            params["filter"] = report_filter
+        if token:
+            params["token"] = token
         resp: str = await self.get(
             AlmaEndpoint.REPORTS,
             params=params,
