@@ -1,3 +1,38 @@
+[project]
+name = "almapy"
+version = "5.16.0"
+requires-python = ">=3.8.1, <4.0.0"
+authors = [{ name = "Ben Gable", email = "ben.gable@bodleian.ox.ac.uk" }]
+dependencies = [
+
+    "httpx>=0.26.0",
+    "xmltodict>=0.13.0",
+    "python-box>=7.2.0",
+    "glom>=23.5.0",
+    "gracy>=1.32.1",
+]
+
+
+[tool.uv]
+dev-dependencies = [
+    "deptry>=0.19.1",
+    "cruft>=2.15.0",
+    "pdoc>=14.6.0",
+    "commitizen>=3.29.0",
+    "coverage>=7.6.1",
+    "mypy>=1.11.1",
+    "poethepoet>=0.27.0",
+    "pre-commit>=3.5.0",
+    "pytest>=8.3.2",
+    "pytest-asyncio>=0.23.8",
+    "pytest-clarity>=1.0.1",
+    "pytest-mock>=3.14.0",
+    "ruff>=0.6.1",
+    "safety>=2.3.5",
+    "typeguard>=4.3.0",
+    "environs>=11.0.0",
+]
+
 [tool.poetry]
 name = "almapy"
 version = "5.16.0"
@@ -6,7 +41,7 @@ authors = ["Ben Gable <ben.gable@bodleian.ox.ac.uk>"]
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
-httpx = "^0.26.0"
+httpx = "^0.27.0"
 xmltodict = "^0.13.0"
 python-box = "^7.1.1"
 glom = "^23.5.0"
@@ -99,48 +134,48 @@ convention = "google"
 
 [tool.poe.tasks]  # https://github.com/nat-n/poethepoet
 
-  [tool.poe.tasks.docs]
-  help = "Generate this package's docs"
-  cmd = """
+[tool.poe.tasks.docs]
+help = "Generate this package's docs"
+cmd = """
     pdoc
       --docformat $docformat
       --output-directory $outputdirectory
       almapy
     """
 
-    [[tool.poe.tasks.docs.args]]
-    help = "The docstring style (default: google)"
-    name = "docformat"
-    options = ["--docformat"]
-    default = "google"
+[[tool.poe.tasks.docs.args]]
+help = "The docstring style (default: google)"
+name = "docformat"
+options = ["--docformat"]
+default = "google"
 
-    [[tool.poe.tasks.docs.args]]
-    help = "The output directory (default: docs)"
-    name = "outputdirectory"
-    options = ["--output-directory"]
-    default = "docs"
+[[tool.poe.tasks.docs.args]]
+help = "The output directory (default: docs)"
+name = "outputdirectory"
+options = ["--output-directory"]
+default = "docs"
 
-  [tool.poe.tasks.lint]
-  help = "Lint this package"
+[tool.poe.tasks.lint]
+help = "Lint this package"
 
-    [[tool.poe.tasks.lint.sequence]]
-    cmd = """
+[[tool.poe.tasks.lint.sequence]]
+cmd = """
       pre-commit run
         --all-files
         --color always
       """
 
-    [[tool.poe.tasks.lint.sequence]]
-    shell = "safety check --continue-on-error --full-report"
+[[tool.poe.tasks.lint.sequence]]
+shell = "safety check --continue-on-error --full-report"
 
-  [tool.poe.tasks.test]
-  help = "Test this package"
+[tool.poe.tasks.test]
+help = "Test this package"
 
-    [[tool.poe.tasks.test.sequence]]
-    cmd = "coverage run"
+[[tool.poe.tasks.test.sequence]]
+cmd = "coverage run"
 
-    [[tool.poe.tasks.test.sequence]]
-    cmd = "coverage report"
+[[tool.poe.tasks.test.sequence]]
+cmd = "coverage report"
 
-    [[tool.poe.tasks.test.sequence]]
-    cmd = "coverage xml"
+[[tool.poe.tasks.test.sequence]]
+cmd = "coverage xml"
