@@ -5,7 +5,7 @@ requires-python = ">=3.8.1, <4.0.0"
 authors = [{ name = "Ben Gable", email = "ben.gable@bodleian.ox.ac.uk" }]
 dependencies = [
 
-    "httpx>=0.26.0",
+    "httpx>=0.27.0",
     "xmltodict>=0.13.0",
     "python-box>=7.2.0",
     "glom>=23.5.0",
@@ -32,42 +32,6 @@ dev-dependencies = [
     "typeguard>=4.3.0",
     "environs>=11.0.0",
 ]
-
-[tool.poetry]
-name = "almapy"
-version = "5.16.0"
-description = ""
-authors = ["Ben Gable <ben.gable@bodleian.ox.ac.uk>"]
-
-[tool.poetry.dependencies]
-python = "^3.8.1"
-httpx = "^0.27.0"
-xmltodict = "^0.13.0"
-python-box = "^7.1.1"
-glom = "^23.5.0"
-gracy = "^1.32.1"
-
-[tool.poetry.group.dev.dependencies]
-deptry = "^0.8.0"
-cruft = "^2.15.0"
-pdoc = "^14.1.0"
-
-[tool.poetry.group.test.dependencies]  # https://python-poetry.org/docs/master/managing-dependencies/
-commitizen = "^3.13.0"
-coverage = { extras = ["toml"], version = "^7.3.2" }
-mypy = "^1.7.1"
-poethepoet = "^0.24.2"
-pre-commit = "^3.5.0"
-pytest = "^7.4.3"
-pytest-asyncio = "^0.21.0"
-pytest-clarity = "^1.0.1"
-pytest-mock = "^3.12.0"
-pytest-xdist = "^3.5.0"
-ruff = "^0.4.2"
-safety = "^2.3.5"
-shellcheck-py = "^0.9.0.6"
-typeguard = "^4.1.5"
-environs = "^11.0.0"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
@@ -121,7 +85,6 @@ target-version = "py38"
 select = ["A", "ASYNC", "B", "BLE", "C4", "C90", "D", "DTZ", "E", "EM", "ERA", "F", "FBT", "FLY", "FURB", "I", "ICN", "INP", "INT", "ISC", "LOG", "N", "NPY", "PERF", "PGH", "PIE", "PLC", "PLE", "PLR", "PLW", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "S", "SIM", "SLF", "SLOT", "T10", "T20", "TCH", "TID", "TRY", "UP", "W", "YTT"]
 ignore = ["E501", "S307", "RET504", "S101", "PLE1205", "ISC001", "D107", "D105", "PLR0913", "PLR0917"]
 unfixable = ["ERA001", "F401", "F841", "T201", "T203"]
-ignore-init-module-imports = true
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"

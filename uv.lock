@@ -37,7 +37,7 @@ dev = [
 requires-dist = [
     { name = "glom", specifier = ">=23.5.0" },
     { name = "gracy", specifier = ">=1.32.1" },
-    { name = "httpx", specifier = ">=0.26.0" },
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "python-box", specifier = ">=7.2.0" },
     { name = "xmltodict", specifier = ">=0.13.0" },
 ]
