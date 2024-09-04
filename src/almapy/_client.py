@@ -62,9 +62,9 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                 HTTPStatus.OK: lambda resp: Box(resp.json()),
             },
             retry=GracefulRetry(
-                delay=2,
-                max_attempts=5,
-                delay_modifier=3,
+                delay=3,
+                max_attempts=3,
+                delay_modifier=4,
                 retry_on={
                     APIServerError,
                     ThresholdError,
@@ -83,7 +83,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                 ],
             ),
             concurrent_requests=ConcurrentRequestLimit(
-                limit=199,
+                limit=150,
                 log_limit_reached=None,
                 log_limit_freed=None,
             ),
@@ -97,7 +97,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
         replay: GracyReplay | None = None,
         *,
         rate_limit: int = 25,
-        concurrent_requests: int = 199,
+        concurrent_requests: int = 150,
         debug: bool = False,
         **kwargs: Any,
     ) -> None:
@@ -130,9 +130,9 @@ class AlmaClient(Gracy[AlmaEndpoint]):
         })
         client.follow_redirects = True
         client.limits = Limits(
-            max_keepalive_connections=20, max_connections=200, keepalive_expiry=120
+            max_keepalive_connections=20, max_connections=150, keepalive_expiry=120
         )
-        client.timeout = Timeout(30, connect=60, read=120, pool=120)
+        client.timeout = Timeout(30, connect=30, read=90, pool=120)
         return client
 
     users: AlmaClientUserNS
