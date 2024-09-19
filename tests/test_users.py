@@ -14,7 +14,7 @@ class TestUserLoans:
     """User loan tests."""
 
     @staticmethod
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio
     async def test_get_loans(client: AlmaClient) -> None:
         """Test whether the get_loans method works."""
         resp = await client.users.loans.get_loans("ben.olis", loan_status="Complete")
@@ -25,7 +25,7 @@ class TestUser:
     """User tests."""
 
     @staticmethod
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio
     async def test_get_user(client: AlmaClient) -> None:
         """Test whether the get_user method retrieves a user correctly."""
         resp = await client.users.get_user("ben.olis")

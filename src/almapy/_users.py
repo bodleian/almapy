@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from gracy import Gracy, GracyNamespace, graceful
 
 from almapy._endpoints import AlmaEndpoint
+from almapy._utils import RESP_TYPE
 from almapy.exceptions import (
     APIClientError,
     CannotRenewError,
@@ -14,7 +15,7 @@ from almapy.exceptions import (
 )
 
 if TYPE_CHECKING:
-    from almapy._utils import RESP_TYPE, Request
+    from almapy._utils import Request
 
 
 class AlmaClientUserLoansNS(GracyNamespace[AlmaEndpoint]):
@@ -32,7 +33,7 @@ class AlmaClientUserLoansNS(GracyNamespace[AlmaEndpoint]):
         expand: Literal["renewable"] | None = None,
         loan_status: Literal["Active", "Complete"] = "Active",
     ) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(
+        resp: RESP_TYPE = await self.get[RESP_TYPE](
             AlmaEndpoint.USER_LOANS,
             {"USER_ID": user_id},
             params={
@@ -171,7 +172,7 @@ class AlmaClientUserRequestsNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
-    @graceful(parser={HTTPStatus.NO_CONTENT: lambda r: True, "default": lambda r: False})
+    @graceful(parser={HTTPStatus.NO_CONTENT: lambda _: True, "default": lambda _: False})
     async def cancel_request(
         self,
         user_id: str,
@@ -215,7 +216,7 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
         order_by: Literal["last_name", "first_name", "primary_id"] | None = None,
         expand: bool = False,
     ) -> RESP_TYPE:
-        params = {"limit": limit, "offset": offset}
+        params: dict[str, str | int] = {"limit": limit, "offset": offset}
         if q:
             params["q"] = q
         if order_by:

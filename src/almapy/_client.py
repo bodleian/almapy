@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import timedelta
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from box import Box
 from gracy import (
@@ -19,7 +19,6 @@ from gracy import (
 from httpx import (
     URL,
     Headers,
-    Limits,
     Timeout,
     TimeoutException,
 )
@@ -43,7 +42,7 @@ logging.getLogger("httpx").setLevel(logging.CRITICAL)
 class AlmaClient(Gracy[AlmaEndpoint]):
     """An API wrapper client for Alma."""
 
-    class Config:
+    class Config(Gracy.Config):
         BASE_URL = ""  # We set it dynamically instead, based on country.
         REQUEST_TIMEOUT = 60.0
         SETTINGS = GracyConfig(
@@ -112,13 +111,18 @@ class AlmaClient(Gracy[AlmaEndpoint]):
         if location not in locations:
             msg = f'Invalid location. Must be one of {", ".join(locations.keys())}.'
             raise ValueError(msg)
+        if not apikey:
+            msg = "apikey must be provided"
+            raise ValueError(msg)
         self._location_url = URL(locations[location] + "/almaws/v1")
-        self.Config.SETTINGS.throttling.rules = [
+        cast(GracefulThrottle, self.Config.SETTINGS.throttling).rules = [
             ThrottleRule(
                 url_pattern=r".*", max_requests=rate_limit, per_time_range=timedelta(seconds=1)
             )
         ]
-        self.Config.SETTINGS.concurrent_requests.limit = concurrent_requests
+        cast(
+            ConcurrentRequestLimit, self.Config.SETTINGS.concurrent_requests
+        ).limit = concurrent_requests
         super().__init__(replay, debug, **kwargs)
 
     def _create_client(self, **kwargs: Any) -> httpx.AsyncClient:
@@ -129,9 +133,6 @@ class AlmaClient(Gracy[AlmaEndpoint]):
             "Authorization": f"apikey {self._apikey}",
         })
         client.follow_redirects = True
-        client.limits = Limits(
-            max_keepalive_connections=20, max_connections=150, keepalive_expiry=120
-        )
         client.timeout = Timeout(30, connect=30, read=90, pool=120)
         return client
 

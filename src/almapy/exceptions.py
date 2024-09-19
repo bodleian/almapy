@@ -202,6 +202,6 @@ class POUpdateFailedError(APIClientError):
     """Raised when a PO could not be updated for any reason."""
 
     def __init__(self, msg: str) -> None:
-        msg = msg.removeprefix("Failed to update the PO Line. Errors:").strip()
+        msg = msg.replace("Failed to update the PO Line. Error:", "").strip()
         super().__init__("401876", msg)
         self.message = msg

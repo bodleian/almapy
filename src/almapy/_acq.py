@@ -68,7 +68,7 @@ class AlmaClientAcqNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
-    @graceful(parser={HTTPStatus.NO_CONTENT: lambda r: True, "default": lambda r: False})
+    @graceful(parser={HTTPStatus.NO_CONTENT: lambda _: True, "default": lambda _: False})
     async def cancel_po_line(
         self,
         po_line_id: str,
@@ -87,5 +87,7 @@ class AlmaClientAcqNS(GracyNamespace[AlmaEndpoint]):
         }
         if comment:
             params["comment"] = comment
-        resp: bool = self.delete(AlmaEndpoint.PO_LINE, {"PO_LINE_ID": po_line_id}, params=params)
+        resp: bool = await self.delete[bool](
+            AlmaEndpoint.PO_LINE, {"PO_LINE_ID": po_line_id}, params=params
+        )
         return resp

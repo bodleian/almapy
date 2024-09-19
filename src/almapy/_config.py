@@ -171,7 +171,7 @@ class AlmaClientConfigJobsNS(GracyNamespace[AlmaEndpoint]):
         job_type: Literal["MANUAL", "SCHEDULED", "OTHER"] | None = None,
         profile_id: str | None = None,
     ) -> RESP_TYPE:
-        params = {"limit": limit, "offset": offset}
+        params: dict[str, str | int] = {"limit": limit, "offset": offset}
         if category:
             params["category"] = category
         if job_type:
@@ -202,7 +202,7 @@ class AlmaClientConfigJobsNS(GracyNamespace[AlmaEndpoint]):
         submit_date_to: str | None = None,
         status: str | None = None,
     ) -> RESP_TYPE:
-        params = {"limit": limit, "offset": offset}
+        params: dict[str, str | int] = {"limit": limit, "offset": offset}
         if submit_date_to:
             params["submit_date_to"] = submit_date_to
         if submit_date_from:
@@ -228,7 +228,7 @@ class AlmaClientConfigJobsNS(GracyNamespace[AlmaEndpoint]):
         limit: int = 10,
         offset: int = 0,
     ) -> RESP_TYPE:
-        params = {"limit": limit, "offset": offset}
+        params: dict[str, str | int] = {"limit": limit, "offset": offset}
         if single_or_multi == "multi":
             params["population"] = "MULTI_MATCHES"
         elif single_or_multi == "single":

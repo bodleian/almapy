@@ -4,7 +4,7 @@ import re
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Literal
 
-from gracy import Gracy, GracyNamespace, graceful, parsed_response
+from gracy import Gracy, GracyNamespace, graceful
 
 from almapy._endpoints import AlmaEndpoint
 from almapy.exceptions import APIClientError, CannotRenewError, InvalidCodeError, RequestFailedError
@@ -273,7 +273,7 @@ class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
-    @graceful(parser={HTTPStatus.NO_CONTENT: lambda r: True, "default": lambda r: False})
+    @graceful(parser={HTTPStatus.NO_CONTENT: lambda _: True, "default": lambda _: False})
     async def cancel_request(
         self,
         mms_id: str,
@@ -425,7 +425,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             raise
         return resp
 
-    @graceful(parser={HTTPStatus.NO_CONTENT: lambda r: True, "default": lambda r: False})
+    @graceful(parser={HTTPStatus.NO_CONTENT: lambda _: True, "default": lambda _: False})
     async def withdraw_item(
         self,
         mms_id: str,
@@ -435,7 +435,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         override: bool = False,
         handle_holding: Literal["retain", "delete", "suppress"] = "retain",
         handle_bib: Literal["retain", "delete", "suppress"] = "retain",
-    ):
+    ) -> bool:
         resp: bool = await self.delete(
             AlmaEndpoint.ITEM,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
@@ -495,28 +495,26 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         resp: RESP_TYPE = await self.get(AlmaEndpoint.PORTFOLIOS, {"MMS_ID": mms_id}, params=params)
         return resp
 
-    @parsed_response(str)
     @graceful(
         parser={
             "default": lambda r: r.text,
         },
     )
     async def get_holding(self, mms_id: str, holding_id: str) -> str:
-        resp: str = await self.get(
+        resp: str = await self.get[str](
             AlmaEndpoint.HOLDING,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
             headers={"Accept": "application/xml"},
         )
         return resp
 
-    @parsed_response(str)
     @graceful(
         parser={
             "default": lambda r: r.text,
         },
     )
     async def update_holding(self, mms_id: str, holding_id: str, record: str) -> str:
-        resp: str = await self.put(
+        resp: str = await self.put[str](
             AlmaEndpoint.HOLDING,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
@@ -524,14 +522,13 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
-    @parsed_response(str)
     @graceful(
         parser={
             "default": lambda r: r.text,
         },
     )
     async def create_holding(self, mms_id: str, record: str) -> str:
-        resp: str = await self.post(
+        resp: str = await self.post[str](
             AlmaEndpoint.HOLDINGS,
             {"MMS_ID": mms_id},
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
@@ -539,7 +536,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
-    @graceful(parser={HTTPStatus.NO_CONTENT: lambda r: True, "default": lambda r: False})
+    @graceful(parser={HTTPStatus.NO_CONTENT: lambda _: True, "default": lambda _: False})
     async def delete_holding(
         self,
         mms_id: str,
@@ -557,7 +554,6 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
-    @parsed_response(str)
     @graceful(parser={"default": lambda r: r.text})
     async def create_bib(
         self,
@@ -571,7 +567,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         check_match: bool = False,
         import_profile: str | None = None,
     ) -> str:
-        params = {
+        params: dict[str, str | bool] = {
             "validate": validate,
             "override_warning": override_warning,
             "check_match": check_match,
@@ -585,7 +581,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         if import_profile:
             params["import_profile"] = import_profile
 
-        resp: str = await self.post(
+        resp: str = await self.post[str](
             AlmaEndpoint.BIBS,
             {},
             content=record,
@@ -594,7 +590,6 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
-    @parsed_response(str)
     @graceful(
         parser={
             "default": lambda r: r.text,
@@ -625,7 +620,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         if expand_param_string:
             params["expand"] = expand_param_string
 
-        resp: str = await self.get(
+        resp: str = await self.get[str](
             AlmaEndpoint.BIB,
             {"MMS_ID": mms_id},
             params=params,

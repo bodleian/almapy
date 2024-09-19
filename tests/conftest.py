@@ -10,7 +10,7 @@ from almapy import AlmaClient
 MOCK = True
 
 
-@pytest.fixture()
+@pytest.fixture
 def client() -> AlmaClient:
     """Fixture to set up an AlmaClient, in either record or replay mode."""
     if MOCK:
