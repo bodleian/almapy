@@ -243,6 +243,31 @@ class AlmaClientConfigJobsNS(GracyNamespace[AlmaEndpoint]):
         return resp
 
 
+class AlmaClientConfigCodeTablesNS(GracyNamespace[AlmaEndpoint]):
+    """Namespace for code table functionality, exposed at AlmaClient.config.code_tables."""
+
+    async def get_code_tables(self) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.get(AlmaEndpoint.CODE_TABLES)
+        return resp
+
+    async def get_code_table(self, table_code: str, *, lang: str = "en") -> RESP_TYPE:
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.CODE_TABLE, {"TABLE_CODE": table_code}, params={"lang": lang}
+        )
+        return resp
+
+    async def update_code_table(
+        self, table_code: str, data: dict[str, Any], *, lang: str = "en"
+    ) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.put(
+            AlmaEndpoint.CODE_TABLE,
+            {"TABLE_CODE": table_code},
+            params={"lang": lang},
+            json=data,
+        )
+        return resp
+
+
 class AlmaClientConfigNS(GracyNamespace[AlmaEndpoint]):
     """Namespace for config/admin functionality, exposing a number of sub-namespace via attrs.
 
@@ -257,3 +282,4 @@ class AlmaClientConfigNS(GracyNamespace[AlmaEndpoint]):
         self.libraries = AlmaClientConfigLibrariesNS(parent)
         self.letters = AlmaClientConfigLettersNS(parent)
         self.jobs = AlmaClientConfigJobsNS(parent)
+        self.code_tables = AlmaClientConfigCodeTablesNS(parent)
