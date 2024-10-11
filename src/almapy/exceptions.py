@@ -205,3 +205,22 @@ class POUpdateFailedError(APIClientError):
         msg = msg.replace("Failed to update the PO Line. Error:", "").strip()
         super().__init__("401876", msg)
         self.message = msg
+
+
+class LoanNotFoundError(APIClientError):
+    """Raised when a loan could not be found."""
+
+    def __init__(self, msg: str) -> None:
+        super().__init__("401823", msg)
+        m = re.match(
+            r"Loan ID (?P<identifier>[0-9]+) does not exist\.",
+            msg,
+        )
+        if m:
+            self.loan_id = m.group("identifier")
+        else:
+            self.loan_id = ""
+        self.message = msg
+
+    def __str__(self) -> str:
+        return self.message
