@@ -110,7 +110,7 @@ class AlmaClientUserFinesNS(GracyNamespace[AlmaEndpoint]):
         resp: RESP_TYPE = await self.get(
             AlmaEndpoint.USER_FEES,
             {"USER_ID": user_id},
-            {"user_id_type": user_id_type, "status": status},
+            params={"user_id_type": user_id_type, "status": status},
         )
         return resp
 
