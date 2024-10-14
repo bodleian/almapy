@@ -210,8 +210,8 @@ class POUpdateFailedError(APIClientError):
 class LoanNotFoundError(APIClientError):
     """Raised when a loan could not be found."""
 
-    def __init__(self, msg: str) -> None:
-        super().__init__("401823", msg)
+    def __init__(self, code: str, msg: str) -> None:
+        super().__init__(code, msg)
         m = re.match(
             r"Loan ID (?P<identifier>[0-9]+) does not exist\.",
             msg,
