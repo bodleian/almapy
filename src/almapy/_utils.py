@@ -19,24 +19,7 @@ from box import Box
 from glom import Coalesce, GlomError, glom
 from gracy import GracefulValidator
 
-from almapy.exceptions import (
-    APIClientError,
-    APIServerError,
-    BarcodeNotFoundError,
-    InvalidFieldError,
-    LoanBlockedError,
-    LoanLimitError,
-    LoanNotFoundError,
-    MMSIdNotFoundError,
-    NoItemsCanFulfillRequestError,
-    ParallelLoanError,
-    ParallelRequestError,
-    POUpdateFailedError,
-    RequestFailedError,
-    ScanItemRetrievalError,
-    ThresholdError,
-    UserNotFoundError,
-)
+from almapy import exceptions
 
 if TYPE_CHECKING:
     import httpx
@@ -87,13 +70,13 @@ class AlmaErrorValidator(GracefulValidator):
 
 def _get_error_class(
     status_code: int,
-) -> type[APIServerError | APIClientError] | None:
+) -> type[exceptions.APIServerError | exceptions.APIClientError] | None:
     if status_code == HTTPStatus.TOO_MANY_REQUESTS:
-        return ThresholdError
+        return exceptions.ThresholdError
     if status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
-        return APIServerError
+        return exceptions.APIServerError
     if status_code >= HTTPStatus.BAD_REQUEST:
-        return APIClientError
+        return exceptions.APIClientError
     return None
 
 
@@ -105,7 +88,7 @@ def process_response(response: httpx.Response) -> tuple[str, str] | None:
     if ct and "xml" in ct:
         body = _parse_xml(response.text)
     elif response.headers.get("Content-Type") == "text/plain":
-        raise APIServerError(str(response.status_code), response.text)
+        raise exceptions.APIServerError(str(response.status_code), response.text)
     else:
         body = json.loads(response.text)
 
@@ -122,7 +105,7 @@ def process_response(response: httpx.Response) -> tuple[str, str] | None:
             ),
         )
     except GlomError as e:
-        raise APIServerError(str(response.status_code), "Unknown error") from e
+        raise exceptions.APIServerError(str(response.status_code), "Unknown error") from e
 
     message = code if not message else message.strip()
 
@@ -135,21 +118,24 @@ def _handle_error(response: httpx.Response) -> None:
     else:
         return
 
-    error_mapping: dict[HTTPStatus | str, type[APIServerError | APIClientError]] = {
-        "401689": BarcodeNotFoundError,
-        "401161": LoanLimitError,
-        "401201": LoanBlockedError,
-        "401873": RequestFailedError,
-        "40166404": InvalidFieldError,
-        "401163": LoanBlockedError,
-        "401198": ParallelLoanError,
-        "402504": ScanItemRetrievalError,
-        "401129": NoItemsCanFulfillRequestError,
-        "401136": ParallelRequestError,
-        "401876": POUpdateFailedError,
-        "402203": MMSIdNotFoundError,
-        "401861": UserNotFoundError,
-        "401823": LoanNotFoundError,
+    error_mapping: dict[
+        HTTPStatus | str, type[exceptions.APIServerError | exceptions.APIClientError]
+    ] = {
+        "401689": exceptions.BarcodeNotFoundError,
+        "401161": exceptions.LoanLimitError,
+        "401201": exceptions.LoanBlockedError,
+        "401873": exceptions.RequestFailedError,
+        "40166404": exceptions.InvalidFieldError,
+        "401163": exceptions.LoanBlockedError,
+        "401198": exceptions.ParallelLoanError,
+        "402504": exceptions.ScanItemRetrievalError,
+        "401129": exceptions.NoItemsCanFulfillRequestError,
+        "401136": exceptions.ParallelRequestError,
+        "401876": exceptions.POUpdateFailedError,
+        "402203": exceptions.MMSIdNotFoundError,
+        "401861": exceptions.UserNotFoundError,
+        "401823": exceptions.LoanNotFoundError,
+        "401168": exceptions.ExpiredCardError,
     }
 
     error_class = error_mapping.get(str(code)) or _get_error_class(response.status_code)
@@ -157,4 +143,4 @@ def _handle_error(response: httpx.Response) -> None:
     if error_class:
         raise error_class(code, message)
 
-    raise APIClientError(code, message)
+    raise exceptions.APIClientError(code, message)

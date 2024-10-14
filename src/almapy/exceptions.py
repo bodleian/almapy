@@ -224,3 +224,7 @@ class LoanNotFoundError(APIClientError):
 
     def __str__(self) -> str:
         return self.message
+
+
+class ExpiredCardError(APIClientError):
+    """Raised when creating a loan for a card that has expired."""
