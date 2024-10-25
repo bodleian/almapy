@@ -201,9 +201,9 @@ class NoItemsCanFulfillRequestError(APIClientError):
 class POUpdateFailedError(APIClientError):
     """Raised when a PO could not be updated for any reason."""
 
-    def __init__(self, msg: str) -> None:
+    def __init__(self, code: str, msg: str) -> None:
         msg = msg.replace("Failed to update the PO Line. Error:", "").strip()
-        super().__init__("401876", msg)
+        super().__init__(code, msg)
         self.message = msg
 
 
