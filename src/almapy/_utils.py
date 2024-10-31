@@ -136,6 +136,7 @@ def _handle_error(response: httpx.Response) -> None:
         "401861": exceptions.UserNotFoundError,
         "401823": exceptions.LoanNotFoundError,
         "401168": exceptions.ExpiredCardError,
+        "400042": exceptions.ItemAlreadyLoanedToUserError,
     }
 
     error_class = error_mapping.get(str(code)) or _get_error_class(response.status_code)

@@ -228,3 +228,7 @@ class LoanNotFoundError(APIClientError):
 
 class ExpiredCardError(APIClientError):
     """Raised when creating a loan for a card that has expired."""
+
+
+class ItemAlreadyLoanedToUserError(APIClientError):
+    """Raised when trying to create a loan for an item that is already loaned to the user."""
