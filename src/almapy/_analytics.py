@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import xmltodict
-from gracy import GracyNamespace, graceful, parsed_response
+from gracy import GracyNamespace, graceful
 
 from almapy._endpoints import AlmaEndpoint
 
@@ -15,7 +15,6 @@ def headers_to_dict(headers: list[dict[str, Any]]) -> dict[str, Any]:
 class AlmaClientAnalyticsNS(GracyNamespace[AlmaEndpoint]):
     """Namespace for analytics functionality."""
 
-    @parsed_response(str)
     @graceful(
         parser={
             "default": lambda r: r.text,
@@ -37,7 +36,7 @@ class AlmaClientAnalyticsNS(GracyNamespace[AlmaEndpoint]):
             params["filter"] = report_filter
         if token:
             params["token"] = token
-        resp: str = await self.get(
+        resp: str = await self.get[str](
             AlmaEndpoint.REPORTS,
             params=params,
             headers={"Accept": "application/xml"},
