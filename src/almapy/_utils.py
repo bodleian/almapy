@@ -56,10 +56,10 @@ class Request(TypedDict, total=False):
 def _parse_xml(text: str) -> OrderedDict[str, Any]:
     try:
         body = xmltodict.parse(text)
-    except xml.parsers.expat.ExpatError:
+    except xml.parsers.expat.ExpatError:  # type: ignore  # noqa: PGH003
         text = re.sub(r"https://(.*)&(.*)", r"\g<1>&#38;\g<2>", text)
         body = xmltodict.parse(text)
-    return cast(OrderedDict[str, Any], body)
+    return cast("OrderedDict[str, Any]", body)
 
 
 class AlmaErrorValidator(GracefulValidator):

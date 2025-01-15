@@ -23,12 +23,12 @@ from httpx import (
     TimeoutException,
 )
 
-from almapy._acq import AlmaClientAcqNS  # noqa: TCH001
-from almapy._analytics import AlmaClientAnalyticsNS  # noqa: TCH001
-from almapy._bibs import AlmaClientBibNS  # noqa: TCH001
-from almapy._config import AlmaClientConfigNS  # noqa: TCH001
+from almapy._acq import AlmaClientAcqNS  # noqa: TC001
+from almapy._analytics import AlmaClientAnalyticsNS  # noqa: TC001
+from almapy._bibs import AlmaClientBibNS  # noqa: TC001
+from almapy._config import AlmaClientConfigNS  # noqa: TC001
 from almapy._endpoints import AlmaEndpoint
-from almapy._users import AlmaClientUserNS  # noqa: TCH001
+from almapy._users import AlmaClientUserNS  # noqa: TC001
 from almapy._utils import AlmaErrorValidator
 from almapy.exceptions import APIServerError, ThresholdError
 
@@ -48,6 +48,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
         SETTINGS = GracyConfig(
             allowed_status_code={
                 HTTPStatus.BAD_REQUEST,
+                HTTPStatus.UNAUTHORIZED,
                 HTTPStatus.NOT_FOUND,
                 HTTPStatus.FOUND,
                 HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -109,19 +110,19 @@ class AlmaClient(Gracy[AlmaEndpoint]):
             "China": "https://api-cn.hosted.exlibrisgroup.com",
         }
         if location not in locations:
-            msg = f'Invalid location. Must be one of {", ".join(locations.keys())}.'
+            msg = f"Invalid location. Must be one of {', '.join(locations.keys())}."
             raise ValueError(msg)
         if not apikey:
             msg = "apikey must be provided"
             raise ValueError(msg)
         self._location_url = URL(locations[location] + "/almaws/v1")
-        cast(GracefulThrottle, self.Config.SETTINGS.throttling).rules = [
+        cast("GracefulThrottle", self.Config.SETTINGS.throttling).rules = [
             ThrottleRule(
                 url_pattern=r".*", max_requests=rate_limit, per_time_range=timedelta(seconds=1)
             )
         ]
         cast(
-            ConcurrentRequestLimit, self.Config.SETTINGS.concurrent_requests
+            "ConcurrentRequestLimit", self.Config.SETTINGS.concurrent_requests
         ).limit = concurrent_requests
         super().__init__(replay, debug, **kwargs)
 
