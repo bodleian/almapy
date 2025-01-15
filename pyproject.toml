@@ -1,6 +1,6 @@
 [project]
 name = "almapy"
-version = "5.18.0"
+version = "5.19.0"
 requires-python = ">=3.8.1, <4.0.0"
 authors = [{ name = "Ben Gable", email = "ben.gable@bodleian.ox.ac.uk" }]
 dependencies = [
@@ -35,7 +35,7 @@ dev-dependencies = [
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "5.18.0"
+version = "5.19.0"
 tag_format = "$version"
 version_files = [
     "pyproject.toml:^version"
