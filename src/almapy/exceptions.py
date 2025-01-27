@@ -232,3 +232,7 @@ class ExpiredCardError(APIClientError):
 
 class ItemAlreadyLoanedToUserError(APIClientError):
     """Raised when trying to create a loan for an item that is already loaned to the user."""
+
+
+class IllegalBarcodeError(APIClientError):
+    """Raised when trying to retrieve an item with an illegal barcode."""

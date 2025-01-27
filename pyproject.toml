@@ -5,58 +5,57 @@ requires-python = ">=3.8.1, <4.0.0"
 authors = [{ name = "Ben Gable", email = "ben.gable@bodleian.ox.ac.uk" }]
 dependencies = [
 
-    "httpx>=0.27.0",
-    "xmltodict>=0.13.0",
-    "python-box>=7.2.0",
-    "glom>=23.5.0",
-    "gracy>=1.32.1",
+  "httpx>=0.27.0",
+  "xmltodict>=0.13.0",
+  "python-box>=7.2.0",
+  "glom>=23.5.0",
+  "gracy>=1.32.1",
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.uv]
+publish-url = "https://gitlab.bodleian.ox.ac.uk/api/v4/projects/779/packages/pypi"
+
 dev-dependencies = [
-    "deptry>=0.19.1",
-    "cruft>=2.15.0",
-    "pdoc>=14.6.0",
-    "commitizen>=3.29.0",
-    "coverage>=7.6.1",
-    "mypy>=1.11.1",
-    "poethepoet>=0.27.0",
-    "pre-commit>=3.5.0",
-    "pytest>=8.3.2",
-    "pytest-asyncio>=0.23.8",
-    "pytest-clarity>=1.0.1",
-    "pytest-mock>=3.14.0",
-    "ruff>=0.6.1",
-    "safety>=2.3.5",
-    "typeguard>=4.3.0",
-    "environs>=11.0.0",
+  "commitizen>=3.29.0",
+  "coverage>=7.6.1",
+  "mypy>=1.11.1",
+  "pre-commit>=3.5.0",
+  "pytest>=8.3.2",
+  "pytest-asyncio>=0.23.8",
+  "pytest-clarity>=1.0.1",
+  "pytest-mock>=3.14.0",
+  "ruff>=0.6.1",
+  "safety>=2.3.5",
+  "typeguard>=4.3.0",
+  "environs>=11.0.0",
 ]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "5.19.0"
 tag_format = "$version"
-version_files = [
-    "pyproject.toml:^version"
-]
+version_files = ["pyproject.toml:^version"]
 
-[tool.coverage.report]  # https://coverage.readthedocs.io/en/latest/config.html#report
+[tool.coverage.report] # https://coverage.readthedocs.io/en/latest/config.html#report
 fail_under = 50
 precision = 1
 show_missing = true
 skip_covered = true
 
-[tool.coverage.run]  # https://coverage.readthedocs.io/en/latest/config.html#run
+[tool.coverage.run] # https://coverage.readthedocs.io/en/latest/config.html#run
 branch = true
 command_line = "--module pytest"
 data_file = "reports/.coverage"
 source = ["src"]
 
-[tool.coverage.xml]  # https://coverage.readthedocs.io/en/latest/config.html#xml
+[tool.coverage.xml] # https://coverage.readthedocs.io/en/latest/config.html#xml
 output = "reports/coverage.xml"
 
-[tool.mypy]  # https://mypy.readthedocs.io/en/latest/config_file.html
+[tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
 junit_xml = "reports/mypy.xml"
 strict = true
 disallow_subclassing_any = false
@@ -68,77 +67,58 @@ show_error_codes = true
 show_error_context = true
 warn_unreachable = true
 
-[tool.pytest.ini_options]  # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
+[tool.pytest.ini_options] # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
 addopts = "--import-mode=importlib --color=yes --doctest-modules --exitfirst --failed-first --strict-config --strict-markers --typeguard-packages=almapy --verbosity=2 --junitxml=../reports/pytest.xml"
 filterwarnings = ["error", "ignore::DeprecationWarning"]
 testpaths = ["src", "tests"]
 xfail_strict = true
 
-[tool.ruff]  # https://github.com/charliermarsh/ruff
+
+[tool.ruff] # https://github.com/charliermarsh/ruff
 fix = true
-preview = true
+
 line-length = 100
-src = ["src", "tests"]
-target-version = "py38"
+preview = true
+src = ["dire", "tests"]
+target-version = "py312"
+
 
 [tool.ruff.lint]
-select = ["A", "ASYNC", "B", "BLE", "C4", "C90", "D", "DTZ", "E", "EM", "ERA", "F", "FBT", "FLY", "FURB", "I", "ICN", "INP", "INT", "ISC", "LOG", "N", "NPY", "PERF", "PGH", "PIE", "PLC", "PLE", "PLR", "PLW", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "S", "SIM", "SLF", "SLOT", "T10", "T20", "TCH", "TID", "TRY", "UP", "W", "YTT"]
-ignore = ["E501", "S307", "RET504", "S101", "PLE1205", "ISC001", "D107", "D105", "PLR0913", "PLR0917"]
+select = [
+  # flake8-2020
+  "YTT",
+  # flake8-bandit
+  "S",
+  # flake8-bugbear
+  "B",
+  # flake8-builtins
+  "A",
+  # flake8-comprehensions
+  "C4",
+  # flake8-debugger
+  "T10",
+  # flake8-simplify
+  "SIM",
+  # isort
+  "I",
+  # mccabe
+  "C90",
+  # pycodestyle
+  "E",
+  "W",
+  # pyflakes
+  "F",
+  # pygrep-hooks
+  "PGH",
+  # pyupgrade
+  "UP",
+  # ruff
+  "RUF",
+  # tryceratops
+  "TRY",
+]
+
+
+ignore = ["E501", "S307", "RET504", "S101", "PERF203", "D107", "ISC001"]
+
 unfixable = ["ERA001", "F401", "F841", "T201", "T203"]
-
-[tool.ruff.lint.flake8-tidy-imports]
-ban-relative-imports = "all"
-
-[tool.ruff.lint.pycodestyle]
-max-doc-length = 100
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
-
-[tool.poe.tasks]  # https://github.com/nat-n/poethepoet
-
-[tool.poe.tasks.docs]
-help = "Generate this package's docs"
-cmd = """
-    pdoc
-      --docformat $docformat
-      --output-directory $outputdirectory
-      almapy
-    """
-
-[[tool.poe.tasks.docs.args]]
-help = "The docstring style (default: google)"
-name = "docformat"
-options = ["--docformat"]
-default = "google"
-
-[[tool.poe.tasks.docs.args]]
-help = "The output directory (default: docs)"
-name = "outputdirectory"
-options = ["--output-directory"]
-default = "docs"
-
-[tool.poe.tasks.lint]
-help = "Lint this package"
-
-[[tool.poe.tasks.lint.sequence]]
-cmd = """
-      pre-commit run
-        --all-files
-        --color always
-      """
-
-[[tool.poe.tasks.lint.sequence]]
-shell = "safety check --continue-on-error --full-report"
-
-[tool.poe.tasks.test]
-help = "Test this package"
-
-[[tool.poe.tasks.test.sequence]]
-cmd = "coverage run"
-
-[[tool.poe.tasks.test.sequence]]
-cmd = "coverage report"
-
-[[tool.poe.tasks.test.sequence]]
-cmd = "coverage xml"

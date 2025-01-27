@@ -4,11 +4,11 @@ import json
 import operator
 import re
 import xml
+from collections import OrderedDict
 from http import HTTPStatus
 from typing import (
     TYPE_CHECKING,
     Any,
-    OrderedDict,
     TypedDict,
     TypeVar,
     cast,
@@ -63,7 +63,7 @@ def _parse_xml(text: str) -> OrderedDict[str, Any]:
 
 
 class AlmaErrorValidator(GracefulValidator):
-    def check(self, response: httpx.Response) -> None:  # noqa: PLR6301
+    def check(self, response: httpx.Response) -> None:
         if response.status_code >= HTTPStatus.BAD_REQUEST:
             _handle_error(response)
 
@@ -137,6 +137,7 @@ def _handle_error(response: httpx.Response) -> None:
         "401823": exceptions.LoanNotFoundError,
         "401168": exceptions.ExpiredCardError,
         "400042": exceptions.ItemAlreadyLoanedToUserError,
+        "401690": exceptions.IllegalBarcodeError,
     }
 
     error_class = error_mapping.get(str(code)) or _get_error_class(response.status_code)
