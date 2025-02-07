@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Literal, assert_never
+from typing import TYPE_CHECKING, Any, Literal
 
 from gracy import Gracy, GracyNamespace, graceful
+from typing_extensions import assert_never
 
 from almapy._endpoints import AlmaEndpoint
 

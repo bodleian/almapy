@@ -10,6 +10,7 @@ dependencies = [
   "python-box>=7.2.0",
   "glom>=23.5.0",
   "gracy>=1.32.1",
+  "typing-extensions (>=4.12.2,<5.0.0)",
 ]
 
 [build-system]
@@ -19,7 +20,8 @@ build-backend = "hatchling.build"
 [tool.uv]
 publish-url = "https://gitlab.bodleian.ox.ac.uk/api/v4/projects/779/packages/pypi"
 
-dev-dependencies = [
+[dependencies-groups]
+dev = [
   "commitizen>=3.29.0",
   "coverage>=7.6.1",
   "mypy>=1.11.1",
@@ -80,7 +82,7 @@ fix = true
 line-length = 100
 preview = true
 src = ["dire", "tests"]
-target-version = "py312"
+target-version = "py38"
 
 
 [tool.ruff.lint]
