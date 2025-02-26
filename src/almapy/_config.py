@@ -52,19 +52,27 @@ class AlmaClientConfigSetsNS(GracyNamespace[AlmaEndpoint]):
         nz_set_from_iz_set: str | None = None,
         indication_rule: str | None = None,
     ) -> RESP_TYPE:
+        params = {}
+        if population:
+            params["population"] = population
+        if job_instance_id:
+            params["job_instance_id"] = job_instance_id
+        if from_logical_set:
+            params["from_logical_set"] = from_logical_set
+        if combine:
+            params["combine"] = combine
+        if set1:
+            params["set1"] = set1
+        if set2:
+            params["set2"] = set2
+        if nz_set_from_iz_set:
+            params["nz_set_from_iz_set"] = nz_set_from_iz_set
+        if indication_rule:
+            params["indication_rule"] = indication_rule
         resp: RESP_TYPE = await self.post(
             AlmaEndpoint.SETS,
             json=data,
-            params={
-                "population": population,
-                "job_instance_id": job_instance_id,
-                "from_logical_set": from_logical_set,
-                "combine": combine,
-                "set1": set1,
-                "set2": set2,
-                "nz_set_from_iz_set": nz_set_from_iz_set,
-                "indication_rule": indication_rule,
-            },
+            params=params,
         )
         return resp
 
@@ -96,18 +104,21 @@ class AlmaClientConfigSetsNS(GracyNamespace[AlmaEndpoint]):
         set_id: str,
         member_id_list: list[str],
         *,
-        id_type: str,
+        id_type: str | None = None,
         op: Literal["add_members", "delete_members", "replace_members"],
         fail_on_invalid: bool = True,
     ) -> RESP_TYPE:
         params = {
-            "id_type": id_type,
             "op": op,
             "fail_on_invalid": fail_on_invalid,
         }
+        if id_type:
+            params["id_type"] = id_type
         body = await self.get_set(set_id)
         body["members"] = {"member": [{"id": member_id} for member_id in member_id_list]}
-        resp: RESP_TYPE = await self.post(AlmaEndpoint.SET, {"SET_ID": set_id}, body, params=params)
+        resp: RESP_TYPE = await self.post(
+            AlmaEndpoint.SET, {"SET_ID": set_id}, json=body, params=params
+        )
         return resp
 
 
