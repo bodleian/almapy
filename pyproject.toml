@@ -1,6 +1,6 @@
 [project]
 name = "almapy"
-version = "5.20.1"
+version = "5.21.0"
 requires-python = ">=3.8.1, <4.0.0"
 authors = [{ name = "Ben Gable", email = "ben.gable@bodleian.ox.ac.uk" }]
 dependencies = [
@@ -20,7 +20,7 @@ build-backend = "hatchling.build"
 [tool.uv]
 publish-url = "https://gitlab.bodleian.ox.ac.uk/api/v4/projects/779/packages/pypi"
 
-[dependencies-groups]
+[dependency-groups]
 dev = [
   "commitizen>=3.29.0",
   "coverage>=7.6.1",
@@ -38,7 +38,7 @@ dev = [
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "5.20.1"
+version = "5.21.0"
 tag_format = "$version"
 version_files = ["pyproject.toml:^version"]
 

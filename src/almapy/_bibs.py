@@ -554,6 +554,10 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
+    async def get_holdings(self, mms_id: str) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.get(AlmaEndpoint.HOLDINGS, {"MMS_ID": mms_id})
+        return resp
+
     @graceful(parser={"default": lambda r: r.text})
     async def create_bib(
         self,
