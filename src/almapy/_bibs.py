@@ -632,6 +632,62 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
+    @graceful(parser={"default": lambda r: r.text})
+    async def update_bib(
+        self,
+        mms_id: str,
+        record: str,
+        *,
+        normalization: str | None = None,
+        validate: bool = False,
+        override_warning: bool = True,
+        override_lock: bool = True,
+        stale_version_check: bool = False,
+        cataloguer_level: str | None = None,
+        check_match: bool = False,
+    ) -> str:
+        params: dict[str, str | bool] = {
+            "validate": validate,
+            "override_warning": override_warning,
+            "check_match": check_match,
+        }
+        if normalization:
+            params["normalization"] = normalization
+        if override_lock:
+            params["override_lock"] = override_lock
+        if stale_version_check:
+            params["stale_version_check"] = stale_version_check
+        if cataloguer_level:
+            params["cataloguer_level"] = cataloguer_level
+
+        resp: str = await self.put[str](
+            AlmaEndpoint.BIBS,
+            {"MMS_ID": mms_id},
+            content=record,
+            params=params,
+            headers={"Accept": "application/xml", "Content-Type": "application/xml"},
+        )
+        return resp
+
+    @graceful(parser={HTTPStatus.NO_CONTENT: lambda _: True, "default": lambda _: False})
+    async def delete_bib(
+        self,
+        mms_id: str,
+        *,
+        override: bool = True,
+        cataloguer_level: str | None = None,
+    ) -> bool:
+        params: dict[str, str | bool] = {"override": override}
+        if cataloguer_level:
+            params["cataloguer_level"] = cataloguer_level
+
+        resp: bool = await self.delete(
+            AlmaEndpoint.BIBS,
+            {"MMS_ID": mms_id},
+            params=params,
+        )
+        return resp
+
     async def scan_in(
         self,
         mms_id: str,
