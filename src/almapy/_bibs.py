@@ -661,7 +661,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             params["cataloguer_level"] = cataloguer_level
 
         resp: str = await self.put[str](
-            AlmaEndpoint.BIBS,
+            AlmaEndpoint.BIB,
             {"MMS_ID": mms_id},
             content=record,
             params=params,
@@ -682,7 +682,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             params["cataloguer_level"] = cataloguer_level
 
         resp: bool = await self.delete(
-            AlmaEndpoint.BIBS,
+            AlmaEndpoint.BIB,
             {"MMS_ID": mms_id},
             params=params,
         )
