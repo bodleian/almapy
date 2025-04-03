@@ -253,6 +253,37 @@ class AlmaClientConfigJobsNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
+    async def get_integration_profiles(
+        self,
+        profile_type: str | None = None,
+        query: str | None = None,
+        limit: int = 10,
+        offset: int = 0,
+    ) -> RESP_TYPE:
+        params: dict[str, str | int] = {"limit": limit, "offset": offset}
+        if profile_type:
+            params["type"] = profile_type
+        if query:
+            params["query"] = query
+        resp: RESP_TYPE = await self.get(AlmaEndpoint.INTEGRATION_PROFILES, params=params)
+        return resp
+
+    async def get_integration_profile(self, profile_id: str) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.INTEGRATION_PROFILE, {"PROFILE_ID": profile_id}
+        )
+        return resp
+
+    async def update_integration_profile(self, profile_id: str, data: dict[str, Any]) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.put(
+            AlmaEndpoint.INTEGRATION_PROFILE, {"PROFILE_ID": profile_id}, json=data
+        )
+        return resp
+
+    async def create_integration_profile(self, data: dict[str, Any]) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.post(AlmaEndpoint.INTEGRATION_PROFILES, json=data)
+        return resp
+
 
 class AlmaClientConfigCodeTablesNS(GracyNamespace[AlmaEndpoint]):
     """Namespace for code table functionality, exposed at AlmaClient.config.code_tables."""

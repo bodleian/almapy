@@ -501,7 +501,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         },
     )
     async def get_holding(self, mms_id: str, holding_id: str) -> str:
-        resp: str = await self.get[str](
+        resp: str = await self.get(
             AlmaEndpoint.HOLDING,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
             headers={"Accept": "application/xml"},
@@ -514,7 +514,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         },
     )
     async def update_holding(self, mms_id: str, holding_id: str, record: str) -> str:
-        resp: str = await self.put[str](
+        resp: str = await self.put(
             AlmaEndpoint.HOLDING,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
@@ -528,7 +528,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         },
     )
     async def create_holding(self, mms_id: str, record: str) -> str:
-        resp: str = await self.post[str](
+        resp: str = await self.post(
             AlmaEndpoint.HOLDINGS,
             {"MMS_ID": mms_id},
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
@@ -585,7 +585,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         if import_profile:
             params["import_profile"] = import_profile
 
-        resp: str = await self.post[str](
+        resp: str = await self.post(
             AlmaEndpoint.BIBS,
             {},
             content=record,

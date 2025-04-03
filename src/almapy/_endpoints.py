@@ -48,5 +48,7 @@ class AlmaEndpoint(BaseEndpoint):
     JOB_INSTANCE_MATCHES = "/conf/jobs/{JOB_ID}/instances/{INSTANCE_ID}/matches"
     CODE_TABLES = "/conf/code-tables"
     CODE_TABLE = "/conf/code-tables/{TABLE_CODE}"
+    INTEGRATION_PROFILES = "/conf/integration-profiles"
+    INTEGRATION_PROFILE = "/conf/integration-profiles/{PROFILE_ID}"
 
     REPORTS = "/analytics/reports"
