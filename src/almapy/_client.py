@@ -16,6 +16,7 @@ from gracy import (
     LogLevel,
     ThrottleRule,
 )
+from gracy.exceptions import GracyParseFailed
 from httpx import (
     URL,
     Headers,
@@ -65,11 +66,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                 delay=3,
                 max_attempts=3,
                 delay_modifier=4,
-                retry_on={
-                    APIServerError,
-                    ThresholdError,
-                    TimeoutException,
-                },
+                retry_on={APIServerError, ThresholdError, TimeoutException, GracyParseFailed},
                 log_before=LogEvent(LogLevel.WARNING),
                 log_after=None,
                 log_exhausted=LogEvent(LogLevel.ERROR),
