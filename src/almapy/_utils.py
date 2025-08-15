@@ -10,7 +10,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     TypedDict,
-    TypeVar,
     cast,
 )
 
@@ -25,7 +24,6 @@ if TYPE_CHECKING:
     import httpx
 
 RESP_TYPE = Box
-RESP_T = TypeVar("RESP_T")
 
 
 class Request(TypedDict, total=False):
@@ -138,6 +136,7 @@ def _handle_error(response: httpx.Response) -> None:
         "401168": exceptions.ExpiredCardError,
         "400042": exceptions.ItemAlreadyLoanedToUserError,
         "401690": exceptions.IllegalBarcodeError,
+        "401153": exceptions.CannotBeLoanedError,
     }
 
     error_class = error_mapping.get(str(code)) or _get_error_class(response.status_code)

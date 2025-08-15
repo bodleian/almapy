@@ -236,3 +236,7 @@ class ItemAlreadyLoanedToUserError(APIClientError):
 
 class IllegalBarcodeError(APIClientError):
     """Raised when trying to retrieve an item with an illegal barcode."""
+
+
+class CannotBeLoanedError(APIClientError):
+    """Raised when an item cannot be loaned from the circulation desk."""
