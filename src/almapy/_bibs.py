@@ -324,6 +324,21 @@ class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
+    async def update_request(
+        self, mms_id: str, holding_id: str, item_id: str, request_id: str, request: Request
+    ) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.put(
+            AlmaEndpoint.ITEM_REQUEST,
+            {
+                "MMS_ID": mms_id,
+                "HOLDING_ID": holding_id,
+                "ITEM_PID": item_id,
+                "REQUEST_ID": request_id,
+            },
+            json=request,
+        )
+        return resp
+
 
 class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
     """Namespace for user functionality, exposing a number of sub-namespace via attrs.
