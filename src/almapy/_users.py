@@ -257,7 +257,7 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
     """Namespace for user functionality, exposing a number of sub-namespace via attrs.
 
     - loans
-    - fines
+    - fees
     - requests
     """
 
