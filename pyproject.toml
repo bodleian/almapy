@@ -4,7 +4,6 @@ version = "5.26.0"
 requires-python = ">=3.8.1, <4.0.0"
 authors = [{ name = "Ben Gable", email = "ben.gable@bodleian.ox.ac.uk" }]
 dependencies = [
-
   "httpx>=0.27.0",
   "xmltodict>=0.13.0",
   "python-box>=7.2.0",
@@ -38,9 +37,8 @@ dev = [
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "5.26.0"
+version_provider = "pep621"
 tag_format = "$version"
-version_files = ["pyproject.toml:^version"]
 
 [tool.coverage.report] # https://coverage.readthedocs.io/en/latest/config.html#report
 fail_under = 50

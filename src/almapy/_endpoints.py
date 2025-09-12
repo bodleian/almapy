@@ -9,6 +9,8 @@ class AlmaEndpoint(BaseEndpoint):
     USER_LOANS = "/users/{USER_ID}/loans"
     USER_LOAN = "/users/{USER_ID}/loans/{LOAN_ID}"
     USER_FEES = "/users/{USER_ID}/fees"
+    USER_FEES_ALL = "/users/{USER_ID}/fees/all"
+    USER_FEE = "/users/{USER_ID}/fees/{FEE_ID}"
     USER_REQUESTS = "/users/{USER_ID}/requests"
     USER_REQUEST = "/users/{USER_ID}/requests/{REQUEST_ID}"
     USER_ATTACHMENTS = "/users/{USER_ID}/attachments"

@@ -114,6 +114,66 @@ class AlmaClientUserFinesNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
+    get_fees = get_fines
+
+    async def create_fee(self, user_id: str, fine: dict[str, Any]) -> RESP_TYPE:
+        resp: RESP_TYPE = await self.post(AlmaEndpoint.USER_FEES, {"USER_ID": user_id}, json=fine)
+        return resp
+
+    async def pay_fees(
+        self,
+        user_id: str,
+        *,
+        user_id_type: str = "all_unique",
+        amount: str,
+        method: Literal["CREDIT_CARD", "ONLINE", "CASH"],
+        comment: str | None = None,
+        external_transaction_id: str | None = None,
+    ) -> RESP_TYPE:
+        params = {"op": "pay", "user_id_type": user_id_type, "amount": amount, "method": method}
+        if comment:
+            params["comment"] = comment
+        if external_transaction_id:
+            params["external_transaction_id"] = external_transaction_id
+        resp: RESP_TYPE = await self.post(
+            AlmaEndpoint.USER_FEES_ALL, {"USER_ID": user_id}, params=params
+        )
+        return resp
+
+    async def get_fee(self, fee_id: str, *, user_id_type: str = "all_unique") -> RESP_TYPE:
+        resp: RESP_TYPE = await self.get(
+            AlmaEndpoint.USER_FEE,
+            {"USER_ID": fee_id, "FEE_ID": fee_id},
+            params={"user_id_type": user_id_type},
+        )
+        return resp
+
+    async def update_fee(
+        self,
+        user_id: str,
+        fee_id: str,
+        *,
+        op: Literal["pay", "waive", "dispute", "restore"],
+        user_id_type: str = "all_unique",
+        amount: str,
+        method: Literal["CREDIT_CARD", "ONLINE", "CASH"],
+        reason: str | None = None,
+        comment: str | None = None,
+        external_transaction_id: str | None = None,
+    ) -> RESP_TYPE:
+        params = {"op": op, "user_id_type": user_id_type, "amount": amount, "method": method}
+        if reason:
+            params["reason"] = reason
+        if comment:
+            params["comment"] = comment
+        if external_transaction_id:
+            params["external_transaction_id"] = external_transaction_id
+        resp: RESP_TYPE = await self.put(
+            AlmaEndpoint.USER_FEE,
+            {"USER_ID": user_id, "FEE_ID": fee_id},
+        )
+        return resp
+
 
 class AlmaClientUserRequestsNS(GracyNamespace[AlmaEndpoint]):
     """Namespace for user requests, exposed at AlmaClient.user.requests."""
