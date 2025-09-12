@@ -265,6 +265,7 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
         super().__init__(parent, **kwargs)
         self.loans = AlmaClientUserLoansNS(parent)
         self.fines = AlmaClientUserFinesNS(parent)
+        self.fees = self.fines
         self.requests = AlmaClientUserRequestsNS(parent)
 
     async def get_users(
