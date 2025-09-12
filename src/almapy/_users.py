@@ -140,10 +140,12 @@ class AlmaClientUserFinesNS(GracyNamespace[AlmaEndpoint]):
         )
         return resp
 
-    async def get_fee(self, fee_id: str, *, user_id_type: str = "all_unique") -> RESP_TYPE:
+    async def get_fee(
+        self, user_id: str, fee_id: str, *, user_id_type: str = "all_unique"
+    ) -> RESP_TYPE:
         resp: RESP_TYPE = await self.get(
             AlmaEndpoint.USER_FEE,
-            {"USER_ID": fee_id, "FEE_ID": fee_id},
+            {"USER_ID": user_id, "FEE_ID": fee_id},
             params={"user_id_type": user_id_type},
         )
         return resp
