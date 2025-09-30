@@ -158,7 +158,7 @@ class AlmaClientUserFinesNS(GracyNamespace[AlmaEndpoint]):
         op: Literal["pay", "waive", "dispute", "restore"],
         user_id_type: str = "all_unique",
         amount: str,
-        method: Literal["CREDIT_CARD", "ONLINE", "CASH"],
+        method: Literal["CREDIT_CARD", "ONLINE", "CASH"] | None = None,
         reason: str | None = None,
         comment: str | None = None,
         external_transaction_id: str | None = None,
@@ -170,9 +170,11 @@ class AlmaClientUserFinesNS(GracyNamespace[AlmaEndpoint]):
             params["comment"] = comment
         if external_transaction_id:
             params["external_transaction_id"] = external_transaction_id
-        resp: RESP_TYPE = await self.put(
+        resp: RESP_TYPE = await self.post(
             AlmaEndpoint.USER_FEE,
             {"USER_ID": user_id, "FEE_ID": fee_id},
+            params=params,
+            json={},
         )
         return resp
 
