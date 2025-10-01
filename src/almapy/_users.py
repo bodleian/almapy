@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Literal
@@ -213,22 +211,24 @@ class AlmaClientUserRequestsNS(GracyNamespace[AlmaEndpoint]):
         user_id_type: str = "all_unique",
         *,
         allow_same_request: bool = False,
-        mms_id: str,
-        item_id: str,
+        mms_id: str = "",
+        item_id: str = "",
     ) -> RESP_TYPE:
-        if (mms_id and item_id) or (not mms_id and not item_id):
+        if bool(mms_id) == bool(item_id):
             msg = "must provide exactly one of mms_id or item_id"
             raise ValueError(msg)
-        params = {"user_id_type": user_id_type, "allow_same_request": allow_same_request}
-        if mms_id:
-            params["mms_id"] = mms_id
-        if item_id:
-            params["item_id"] = item_id
 
-        resp: RESP_TYPE = await self.post(
+        params: dict[str, Any] = (
+            {
+                "user_id_type": user_id_type,
+                "allow_same_request": allow_same_request,
+            }
+            | ({"mms_id": mms_id} if mms_id else {"item_id": item_id}),
+        )
+
+        return await self.post(
             AlmaEndpoint.USER_REQUESTS, {"USER_ID": user_id}, params=params, json=request
         )
-        return resp
 
     async def update_request(self, user_id: str, request_id: str, request: Request) -> RESP_TYPE:
         resp: RESP_TYPE = await self.put(
@@ -258,7 +258,7 @@ class AlmaClientUserRequestsNS(GracyNamespace[AlmaEndpoint]):
 
 
 class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
-    """Namespace for user functionality, exposing a number of sub-namespace via attrs.
+    """Namespace for user functionality, exposing a number of sub-namespaces via attrs.
 
     - loans
     - fees
@@ -333,7 +333,7 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
         """Create a new user.
 
         Args:
-            user (Dict[str, Any]): The user object to be create.
+            user (Dict[str, Any]): The user object to be created.
 
         Returns:
             Dict[str, Any]: The user dict
