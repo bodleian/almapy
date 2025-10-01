@@ -1,6 +1,6 @@
 [project]
 name = "almapy"
-version = "5.27.5"
+version = "5.27.6"
 requires-python = ">=3.11.0, <4.0.0"
 authors = [{ name = "Ben Gable", email = "ben.gable@bodleian.ox.ac.uk" }]
 dependencies = [

@@ -4,7 +4,7 @@ requires-python = ">=3.11.0, <4.0.0"
 
 [[package]]
 name = "almapy"
-version = "5.27.5"
+version = "5.27.6"
 source = { editable = "." }
 dependencies = [
     { name = "glom" },
