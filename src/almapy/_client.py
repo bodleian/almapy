@@ -32,7 +32,9 @@ if TYPE_CHECKING:
     import httpx
     from gracy import GracyReplay
 
-logging.getLogger("httpx").setLevel(logging.CRITICAL)
+logging.getLogger("httpx").propagate = False
+logging.getLogger("httpcore").propagate = False
+logging.getLogger("gracy").propagate = False
 
 
 class AlmaClient(Gracy[AlmaEndpoint]):
@@ -42,6 +44,7 @@ class AlmaClient(Gracy[AlmaEndpoint]):
         BASE_URL = ""  # We set it dynamically instead, based on country.
         REQUEST_TIMEOUT = 60.0
         SETTINGS = GracyConfig(
+            # We need to allow these to retry and do our own exception handling.
             allowed_status_code={
                 HTTPStatus.BAD_REQUEST,
                 HTTPStatus.UNAUTHORIZED,
@@ -68,9 +71,15 @@ class AlmaClient(Gracy[AlmaEndpoint]):
                     GracyParseFailed,
                     ReadError,
                 },
-                log_before=LogEvent(LogLevel.WARNING),
+                log_before=LogEvent(
+                    LogLevel.WARNING,
+                    custom_message="{ENDPOINT} will wait {RETRY_DELAY}s before next attempt due to {RETRY_CAUSE} ({CUR_ATTEMPT} out of {MAX_ATTEMPT})",
+                ),
                 log_after=None,
-                log_exhausted=LogEvent(LogLevel.ERROR),
+                log_exhausted=LogEvent(
+                    LogLevel.ERROR,
+                    custom_message="{ENDPOINT} exhausted the maximum attempts of {MAX_ATTEMPT} due to {RETRY_CAUSE}",
+                ),
                 behavior="break",
             ),
             throttling=GracefulThrottle(
