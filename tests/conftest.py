@@ -1,10 +1,11 @@
 """Fixtures."""
 
 import pytest
-from almapy import AlmaClient
 from environs import Env
 from gracy import GracyReplay
 from gracy.replays.storages.sqlite import SQLiteReplayStorage
+
+from almapy import AlmaClient
 
 MOCK = True
 

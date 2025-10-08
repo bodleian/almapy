@@ -2,15 +2,13 @@ from __future__ import annotations
 
 import re
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 from gracy import Gracy, GracyNamespace, graceful
 
 from almapy._endpoints import AlmaEndpoint
+from almapy._utils import RESP_TYPE, Request
 from almapy.exceptions import APIClientError, CannotRenewError, InvalidCodeError, RequestFailedError
-
-if TYPE_CHECKING:
-    from almapy._utils import RESP_TYPE, Request
 
 
 class AlmaClientBibLoansNS(GracyNamespace[AlmaEndpoint]):

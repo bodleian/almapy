@@ -1,16 +1,13 @@
 from __future__ import annotations
 
+from datetime import date
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 from gracy import Gracy, GracyNamespace, graceful
 
 from almapy._endpoints import AlmaEndpoint
-
-if TYPE_CHECKING:
-    from datetime import date
-
-    from almapy._utils import RESP_TYPE
+from almapy._utils import RESP_TYPE
 
 
 class AlmaClientAcqNS(GracyNamespace[AlmaEndpoint]):

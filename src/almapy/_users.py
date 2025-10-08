@@ -1,19 +1,16 @@
 import base64
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 from gracy import Gracy, GracyNamespace, graceful
 
 from almapy._endpoints import AlmaEndpoint
-from almapy._utils import RESP_TYPE
+from almapy._utils import RESP_TYPE, Request
 from almapy.exceptions import (
     APIClientError,
     CannotRenewError,
     UserMissingFieldError,
 )
-
-if TYPE_CHECKING:
-    from almapy._utils import Request
 
 
 class AlmaClientUserLoansNS(GracyNamespace[AlmaEndpoint]):
