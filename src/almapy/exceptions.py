@@ -240,3 +240,7 @@ class IllegalBarcodeError(APIClientError):
 
 class CannotBeLoanedError(APIClientError):
     """Raised when an item cannot be loaned from the circulation desk."""
+
+
+class UserIsNotAPatronError(APIClientError):
+    """Raised when a user cannot borrow because they either don't have a patron role or it has expired."""

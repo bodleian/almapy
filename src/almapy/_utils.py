@@ -137,6 +137,7 @@ def _handle_error(response: httpx.Response) -> None:
         "400042": exceptions.ItemAlreadyLoanedToUserError,
         "401690": exceptions.IllegalBarcodeError,
         "401153": exceptions.CannotBeLoanedError,
+        "401151": exceptions.UserIsNotAPatronError,
     }
 
     error_class = error_mapping.get(str(code)) or _get_error_class(response.status_code)
