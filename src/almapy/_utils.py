@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import operator
 import re
@@ -7,21 +5,17 @@ import xml
 from collections import OrderedDict
 from http import HTTPStatus
 from typing import (
-    TYPE_CHECKING,
     Any,
     TypedDict,
     cast,
 )
 
+import httpx
 import xmltodict
 from box import Box
 from glom import Coalesce, GlomError, glom
-from gracy import GracefulValidator
 
 from almapy import exceptions
-
-if TYPE_CHECKING:
-    import httpx
 
 RESP_TYPE = Box
 
@@ -51,7 +45,7 @@ class Request(TypedDict, total=False):
     copyrights_declaration_signed_by_patron: bool
 
 
-def _parse_xml(text: str) -> OrderedDict[str, Any]:
+def _parse_xml(text: str) -> "OrderedDict[str, Any]":
     try:
         body = xmltodict.parse(text)
     except xml.parsers.expat.ExpatError:  # type: ignore  # noqa: PGH003
@@ -60,15 +54,35 @@ def _parse_xml(text: str) -> OrderedDict[str, Any]:
     return cast("OrderedDict[str, Any]", body)
 
 
-class AlmaErrorValidator(GracefulValidator):
+def _validate_response(response: httpx.Response) -> None:
+    """Raise an appropriate exception if the response indicates an error."""
+    if response.status_code >= HTTPStatus.BAD_REQUEST:
+        _handle_error(response)
+
+
+class AlmaErrorValidator:
+    """Compatibility shim — removed when _client.py is rewritten in task 5."""
+
     def check(self, response: httpx.Response) -> None:
-        if response.status_code >= HTTPStatus.BAD_REQUEST:
-            _handle_error(response)
+        _validate_response(response)
+
+
+_RETRYABLE = (
+    exceptions.APIServerError,  # covers ThresholdError (429) and all 5xx
+    httpx.ConnectError,
+    httpx.TimeoutException,  # base for ReadTimeout, WriteTimeout, ConnectTimeout, PoolTimeout
+    httpx.RemoteProtocolError,
+)
+
+
+def _should_retry(exc: BaseException) -> bool:
+    """Return True if the exception is one that stamina should retry."""
+    return isinstance(exc, _RETRYABLE)
 
 
 def _get_error_class(
     status_code: int,
-) -> type[exceptions.APIServerError | exceptions.APIClientError] | None:
+) -> "type[exceptions.APIServerError | exceptions.APIClientError] | None":
     if status_code == HTTPStatus.TOO_MANY_REQUESTS:
         return exceptions.ThresholdError
     if status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
@@ -78,7 +92,7 @@ def _get_error_class(
     return None
 
 
-def process_response(response: httpx.Response) -> tuple[str, str] | None:
+def process_response(response: httpx.Response) -> "tuple[str, str] | None":
     if response.status_code == HTTPStatus.OK:
         return None
 
