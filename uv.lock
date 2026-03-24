@@ -8,7 +8,6 @@ version = "5.28.0"
 source = { editable = "." }
 dependencies = [
     { name = "glom" },
-    { name = "gracy" },
     { name = "httpx" },
     { name = "python-box" },
     { name = "stamina" },
@@ -35,7 +34,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "glom", specifier = ">=23.5.0" },
-    { name = "gracy", specifier = ">=1.32.1" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "python-box", specifier = ">=7.2.0" },
     { name = "stamina", specifier = ">=25.2.0" },
@@ -543,19 +541,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/05/89/b57cfbc448189426f2e01b244fbe9226b059ef5423a9d49c1d335a1f1026/glom-24.11.0.tar.gz", hash = "sha256:4325f96759a912044af7b6c6bd0dba44ad8c1eb6038aab057329661d2021bb27", size = 195120, upload-time = "2024-11-02T23:17:50.405Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9c/a2/75fd80784ec33da8d39cf885e8811a4fbc045a90db5e336b8e345e66dbb2/glom-24.11.0-py3-none-any.whl", hash = "sha256:991db7fcb4bfa9687010aa519b7b541bbe21111e70e58fdd2d7e34bbaa2c1fbd", size = 102690, upload-time = "2024-11-02T23:17:46.468Z" },
-]
-
-[[package]]
-name = "gracy"
-version = "1.34.0"
-source = { registry = "https://gitlab.bodleian.ox.ac.uk/api/v4/groups/bdlss-ils/-/packages/pypi/simple" }
-dependencies = [
-    { name = "httpx" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/90/5d/07d890968a6692bb47cbeae171329932a6cac41891ffe17bef359585d3be/gracy-1.34.0.tar.gz", hash = "sha256:b22668f295c4e33040579cadfd1509bdfd4657d9db51bee92859aba21a6ddfc7", size = 48591, upload-time = "2024-11-27T14:57:36.693Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f4/fe/4828245695c8d10f74e025da35facdaedfe7bb5788cefb0b89bf1ecc1db8/gracy-1.34.0-py3-none-any.whl", hash = "sha256:a0a736b51237cd9ae395c22e3e6afc87ad407b6c329022763972f68942774cad", size = 46279, upload-time = "2024-11-27T14:57:34.599Z" },
 ]
 
 [[package]]
