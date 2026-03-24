@@ -53,5 +53,5 @@ class TestBuild:
 
     def test_str_enum_value(self) -> None:
         """AlmaEndpoint should be usable as a plain string."""
-        assert AlmaEndpoint.USERS == "/users"
+        assert AlmaEndpoint.USERS.value == "/users"
         assert isinstance(AlmaEndpoint.USERS, str)

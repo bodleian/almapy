@@ -1,4 +1,4 @@
-set shell := ["powershell.exe", "-c"]
+set shell := ["bash", "-c"]
 
 default: lint test
 

@@ -10,11 +10,8 @@ from almapy._utils import _should_retry, _validate_response
 def _error_body(code: str, message: str) -> str:
     """Return a JSON error body matching the errorList.error.0 glom path."""
     import json
-    return json.dumps({
-        "errorList": {
-            "error": [{"errorCode": code, "errorMessage": message}]
-        }
-    })
+
+    return json.dumps({"errorList": {"error": [{"errorCode": code, "errorMessage": message}]}})
 
 
 def _make_response(

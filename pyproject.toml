@@ -8,7 +8,6 @@ dependencies = [
   "xmltodict>=0.13.0",
   "python-box>=7.2.0",
   "glom>=23.5.0",
-  "typing-extensions (>=4.12.2,<5.0.0)",
   "stamina>=25.2.0",
 ]
 
@@ -33,6 +32,7 @@ dev = [
   "safety>=3.6.2",
   "typeguard>=4.3.0",
   "environs>=11.0.0",
+  "deptry>=0.25.1",
 ]
 
 [tool.commitizen]
@@ -122,3 +122,6 @@ select = [
 ignore = ["E501", "S307", "RET504", "S101", "PERF203", "D107", "ISC001"]
 
 unfixable = ["ERA001", "F401", "F841", "T201", "T203"]
+
+[tool.deptry]
+known_first_party = ["almapy"]
