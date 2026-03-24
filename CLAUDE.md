@@ -34,7 +34,7 @@ Tests use `--exitfirst` and re-run failures first. Coverage minimum is 50%.
 
 ### Namespace Pattern
 
-`AlmaClient` extends `Gracy[AlmaEndpoint]` and exposes functional namespaces as properties:
+`AlmaClient` is a plain async class (no framework dependency) composed of `httpx.AsyncClient`, `TokenBucket` (rate limiting), `AdaptiveController` (AIMD backpressure), and `asyncio.Semaphore` (concurrency cap). It exposes functional namespaces as properties:
 
 ```
 client.users.loans.get(...)
@@ -46,11 +46,11 @@ client.acq.get_po_line(...)
 client.analytics.get_full_report(...)
 ```
 
-Each namespace class (e.g. `AlmaClientUserLoansNS`) inherits from `GracyNamespace` and wraps HTTP calls with domain logic.
+Each namespace class (e.g. `AlmaClientUserLoansNS`) inherits from `BaseNamespace` (`_base.py`) and wraps HTTP calls with domain logic.
 
 ### Error Handling
 
-`AlmaErrorValidator` intercepts all HTTP responses. `_handle_error()` in `_utils.py` maps Alma's numeric error codes (extracted via regex from response bodies) to ~50 specific exception types in `exceptions.py`.
+`_validate_response()` is called inside `AlmaClient._execute()` on every response. It delegates to `_handle_error()` in `_utils.py`, which maps Alma's numeric error codes (parsed via `glom` from JSON/XML bodies) to ~50 specific exception types in `exceptions.py`.
 
 Exception hierarchy:
 - `APIClientError` (4xx) → specific errors like `BarcodeNotFoundError`, `UserNotFoundError`, `LoanLimitError`
@@ -60,7 +60,7 @@ Exception hierarchy:
 ### Retry & Rate Limiting
 
 Configured in `_client.py`:
-- **Retry**: 3 attempts, exponential backoff (`delay_modifier=4`), retries on server errors, rate limits, timeouts
+- **Retry**: `stamina` handles retries; 3 attempts, exponential backoff (`backoff_factor=0.5`), retries on server errors, rate limits, timeouts
 - **Throttle**: 25 req/sec (configurable via `rate_limit` param)
 - **Concurrency**: 150 concurrent requests max
 
@@ -74,13 +74,15 @@ All API paths are defined in `_endpoints.py` as an enum (`AlmaEndpoint`). URL pa
 
 ### Testing
 
-Tests use Gracy's replay mode with SQLite storage (`.gracy/alma.sqlite3`) — HTTP responses are recorded once and replayed in subsequent runs. The `client` fixture in `conftest.py` configures this automatically. A `.env` file with `API_KEY` is required to record new interactions.
+Tests are pure unit tests — no recording/replay. The `client` fixture in `conftest.py` creates a plain `AlmaClient("test-api-key")`. No `.env` or live API key needed to run tests.
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/almapy/_client.py` | `AlmaClient` — main entry point, Gracy config, namespace wiring |
+| `src/almapy/_client.py` | `AlmaClient` — main entry point, httpx config, namespace wiring |
+| `src/almapy/_base.py` | `BaseNamespace` — base class for all namespace objects |
+| `src/almapy/_throttle.py` | `TokenBucket`, `AdaptiveController` — rate limiting + AIMD backpressure |
 | `src/almapy/_endpoints.py` | All API URL paths as enum |
 | `src/almapy/_utils.py` | `AlmaErrorValidator`, `_handle_error()`, shared types |
 | `src/almapy/exceptions.py` | ~50 specific exception classes |

@@ -85,7 +85,7 @@ def _get_error_class(
     return None
 
 
-def process_response(response: httpx.Response) -> "tuple[str, str] | None":
+def _process_response(response: httpx.Response) -> "tuple[str, str] | None":
     if response.status_code == HTTPStatus.OK:
         return None
 
@@ -118,7 +118,7 @@ def process_response(response: httpx.Response) -> "tuple[str, str] | None":
 
 
 def _handle_error(response: httpx.Response) -> None:
-    if processed := process_response(response):
+    if processed := _process_response(response):
         code, message = processed
     else:
         return
