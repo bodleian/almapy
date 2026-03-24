@@ -102,8 +102,9 @@ class AlmaClient:
             await self._controller.acquire()
             try:
                 result = await self._raw_request(method, url, parser=parser, **kwargs)
-            except Exception:
-                self._controller.record_failure()
+            except Exception as exc:
+                if _should_retry(exc):
+                    self._controller.record_failure()
                 raise
             else:
                 self._controller.record_success()
