@@ -1,9 +1,7 @@
 import base64
-from http import HTTPStatus
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
-from gracy import Gracy, GracyNamespace, graceful
-
+from almapy._base import BaseNamespace
 from almapy._endpoints import AlmaEndpoint
 from almapy._utils import RESP_TYPE, Request
 from almapy.exceptions import (
@@ -12,8 +10,11 @@ from almapy.exceptions import (
     UserMissingFieldError,
 )
 
+if TYPE_CHECKING:
+    from almapy._base import _AlmaExecutable
 
-class AlmaClientUserLoansNS(GracyNamespace[AlmaEndpoint]):
+
+class AlmaClientUserLoansNS(BaseNamespace):
     """Namespace for user loan functionality, exposed at AlmaClient.user.loans."""
 
     async def get_loans(
@@ -28,7 +29,7 @@ class AlmaClientUserLoansNS(GracyNamespace[AlmaEndpoint]):
         expand: Literal["renewable"] | None = None,
         loan_status: Literal["Active", "Complete"] = "Active",
     ) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get[RESP_TYPE](
+        return await self._get(
             AlmaEndpoint.USER_LOANS,
             {"USER_ID": user_id},
             params={
@@ -40,7 +41,6 @@ class AlmaClientUserLoansNS(GracyNamespace[AlmaEndpoint]):
                 "loan_status": loan_status,
             },
         )
-        return resp
 
     async def create_loan(
         self,
@@ -53,23 +53,19 @@ class AlmaClientUserLoansNS(GracyNamespace[AlmaEndpoint]):
         body = {"circ_desk": {"value": circ_desk}, "library": {"value": library}}
         if request_id:
             body["request_id"] = {"value": request_id}
-        resp: RESP_TYPE = await self.post(
+        return await self._post(
             AlmaEndpoint.USER_LOANS,
             {"USER_ID": user_id},
             params={"item_barcode": item_barcode},
             json=body,
         )
-        return resp
 
     async def get_loan(self, user_id: str, loan_id: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(
-            AlmaEndpoint.USER_LOAN, {"USER_ID": user_id, "LOAN_ID": loan_id}
-        )
-        return resp
+        return await self._get(AlmaEndpoint.USER_LOAN, {"USER_ID": user_id, "LOAN_ID": loan_id})
 
     async def renew_loan(self, user_id: str, loan_id: str) -> RESP_TYPE:
         try:
-            resp: RESP_TYPE = await self.post(
+            resp: RESP_TYPE = await self._post(
                 AlmaEndpoint.USER_LOAN,
                 {"USER_ID": user_id, "LOAN_ID": loan_id},
                 params={"op": "renew"},
@@ -84,16 +80,15 @@ class AlmaClientUserLoansNS(GracyNamespace[AlmaEndpoint]):
         self, user_id: str, loan_id: str, due_date: str, *, notify_user: bool = False
     ) -> RESP_TYPE:
         body = {"due_date": due_date}
-        resp: RESP_TYPE = await self.put(
+        return await self._put(
             AlmaEndpoint.USER_LOAN,
             {"USER_ID": user_id, "LOAN_ID": loan_id},
             params={"notify_user": notify_user},
             json=body,
         )
-        return resp
 
 
-class AlmaClientUserFinesNS(GracyNamespace[AlmaEndpoint]):
+class AlmaClientUserFinesNS(BaseNamespace):
     """Namespace for user fines functionality, exposed at AlmaClient.user.fines."""
 
     async def get_fines(
@@ -102,18 +97,16 @@ class AlmaClientUserFinesNS(GracyNamespace[AlmaEndpoint]):
         user_id_type: str = "all_unique",
         status: Literal["ACTIVE", "INDISPUTE", "EXPORTED", "CLOSED"] = "ACTIVE",
     ) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.USER_FEES,
             {"USER_ID": user_id},
             params={"user_id_type": user_id_type, "status": status},
         )
-        return resp
 
     get_fees = get_fines
 
     async def create_fee(self, user_id: str, fine: dict[str, Any]) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.post(AlmaEndpoint.USER_FEES, {"USER_ID": user_id}, json=fine)
-        return resp
+        return await self._post(AlmaEndpoint.USER_FEES, {"USER_ID": user_id}, json=fine)
 
     async def pay_fees(
         self,
@@ -125,25 +118,26 @@ class AlmaClientUserFinesNS(GracyNamespace[AlmaEndpoint]):
         comment: str | None = None,
         external_transaction_id: str | None = None,
     ) -> RESP_TYPE:
-        params = {"op": "pay", "user_id_type": user_id_type, "amount": amount, "method": method}
+        params: dict[str, Any] = {
+            "op": "pay",
+            "user_id_type": user_id_type,
+            "amount": amount,
+            "method": method,
+        }
         if comment:
             params["comment"] = comment
         if external_transaction_id:
             params["external_transaction_id"] = external_transaction_id
-        resp: RESP_TYPE = await self.post(
-            AlmaEndpoint.USER_FEES_ALL, {"USER_ID": user_id}, params=params
-        )
-        return resp
+        return await self._post(AlmaEndpoint.USER_FEES_ALL, {"USER_ID": user_id}, params=params)
 
     async def get_fee(
         self, user_id: str, fee_id: str, *, user_id_type: str = "all_unique"
     ) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.USER_FEE,
             {"USER_ID": user_id, "FEE_ID": fee_id},
             params={"user_id_type": user_id_type},
         )
-        return resp
 
     async def update_fee(
         self,
@@ -158,30 +152,33 @@ class AlmaClientUserFinesNS(GracyNamespace[AlmaEndpoint]):
         comment: str | None = None,
         external_transaction_id: str | None = None,
     ) -> RESP_TYPE:
-        params = {"op": op, "user_id_type": user_id_type, "amount": amount, "method": method}
+        params: dict[str, Any] = {
+            "op": op,
+            "user_id_type": user_id_type,
+            "amount": amount,
+            "method": method,
+        }
         if reason:
             params["reason"] = reason
         if comment:
             params["comment"] = comment
         if external_transaction_id:
             params["external_transaction_id"] = external_transaction_id
-        resp: RESP_TYPE = await self.post(
+        return await self._post(
             AlmaEndpoint.USER_FEE,
             {"USER_ID": user_id, "FEE_ID": fee_id},
             params=params,
             json={},
         )
-        return resp
 
 
-class AlmaClientUserRequestsNS(GracyNamespace[AlmaEndpoint]):
+class AlmaClientUserRequestsNS(BaseNamespace):
     """Namespace for user requests, exposed at AlmaClient.user.requests."""
 
     async def get_request(self, user_id: str, request_id: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.USER_REQUEST, {"USER_ID": user_id, "REQUEST_ID": request_id}
         )
-        return resp
 
     async def get_requests(
         self,
@@ -193,13 +190,15 @@ class AlmaClientUserRequestsNS(GracyNamespace[AlmaEndpoint]):
         offset: int = 0,
         status: Literal["active", "history"] = "active",
     ) -> RESP_TYPE:
-        params = {"user_id_type": user_id_type, "offset": offset, "limit": limit, "status": status}
+        params: dict[str, Any] = {
+            "user_id_type": user_id_type,
+            "offset": offset,
+            "limit": limit,
+            "status": status,
+        }
         if request_type:
             params["request_type"] = request_type
-        resp: RESP_TYPE = await self.get(
-            AlmaEndpoint.USER_REQUESTS, {"USER_ID": user_id}, params=params
-        )
-        return resp
+        return await self._get(AlmaEndpoint.USER_REQUESTS, {"USER_ID": user_id}, params=params)
 
     async def create_request(
         self,
@@ -215,25 +214,22 @@ class AlmaClientUserRequestsNS(GracyNamespace[AlmaEndpoint]):
             msg = "must provide exactly one of mms_id or item_id"
             raise ValueError(msg)
 
-        params: dict[str, Any] = (
-            {
-                "user_id_type": user_id_type,
-                "allow_same_request": allow_same_request,
-            }
-            | ({"mms_id": mms_id} if mms_id else {"item_id": item_id}),
-        )
+        params: dict[str, Any] = {
+            "user_id_type": user_id_type,
+            "allow_same_request": allow_same_request,
+        } | ({"mms_id": mms_id} if mms_id else {"item_id": item_id})
 
-        return await self.post(
+        return await self._post(
             AlmaEndpoint.USER_REQUESTS, {"USER_ID": user_id}, params=params, json=request
         )
 
     async def update_request(self, user_id: str, request_id: str, request: Request) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.put(
-            AlmaEndpoint.USER_REQUEST, {"USER_ID": user_id, "REQUEST_ID": request_id}, json=request
+        return await self._put(
+            AlmaEndpoint.USER_REQUEST,
+            {"USER_ID": user_id, "REQUEST_ID": request_id},
+            json=request,
         )
-        return resp
 
-    @graceful(parser={HTTPStatus.NO_CONTENT: lambda _: True, "default": lambda _: False})
     async def cancel_request(
         self,
         user_id: str,
@@ -243,18 +239,19 @@ class AlmaClientUserRequestsNS(GracyNamespace[AlmaEndpoint]):
         notify_user: bool,
         note: str | None = None,
     ) -> bool:
-        params = {"reason": reason, "notify_user": notify_user}
+        params: dict[str, Any] = {"reason": reason, "notify_user": notify_user}
         if note:
             params["note"] = note
-        resp: bool = await self.delete(
+        await self._delete(
             AlmaEndpoint.USER_REQUEST,
             {"USER_ID": user_id, "REQUEST_ID": request_id},
+            parser="none",
             params=params,
         )
-        return resp
+        return True
 
 
-class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
+class AlmaClientUserNS(BaseNamespace):
     """Namespace for user functionality, exposing a number of sub-namespaces via attrs.
 
     - loans
@@ -262,12 +259,12 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
     - requests
     """
 
-    def __init__(self, parent: Gracy[AlmaEndpoint], **kwargs: Any):
-        super().__init__(parent, **kwargs)
-        self.loans = AlmaClientUserLoansNS(parent)
-        self.fines = AlmaClientUserFinesNS(parent)
+    def __init__(self, client: "_AlmaExecutable") -> None:
+        super().__init__(client)
+        self.loans = AlmaClientUserLoansNS(client)
+        self.fines = AlmaClientUserFinesNS(client)
         self.fees = self.fines
-        self.requests = AlmaClientUserRequestsNS(parent)
+        self.requests = AlmaClientUserRequestsNS(client)
 
     async def get_users(
         self,
@@ -285,8 +282,7 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
             params["order_by"] = order_by
         if expand:
             params["expand"] = "full"
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.USERS, params=params)
-        return resp
+        return await self._get(AlmaEndpoint.USERS, params=params)
 
     async def get_user(self, user_id: str) -> RESP_TYPE:
         """Get user information by user ID.
@@ -301,8 +297,7 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
             UserNotFoundError: If the user identifier is not found.
             APIClientError: If another error occurred while making the API request.
         """
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.USER, {"USER_ID": user_id})
-        return resp
+        return await self._get(AlmaEndpoint.USER, {"USER_ID": user_id})
 
     async def update_user(self, user_id: str, user: dict[str, Any]) -> RESP_TYPE:
         """Update a user.
@@ -319,7 +314,7 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
             APIClientError: If any other API client error occurs.
         """
         try:
-            resp: RESP_TYPE = await self.put(AlmaEndpoint.USER, {"USER_ID": user_id}, json=user)
+            resp: RESP_TYPE = await self._put(AlmaEndpoint.USER, {"USER_ID": user_id}, json=user)
         except APIClientError as e:
             if e.code == "401664":
                 raise UserMissingFieldError(e.error, user_id) from e
@@ -340,7 +335,7 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
             APIClientError: If any other API client error occurs.
         """
         try:
-            resp: RESP_TYPE = await self.post(AlmaEndpoint.USERS, json=user)
+            resp: RESP_TYPE = await self._post(AlmaEndpoint.USERS, json=user)
         except APIClientError as e:
             if e.code == "401664":
                 raise UserMissingFieldError(e.error, user["primary_id"]) from e
@@ -365,7 +360,6 @@ class AlmaClientUserNS(GracyNamespace[AlmaEndpoint]):
             "note": note,
             "url": url,
         }
-        resp: RESP_TYPE = await self.post(
+        return await self._post(
             AlmaEndpoint.USER_ATTACHMENTS, {"USER_ID": user_id}, json=attachment
         )
-        return resp

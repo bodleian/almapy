@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 from typing import Any
 
 import xmltodict
-from gracy import GracyNamespace, graceful
 
+from almapy._base import BaseNamespace
 from almapy._endpoints import AlmaEndpoint
 
 
@@ -12,14 +10,9 @@ def headers_to_dict(headers: list[dict[str, Any]]) -> dict[str, Any]:
     return {header["@name"]: header["@saw-sql:columnHeading"] for header in headers}
 
 
-class AlmaClientAnalyticsNS(GracyNamespace[AlmaEndpoint]):
+class AlmaClientAnalyticsNS(BaseNamespace):
     """Namespace for analytics functionality."""
 
-    @graceful(
-        parser={
-            "default": lambda r: r.text,
-        },
-    )
     async def get_raw_report(
         self,
         path: str,
@@ -28,20 +21,16 @@ class AlmaClientAnalyticsNS(GracyNamespace[AlmaEndpoint]):
         token: str | None = None,
         report_filter: str | None = None,
     ) -> str:
-        params = {
-            "path": path,
-            "limit": limit,
-        }
+        params: dict[str, Any] = {"path": path, "limit": limit}
         if report_filter:
             params["filter"] = report_filter
         if token:
             params["token"] = token
-        resp: str = await self.get[str](
+        return await self._get_text(
             AlmaEndpoint.REPORTS,
             params=params,
             headers={"Accept": "application/xml"},
         )
-        return resp
 
     async def get_full_report(
         self,

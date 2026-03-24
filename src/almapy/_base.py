@@ -6,7 +6,7 @@ from typing import Any, Literal, Protocol
 from almapy._endpoints import AlmaEndpoint
 from almapy._utils import RESP_TYPE
 
-Parser = Literal["json", "xml", "none"]
+Parser = Literal["json", "xml", "none", "text"]
 
 
 class _AlmaExecutable(Protocol):
@@ -73,3 +73,36 @@ class BaseNamespace:  # noqa: B903
         **kwargs: Any,
     ) -> RESP_TYPE:
         return await self._client._execute("DELETE", endpoint.build(path), parser=parser, **kwargs)
+
+    async def _get_text(
+        self,
+        endpoint: AlmaEndpoint,
+        path: Mapping[str, str] | None = None,
+        **kwargs: Any,
+    ) -> str:
+        """GET returning raw response text (e.g., MARC XML records)."""
+        result = await self._get(endpoint, path, parser="text", **kwargs)
+        text: str = result["_text"]
+        return text
+
+    async def _post_text(
+        self,
+        endpoint: AlmaEndpoint,
+        path: Mapping[str, str] | None = None,
+        **kwargs: Any,
+    ) -> str:
+        """POST returning raw response text."""
+        result = await self._post(endpoint, path, parser="text", **kwargs)
+        text: str = result["_text"]
+        return text
+
+    async def _put_text(
+        self,
+        endpoint: AlmaEndpoint,
+        path: Mapping[str, str] | None = None,
+        **kwargs: Any,
+    ) -> str:
+        """PUT returning raw response text."""
+        result = await self._put(endpoint, path, parser="text", **kwargs)
+        text: str = result["_text"]
+        return text

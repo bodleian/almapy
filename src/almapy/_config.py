@@ -1,17 +1,14 @@
-from __future__ import annotations
-
-from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Literal, assert_never
 
-from gracy import Gracy, GracyNamespace, graceful
-
+from almapy._base import BaseNamespace
 from almapy._endpoints import AlmaEndpoint
+from almapy._utils import RESP_TYPE
 
 if TYPE_CHECKING:
-    from almapy._utils import RESP_TYPE
+    from almapy._base import _AlmaExecutable
 
 
-class AlmaClientConfigSetsNS(GracyNamespace[AlmaEndpoint]):
+class AlmaClientConfigSetsNS(BaseNamespace):
     """Namespace for set functionality, exposed at AlmaClient.config.sets."""
 
     async def get_list(
@@ -23,7 +20,7 @@ class AlmaClientConfigSetsNS(GracyNamespace[AlmaEndpoint]):
         offset: int = 0,
         set_origin: Literal["UI", "UI_CZ"] = "UI",
     ) -> RESP_TYPE:
-        params = {
+        params: dict[str, Any] = {
             "content_type": content_type,
             "set_type": set_type,
             "q": q,
@@ -31,13 +28,10 @@ class AlmaClientConfigSetsNS(GracyNamespace[AlmaEndpoint]):
             "offset": offset,
             "set_origin": set_origin,
         }
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.SETS, params=params)
-
-        return resp
+        return await self._get(AlmaEndpoint.SETS, params=params)
 
     async def get_set(self, set_id: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.SET, {"SET_ID": set_id})
-        return resp
+        return await self._get(AlmaEndpoint.SET, {"SET_ID": set_id})
 
     async def create(
         self,
@@ -51,7 +45,7 @@ class AlmaClientConfigSetsNS(GracyNamespace[AlmaEndpoint]):
         nz_set_from_iz_set: str | None = None,
         indication_rule: str | None = None,
     ) -> RESP_TYPE:
-        params = {}
+        params: dict[str, Any] = {}
         if population:
             params["population"] = population
         if job_instance_id:
@@ -68,12 +62,7 @@ class AlmaClientConfigSetsNS(GracyNamespace[AlmaEndpoint]):
             params["nz_set_from_iz_set"] = nz_set_from_iz_set
         if indication_rule:
             params["indication_rule"] = indication_rule
-        resp: RESP_TYPE = await self.post(
-            AlmaEndpoint.SETS,
-            json=data,
-            params=params,
-        )
-        return resp
+        return await self._post(AlmaEndpoint.SETS, json=data, params=params)
 
     async def get_members(
         self,
@@ -81,22 +70,12 @@ class AlmaClientConfigSetsNS(GracyNamespace[AlmaEndpoint]):
         limit: int = 100,
         offset: int = 0,
     ) -> RESP_TYPE:
-        params = {
-            "limit": limit,
-            "offset": offset,
-        }
-        resp: RESP_TYPE = await self.get(
-            AlmaEndpoint.SET_MEMBERS,
-            {"SET_ID": set_id},
-            params=params,
-        )
+        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        return await self._get(AlmaEndpoint.SET_MEMBERS, {"SET_ID": set_id}, params=params)
 
-        return resp
-
-    @graceful(parser={HTTPStatus.NO_CONTENT: lambda r: True, "default": lambda r: False})
     async def delete_set(self, set_id: str) -> bool:
-        resp: bool = await self.delete(AlmaEndpoint.SET, {"SET_ID": set_id})
-        return resp
+        await self._delete(AlmaEndpoint.SET, {"SET_ID": set_id}, parser="none")
+        return True
 
     async def manage_members(
         self,
@@ -107,71 +86,54 @@ class AlmaClientConfigSetsNS(GracyNamespace[AlmaEndpoint]):
         op: Literal["add_members", "delete_members", "replace_members"],
         fail_on_invalid: bool = True,
     ) -> RESP_TYPE:
-        params = {
-            "op": op,
-            "fail_on_invalid": fail_on_invalid,
-        }
+        params: dict[str, Any] = {"op": op, "fail_on_invalid": fail_on_invalid}
         if id_type:
             params["id_type"] = id_type
         body = await self.get_set(set_id)
         body["members"] = {"member": [{"id": member_id} for member_id in member_id_list]}
-        resp: RESP_TYPE = await self.post(
-            AlmaEndpoint.SET, {"SET_ID": set_id}, json=body, params=params
-        )
-        return resp
+        return await self._post(AlmaEndpoint.SET, {"SET_ID": set_id}, json=body, params=params)
 
 
-class AlmaClientConfigLibrariesNS(GracyNamespace[AlmaEndpoint]):
+class AlmaClientConfigLibrariesNS(BaseNamespace):
     """Namespace for library functionality, exposed at AlmaClient.config.sets."""
 
-    async def get_libraries(
-        self,
-    ) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.LIBRARIES)
-        return resp
+    async def get_libraries(self) -> RESP_TYPE:
+        return await self._get(AlmaEndpoint.LIBRARIES)
 
     async def get_circ_desks(self, library: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.CIRC_DESKS, {"LIBRARY_CODE": library})
-        return resp
+        return await self._get(AlmaEndpoint.CIRC_DESKS, {"LIBRARY_CODE": library})
 
     async def get_locations(self, library: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.LOCATIONS, {"LIBRARY_CODE": library})
-        return resp
+        return await self._get(AlmaEndpoint.LOCATIONS, {"LIBRARY_CODE": library})
 
     async def get_location(self, library: str, location: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(
-            AlmaEndpoint.LOCATION, {"LIBRARY": library, "LOCATION_CODE": location}
+        return await self._get(
+            AlmaEndpoint.LOCATION, {"LIBRARY_CODE": library, "LOCATION_CODE": location}
         )
 
-        return resp
 
-
-class AlmaClientConfigLettersNS(GracyNamespace[AlmaEndpoint]):
+class AlmaClientConfigLettersNS(BaseNamespace):
     """Namespace for letter functionality, exposed at AlmaClient.config.letters."""
 
     async def get_letters(self) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.LETTERS)
-        return resp
+        return await self._get(AlmaEndpoint.LETTERS)
 
     async def get_components(self) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.LETTERS, params={"type": "COMPONENT"})
-        return resp
+        return await self._get(AlmaEndpoint.LETTERS, params={"type": "COMPONENT"})
 
     async def get_letter(self, letter_id: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.LETTER, {"LETTER_ID": letter_id})
-        return resp
+        return await self._get(AlmaEndpoint.LETTER, {"LETTER_ID": letter_id})
 
     async def update_letter(self, letter_id: str, data: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.put(
+        return await self._put(
             AlmaEndpoint.LETTER,
             {"LETTER_ID": letter_id},
             content=data,
             headers={"Content-Type": "application/xml"},
         )
-        return resp
 
 
-class AlmaClientConfigJobsNS(GracyNamespace[AlmaEndpoint]):
+class AlmaClientConfigJobsNS(BaseNamespace):
     async def get_jobs(
         self,
         limit: int = 10,
@@ -188,20 +150,17 @@ class AlmaClientConfigJobsNS(GracyNamespace[AlmaEndpoint]):
             params["job_type"] = job_type
         if profile_id:
             params["profile_id"] = profile_id
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.JOBS, params=params)
-        return resp
+        return await self._get(AlmaEndpoint.JOBS, params=params)
 
     async def get_job(self, job_id: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.JOB, {"JOB_ID": job_id})
-        return resp
+        return await self._get(AlmaEndpoint.JOB, {"JOB_ID": job_id})
 
     async def submit_job(
         self, job_id: str, job: dict[str, str | dict[str, str | dict[str, str]]]
     ) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.post(
+        return await self._post(
             AlmaEndpoint.JOB, {"JOB_ID": job_id}, json=job, params={"op": "run"}
         )
-        return resp
 
     async def get_job_instances(
         self,
@@ -219,16 +178,12 @@ class AlmaClientConfigJobsNS(GracyNamespace[AlmaEndpoint]):
             params["submit_date_from"] = submit_date_from
         if status:
             params["status"] = status
-        resp: RESP_TYPE = await self.get(
-            AlmaEndpoint.JOB_INSTANCES, {"JOB_ID": job_id}, params=params
-        )
-        return resp
+        return await self._get(AlmaEndpoint.JOB_INSTANCES, {"JOB_ID": job_id}, params=params)
 
     async def get_job_instance(self, job_id: str, instance_id: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.JOB_INSTANCE, {"JOB_ID": job_id, "INSTANCE_ID": instance_id}
         )
-        return resp
 
     async def get_job_instance_matches(
         self,
@@ -245,12 +200,11 @@ class AlmaClientConfigJobsNS(GracyNamespace[AlmaEndpoint]):
             params["population"] = "SINGLE_MATCHES"
         else:
             assert_never(single_or_multi)
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.JOB_INSTANCE_MATCHES,
             {"JOB_ID": job_id, "INSTANCE_ID": instance_id},
             params=params,
         )
-        return resp
 
     async def get_integration_profiles(
         self,
@@ -264,52 +218,43 @@ class AlmaClientConfigJobsNS(GracyNamespace[AlmaEndpoint]):
             params["type"] = profile_type
         if query:
             params["query"] = query
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.INTEGRATION_PROFILES, params=params)
-        return resp
+        return await self._get(AlmaEndpoint.INTEGRATION_PROFILES, params=params)
 
     async def get_integration_profile(self, profile_id: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(
-            AlmaEndpoint.INTEGRATION_PROFILE, {"PROFILE_ID": profile_id}
-        )
-        return resp
+        return await self._get(AlmaEndpoint.INTEGRATION_PROFILE, {"PROFILE_ID": profile_id})
 
     async def update_integration_profile(self, profile_id: str, data: dict[str, Any]) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.put(
+        return await self._put(
             AlmaEndpoint.INTEGRATION_PROFILE, {"PROFILE_ID": profile_id}, json=data
         )
-        return resp
 
     async def create_integration_profile(self, data: dict[str, Any]) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.post(AlmaEndpoint.INTEGRATION_PROFILES, json=data)
-        return resp
+        return await self._post(AlmaEndpoint.INTEGRATION_PROFILES, json=data)
 
 
-class AlmaClientConfigCodeTablesNS(GracyNamespace[AlmaEndpoint]):
+class AlmaClientConfigCodeTablesNS(BaseNamespace):
     """Namespace for code table functionality, exposed at AlmaClient.config.code_tables."""
 
     async def get_code_tables(self) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.CODE_TABLES)
-        return resp
+        return await self._get(AlmaEndpoint.CODE_TABLES)
 
     async def get_code_table(self, table_code: str, *, lang: str = "en") -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.CODE_TABLE, {"TABLE_CODE": table_code}, params={"lang": lang}
         )
-        return resp
 
     async def update_code_table(
         self, table_code: str, data: dict[str, Any], *, lang: str = "en"
     ) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.put(
+        return await self._put(
             AlmaEndpoint.CODE_TABLE,
             {"TABLE_CODE": table_code},
             params={"lang": lang},
             json=data,
         )
-        return resp
 
 
-class AlmaClientConfigNS(GracyNamespace[AlmaEndpoint]):
+class AlmaClientConfigNS(BaseNamespace):
     """Namespace for config/admin functionality, exposing a number of sub-namespace via attrs.
 
     - sets
@@ -317,10 +262,10 @@ class AlmaClientConfigNS(GracyNamespace[AlmaEndpoint]):
     - letters
     """
 
-    def __init__(self, parent: Gracy[AlmaEndpoint], **kwargs: Any):
-        super().__init__(parent, **kwargs)
-        self.sets = AlmaClientConfigSetsNS(parent)
-        self.libraries = AlmaClientConfigLibrariesNS(parent)
-        self.letters = AlmaClientConfigLettersNS(parent)
-        self.jobs = AlmaClientConfigJobsNS(parent)
-        self.code_tables = AlmaClientConfigCodeTablesNS(parent)
+    def __init__(self, client: "_AlmaExecutable") -> None:
+        super().__init__(client)
+        self.sets = AlmaClientConfigSetsNS(client)
+        self.libraries = AlmaClientConfigLibrariesNS(client)
+        self.letters = AlmaClientConfigLettersNS(client)
+        self.jobs = AlmaClientConfigJobsNS(client)
+        self.code_tables = AlmaClientConfigCodeTablesNS(client)

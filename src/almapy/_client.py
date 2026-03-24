@@ -83,12 +83,11 @@ class AlmaClient:
             self._http = client
             self._owns_client = False
 
-        # Namespaces wired here; type-ignored until Task 6 migrates them to BaseNamespace
-        self.users: AlmaClientUserNS = AlmaClientUserNS(self)  # type: ignore[arg-type]
-        self.bibs: AlmaClientBibNS = AlmaClientBibNS(self)  # type: ignore[arg-type]
-        self.acq: AlmaClientAcqNS = AlmaClientAcqNS(self)  # type: ignore[arg-type]
-        self.config: AlmaClientConfigNS = AlmaClientConfigNS(self)  # type: ignore[arg-type]
-        self.analytics: AlmaClientAnalyticsNS = AlmaClientAnalyticsNS(self)  # type: ignore[arg-type]
+        self.users: AlmaClientUserNS = AlmaClientUserNS(self)
+        self.bibs: AlmaClientBibNS = AlmaClientBibNS(self)
+        self.acq: AlmaClientAcqNS = AlmaClientAcqNS(self)
+        self.config: AlmaClientConfigNS = AlmaClientConfigNS(self)
+        self.analytics: AlmaClientAnalyticsNS = AlmaClientAnalyticsNS(self)
 
     async def _execute(
         self,
@@ -144,6 +143,8 @@ class AlmaClient:
             return Box()
         if parser == "xml":
             return Box(_parse_xml(response.text))
+        if parser == "text":
+            return Box({"_text": response.text})
         return Box(response.json())
 
     async def aclose(self) -> None:

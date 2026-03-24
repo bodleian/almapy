@@ -1,17 +1,16 @@
-from __future__ import annotations
-
 import re
-from http import HTTPStatus
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
-from gracy import Gracy, GracyNamespace, graceful
-
+from almapy._base import BaseNamespace
 from almapy._endpoints import AlmaEndpoint
 from almapy._utils import RESP_TYPE, Request
 from almapy.exceptions import APIClientError, CannotRenewError, InvalidCodeError, RequestFailedError
 
+if TYPE_CHECKING:
+    from almapy._base import _AlmaExecutable
 
-class AlmaClientBibLoansNS(GracyNamespace[AlmaEndpoint]):
+
+class AlmaClientBibLoansNS(BaseNamespace):
     """Namespace for bib requests, exposed at AlmaClient.bibs.requests."""
 
     async def get_loans(
@@ -60,12 +59,11 @@ class AlmaClientBibLoansNS(GracyNamespace[AlmaEndpoint]):
             "direction": direction,
             "loan_status": loan_status,
         }
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.ITEM_LOANS,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
             params=params,
         )
-        return resp
 
     async def create_loan(
         self,
@@ -96,16 +94,15 @@ class AlmaClientBibLoansNS(GracyNamespace[AlmaEndpoint]):
             APIServerError: If there is an error with the server.
 
         """
-        loan = {"circ_desk": {"value": circ_desk}, "library": {"value": library}}
+        loan: dict[str, Any] = {"circ_desk": {"value": circ_desk}, "library": {"value": library}}
         if request_id:
             loan["request_id"] = {"value": request_id}
-        resp: RESP_TYPE = await self.post(
+        return await self._post(
             AlmaEndpoint.ITEM_LOANS,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
             json=loan,
             params={"user_id": user_id},
         )
-        return resp
 
     async def get_loan(self, mms_id: str, holding_id: str, item_id: str, loan_id: str) -> RESP_TYPE:
         """Get the details of a specific loan on a specific copy of an item.
@@ -124,11 +121,10 @@ class AlmaClientBibLoansNS(GracyNamespace[AlmaEndpoint]):
             APIServerError: If there is an error with the server.
 
         """
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.ITEM_LOAN,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id, "LOAN_ID": loan_id},
         )
-        return resp
 
     async def renew_loan(
         self, mms_id: str, holding_id: str, item_id: str, loan_id: str
@@ -151,7 +147,7 @@ class AlmaClientBibLoansNS(GracyNamespace[AlmaEndpoint]):
 
         """
         try:
-            resp: RESP_TYPE = await self.post(
+            resp: RESP_TYPE = await self._post(
                 AlmaEndpoint.ITEM_LOAN,
                 {
                     "MMS_ID": mms_id,
@@ -189,12 +185,11 @@ class AlmaClientBibLoansNS(GracyNamespace[AlmaEndpoint]):
 
         """
         loan = {"due_date": due_date}
-        resp: RESP_TYPE = await self.put(
+        return await self._put(
             AlmaEndpoint.ITEM_LOAN,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id, "LOAN_ID": loan_id},
             json=loan,
         )
-        return resp
 
     async def get_bib_loans(
         self,
@@ -214,17 +209,13 @@ class AlmaClientBibLoansNS(GracyNamespace[AlmaEndpoint]):
             "direction": direction,
             "loan_status": loan_status,
         }
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.BIB_LOANS, {"MMS_ID": mms_id}, params=params)
-        return resp
+        return await self._get(AlmaEndpoint.BIB_LOANS, {"MMS_ID": mms_id}, params=params)
 
     async def get_bib_loan(self, mms_id: str, loan_id: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(
-            AlmaEndpoint.BIB_LOAN, {"MMS_ID": mms_id, "LOAN_ID": loan_id}
-        )
-        return resp
+        return await self._get(AlmaEndpoint.BIB_LOAN, {"MMS_ID": mms_id, "LOAN_ID": loan_id})
 
 
-class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
+class AlmaClientBibRequestsNS(BaseNamespace):
     async def get_requests(
         self,
         mms_id: str,
@@ -234,12 +225,11 @@ class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
         status: Literal["active", "history"] = "active",
     ) -> RESP_TYPE:
         params = {"request_type": request_type, "status": status}
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.ITEM_REQUESTS,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
             params=params,
         )
-        return resp
 
     get_requests_for_item = get_requests
 
@@ -250,17 +240,16 @@ class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
         status: Literal["active", "history"] = "active",
     ) -> RESP_TYPE:
         params = {"request_type": request_type, "status": status}
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.BIB_REQUESTS,
             {"MMS_ID": mms_id},
             params=params,
         )
-        return resp
 
     async def get_request(
         self, mms_id: str, holding_id: str, item_id: str, request_id: str
     ) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.ITEM_REQUEST,
             {
                 "MMS_ID": mms_id,
@@ -269,9 +258,7 @@ class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
                 "REQUEST_ID": request_id,
             },
         )
-        return resp
 
-    @graceful(parser={HTTPStatus.NO_CONTENT: lambda _: True, "default": lambda _: False})
     async def cancel_request(
         self,
         mms_id: str,
@@ -283,10 +270,10 @@ class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
         notify_user: bool,
         note: str | None = None,
     ) -> bool:
-        params = {"reason": reason, "notify_user": notify_user}
+        params: dict[str, Any] = {"reason": reason, "notify_user": notify_user}
         if note:
             params["note"] = note
-        resp: bool = await self.delete(
+        await self._delete(
             AlmaEndpoint.ITEM_REQUEST,
             {
                 "MMS_ID": mms_id,
@@ -294,9 +281,10 @@ class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
                 "ITEM_PID": item_id,
                 "REQUEST_ID": request_id,
             },
+            parser="none",
             params=params,
         )
-        return resp
+        return True
 
     async def create_request(
         self,
@@ -314,18 +302,17 @@ class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
             "user_id_type": user_id_type,
             "allow_same_request": allow_same_request,
         }
-        resp: RESP_TYPE = await self.post(
+        return await self._post(
             AlmaEndpoint.ITEM_REQUESTS,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
             params=params,
             json=request,
         )
-        return resp
 
     async def update_request(
         self, mms_id: str, holding_id: str, item_id: str, request_id: str, request: Request
     ) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.put(
+        return await self._put(
             AlmaEndpoint.ITEM_REQUEST,
             {
                 "MMS_ID": mms_id,
@@ -335,20 +322,19 @@ class AlmaClientBibRequestsNS(GracyNamespace[AlmaEndpoint]):
             },
             json=request,
         )
-        return resp
 
 
-class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
+class AlmaClientBibNS(BaseNamespace):
     """Namespace for user functionality, exposing a number of sub-namespace via attrs.
 
     - loans
     - requests
     """
 
-    def __init__(self, parent: Gracy[AlmaEndpoint], **kwargs: Any):
-        super().__init__(parent, **kwargs)
-        self.loans = AlmaClientBibLoansNS(parent)
-        self.requests = AlmaClientBibRequestsNS(parent)
+    def __init__(self, client: "_AlmaExecutable") -> None:
+        super().__init__(client)
+        self.loans = AlmaClientBibLoansNS(client)
+        self.requests = AlmaClientBibRequestsNS(client)
 
     async def get_item(self, item_barcode: str) -> RESP_TYPE:
         """Get item information by barcode.
@@ -362,10 +348,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         Raises:
             APIClientError: If an error occurred while making the API request.
         """
-        resp: RESP_TYPE = await self.get(
-            AlmaEndpoint.BARCODE, params={"item_barcode": item_barcode}
-        )
-        return resp
+        return await self._get(AlmaEndpoint.BARCODE, params={"item_barcode": item_barcode})
 
     async def get_item_by_pid(self, mms_id: str, holding_id: str, item_pid: str) -> RESP_TYPE:
         """Get item information by barcode.
@@ -381,10 +364,9 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         Raises:
             APIClientError: If an error occurred while making the API request.
         """
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.ITEM, {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid}
         )
-        return resp
 
     async def create_item(
         self,
@@ -394,13 +376,12 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         *,
         generate_description: bool = False,
     ) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.post(
+        return await self._post(
             AlmaEndpoint.ITEMS,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
             params={"generate_description": generate_description},
             json=item,
         )
-        return resp
 
     async def update_item(
         self,
@@ -425,7 +406,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             APIClientError: If another error occurred while making the API request.
         """
         try:
-            resp: RESP_TYPE = await self.put(
+            resp: RESP_TYPE = await self._put(
                 AlmaEndpoint.ITEM,
                 {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
                 json=item,
@@ -438,7 +419,6 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             raise
         return resp
 
-    @graceful(parser={HTTPStatus.NO_CONTENT: lambda _: True, "default": lambda _: False})
     async def withdraw_item(
         self,
         mms_id: str,
@@ -449,12 +429,13 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         handle_holding: Literal["retain", "delete", "suppress"] = "retain",
         handle_bib: Literal["retain", "delete", "suppress"] = "retain",
     ) -> bool:
-        resp: bool = await self.delete(
+        await self._delete(
             AlmaEndpoint.ITEM,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
+            parser="none",
             params={"bib": handle_bib, "holdings": handle_holding, "override": override},
         )
-        return resp
+        return True
 
     async def get_items(
         self,
@@ -478,7 +459,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         expected_receive_date_to: str | None = None,
         view: Literal["brief", "label"] = "brief",
     ) -> RESP_TYPE:
-        params = {
+        params: dict[str, Any] = {
             "limit": limit,
             "offset": offset,
             "expand": expand,
@@ -498,80 +479,55 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             "view": view,
         }
         params = {k: v for k, v in params.items() if v is not None}
-        resp: RESP_TYPE = await self.get(
+        return await self._get(
             AlmaEndpoint.ITEMS, {"MMS_ID": mms_id, "HOLDING_ID": holding_id}, params=params
         )
-        return resp
 
     async def get_portfolios(self, mms_id: str, limit: int = 10, offset: int = 0) -> RESP_TYPE:
         params = {"limit": limit, "offset": offset}
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.PORTFOLIOS, {"MMS_ID": mms_id}, params=params)
-        return resp
+        return await self._get(AlmaEndpoint.PORTFOLIOS, {"MMS_ID": mms_id}, params=params)
 
-    @graceful(
-        parser={
-            "default": lambda r: r.text,
-        },
-    )
     async def get_holding(self, mms_id: str, holding_id: str) -> str:
-        resp: str = await self.get(
+        return await self._get_text(
             AlmaEndpoint.HOLDING,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
             headers={"Accept": "application/xml"},
         )
-        return resp
 
-    @graceful(
-        parser={
-            "default": lambda r: r.text,
-        },
-    )
     async def update_holding(self, mms_id: str, holding_id: str, record: str) -> str:
-        resp: str = await self.put(
+        return await self._put_text(
             AlmaEndpoint.HOLDING,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
             content=record,
         )
-        return resp
 
-    @graceful(
-        parser={
-            "default": lambda r: r.text,
-        },
-    )
     async def create_holding(self, mms_id: str, record: str) -> str:
-        resp: str = await self.post(
+        return await self._post_text(
             AlmaEndpoint.HOLDINGS,
             {"MMS_ID": mms_id},
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
             content=record,
         )
-        return resp
 
-    @graceful(parser={HTTPStatus.NO_CONTENT: lambda _: True, "default": lambda _: False})
     async def delete_holding(
         self,
         mms_id: str,
         holding_id: str,
         *,
         handle_bib: Literal["retain", "delete", "suppress"] = "retain",
-    ):
-        resp: bool = await self.delete(
+    ) -> bool:
+        await self._delete(
             AlmaEndpoint.HOLDING,
-            {
-                "MMS_ID": mms_id,
-                "HOLDING_ID": holding_id,
-            },
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
+            parser="none",
             params={"bib": handle_bib},
         )
-        return resp
+        return True
 
     async def get_holdings(self, mms_id: str) -> RESP_TYPE:
-        resp: RESP_TYPE = await self.get(AlmaEndpoint.HOLDINGS, {"MMS_ID": mms_id})
-        return resp
+        return await self._get(AlmaEndpoint.HOLDINGS, {"MMS_ID": mms_id})
 
-    @graceful(parser={"default": lambda r: r.text})
     async def create_bib(
         self,
         record: str,
@@ -597,21 +553,13 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             params["normalization"] = normalization
         if import_profile:
             params["import_profile"] = import_profile
-
-        resp: str = await self.post(
+        return await self._post_text(
             AlmaEndpoint.BIBS,
-            {},
             content=record,
             params=params,
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
         )
-        return resp
 
-    @graceful(
-        parser={
-            "default": lambda r: r.text,
-        },
-    )
     async def get_bib(
         self,
         mms_id: str,
@@ -633,19 +581,17 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             expand_params.append("requests")
 
         expand_param_string = ",".join(expand_params)
-        params = {"view": view}
+        params: dict[str, str] = {"view": view}
         if expand_param_string:
             params["expand"] = expand_param_string
 
-        resp: str = await self.get[str](
+        return await self._get_text(
             AlmaEndpoint.BIB,
             {"MMS_ID": mms_id},
             params=params,
             headers={"Accept": "application/xml"},
         )
-        return resp
 
-    @graceful(parser={"default": lambda r: r.text})
     async def update_bib(
         self,
         mms_id: str,
@@ -672,17 +618,14 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             params["stale_version_check"] = stale_version_check
         if cataloguer_level:
             params["cataloguer_level"] = cataloguer_level
-
-        resp: str = await self.put[str](
+        return await self._put_text(
             AlmaEndpoint.BIB,
             {"MMS_ID": mms_id},
             content=record,
             params=params,
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
         )
-        return resp
 
-    @graceful(parser={HTTPStatus.NO_CONTENT: lambda _: True, "default": lambda _: False})
     async def delete_bib(
         self,
         mms_id: str,
@@ -693,13 +636,13 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         params: dict[str, str | bool] = {"override": override}
         if cataloguer_level:
             params["cataloguer_level"] = cataloguer_level
-
-        resp: bool = await self.delete(
+        await self._delete(
             AlmaEndpoint.BIB,
             {"MMS_ID": mms_id},
+            parser="none",
             params=params,
         )
-        return resp
+        return True
 
     async def scan_in(
         self,
@@ -720,7 +663,7 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
         register_in_house_use: bool = False,
         done: bool = False,
     ) -> RESP_TYPE:
-        params = {
+        params: dict[str, Any] = {
             "op": "scan",
             "library": library,
             "department": department,
@@ -736,9 +679,8 @@ class AlmaClientBibNS(GracyNamespace[AlmaEndpoint]):
             "register_in_house_use": register_in_house_use,
         }
         params = {k: v for k, v in params.items() if v is not None}
-        resp: RESP_TYPE = await self.post(
+        return await self._post(
             AlmaEndpoint.ITEM,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
             params=params,
         )
-        return resp
