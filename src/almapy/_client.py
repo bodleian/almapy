@@ -97,28 +97,11 @@ class AlmaClient:
         parser: Parser,
         **kwargs: Any,
     ) -> RESP_TYPE:
-        """Semaphore → controller acquire → stamina retries → record outcome."""
-        async with self._semaphore:
-            await self._controller.acquire()
-            try:
-                result = await self._raw_request(method, url, parser=parser, **kwargs)
-            except Exception as exc:
-                if _should_retry(exc):
-                    self._controller.record_failure()
-                raise
-            else:
-                self._controller.record_success()
-                return result
+        """Stamina retry loop; semaphore + controller acquired per attempt.
 
-    async def _raw_request(
-        self,
-        method: str,
-        url: str,
-        *,
-        parser: Parser,
-        **kwargs: Any,
-    ) -> RESP_TYPE:
-        """HTTP request with stamina retries; validate + parse inside retry loop."""
+        Semaphore is released between attempts so backoff sleeps do not pin
+        concurrency slots. record_failure is only called for retryable exceptions.
+        """
         result: RESP_TYPE | None = None
         async for attempt in stamina.retry_context(
             on=_should_retry,
@@ -130,9 +113,18 @@ class AlmaClient:
             wait_exp_base=4,
         ):
             with attempt:
-                resp = await self._http.request(method, url, **kwargs)
-                _validate_response(resp)
-                result = self._parse(resp, parser)
+                async with self._semaphore:
+                    await self._controller.acquire()
+                    try:
+                        resp = await self._http.request(method, url, **kwargs)
+                        _validate_response(resp)
+                        result = self._parse(resp, parser)
+                    except Exception as exc:
+                        if _should_retry(exc):
+                            self._controller.record_failure()
+                        raise
+                    else:
+                        self._controller.record_success()
         if result is None:
             msg = "stamina made zero attempts"  # unreachable
             raise RuntimeError(msg)
