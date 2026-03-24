@@ -1,9 +1,11 @@
-from __future__ import annotations
+"""Alma API endpoint definitions."""
 
-from gracy import BaseEndpoint
+import re
+from collections.abc import Mapping
+from enum import StrEnum
 
 
-class AlmaEndpoint(BaseEndpoint):
+class AlmaEndpoint(StrEnum):
     USERS = "/users"
     USER = "/users/{USER_ID}"
     USER_LOANS = "/users/{USER_ID}/loans"
@@ -26,7 +28,7 @@ class AlmaEndpoint(BaseEndpoint):
     BIBS = "/bibs"
     BIB = "/bibs/{MMS_ID}"
     BIB_LOANS = "/bibs/{MMS_ID}/loans"
-    BIB_LOAN = "/bibs/{MMS_ID}/loans/{LOAN_ID]"
+    BIB_LOAN = "/bibs/{MMS_ID}/loans/{LOAN_ID}"
     BIB_REQUESTS = "/bibs/{MMS_ID}/requests"
     ITEM_REQUESTS = "/bibs/{MMS_ID}/holdings/{HOLDING_ID}/items/{ITEM_PID}/requests"
     ITEM_REQUEST = "/bibs/{MMS_ID}/holdings/{HOLDING_ID}/items/{ITEM_PID}/requests/{REQUEST_ID}"
@@ -54,3 +56,17 @@ class AlmaEndpoint(BaseEndpoint):
     INTEGRATION_PROFILE = "/conf/integration-profiles/{PROFILE_ID}"
 
     REPORTS = "/analytics/reports"
+
+    def build(self, path: Mapping[str, str] | None = None) -> str:
+        """Substitute path parameters. Raises ValueError on missing or extra keys."""
+        if path is None:
+            path = {}
+        expected = set(re.findall(r"\{(\w+)\}", self.value))
+        provided = set(path.keys())
+        if missing := expected - provided:
+            msg = f"{self.name}: missing path params {missing}"
+            raise ValueError(msg)
+        if extra := provided - expected:
+            msg = f"{self.name}: unexpected path params {extra}"
+            raise ValueError(msg)
+        return self.value.format_map(path)

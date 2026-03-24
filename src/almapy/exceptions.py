@@ -244,3 +244,7 @@ class CannotBeLoanedError(APIClientError):
 
 class UserIsNotAPatronError(APIClientError):
     """Raised when a user cannot borrow because they either don't have a patron role or it has expired."""
+
+
+class ThrottleTimeoutError(TimeoutError):
+    """Raised when max_wait is exceeded waiting for adaptive throttle."""
