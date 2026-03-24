@@ -15,7 +15,7 @@ from almapy._bibs import AlmaClientBibNS
 from almapy._config import AlmaClientConfigNS
 from almapy._throttle import AdaptiveController, TokenBucket
 from almapy._users import AlmaClientUserNS
-from almapy._utils import _RETRYABLE, RESP_TYPE, _parse_xml, _validate_response
+from almapy._utils import RESP_TYPE, _parse_xml, _should_retry, _validate_response
 
 _LOCATIONS: dict[str, str] = {
     "America": "https://api-na.hosted.exlibrisgroup.com",
@@ -120,7 +120,7 @@ class AlmaClient:
         """HTTP request with stamina retries; validate + parse inside retry loop."""
         result: RESP_TYPE | None = None
         async for attempt in stamina.retry_context(
-            on=_RETRYABLE,
+            on=_should_retry,
             attempts=self._retry_attempts,
             timeout=None,
             wait_initial=0.5,
