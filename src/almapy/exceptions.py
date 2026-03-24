@@ -3,24 +3,29 @@
 import re
 
 
-class APIClientError(Exception):
+class _AlmaError(Exception):
+    """Shared base for all Alma API exceptions raised by the error handler.
+
+    Two tiers of exceptions exist:
+    - Handler-raised: constructed with (code, msg) by _raise_for_error_body in _utils.py.
+    - Namespace-enriched: constructed with bespoke signatures by namespace methods that
+      catch a handler-raised exception, extract domain context (e.g. loan_id), and re-raise
+      with a richer type (e.g. CannotRenewError, UserMissingFieldError, InvalidCodeError).
+    """
+
+    def __init__(self, code: str, msg: str) -> None:
+        super().__init__(f"{msg} [{code}]")
+        self.code = code
+        self.error = msg
+        self.message = f"{msg} [{code}]"
+
+
+class APIClientError(_AlmaError):
     """Base exception for generic client-caused errors (HTTP 400s)."""
 
-    def __init__(self, code: str, msg: str) -> None:
-        super().__init__(f"{msg} [{code}]")
-        self.code = code
-        self.error = msg
-        self.message = f"{msg} [{code}]"
 
-
-class APIServerError(Exception):
+class APIServerError(_AlmaError):
     """Base exception for generic server-related errors (HTTP 500s)."""
-
-    def __init__(self, code: str, msg: str) -> None:
-        super().__init__(f"{msg} [{code}]")
-        self.code = code
-        self.error = msg
-        self.message = f"{msg} [{code}]"
 
 
 class ThresholdError(APIClientError):
