@@ -29,8 +29,6 @@ class BaseNamespace:  # noqa: B903
     delegates HTTP execution to AlmaClient._execute().
     """
 
-    __slots__ = ("_client",)
-
     def __init__(self, client: _AlmaExecutable) -> None:
         self._client = client
 
