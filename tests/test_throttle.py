@@ -24,11 +24,17 @@ class TestTokenBucket:
         await bucket.acquire()
         elapsed = time.monotonic() - start
         assert elapsed < 0.1
+        # Direct attribute access to verify exactly 1 token was consumed:
+        # _tokens starts at 10.0, minus 1 consumed, plus tiny refill ≈ 9.0
+        assert 8.5 <= bucket._tokens <= 9.1
 
     def test_rate_setter(self) -> None:
         bucket = TokenBucket(25.0)
         bucket.rate = 10.0
         assert bucket.rate == 10.0
+        # Direct attribute access to verify token consumption invariant:
+        # setter does self._tokens = min(self._tokens, value) → min(25.0, 10.0)
+        assert bucket._tokens == 10.0
 
     def test_rate_setter_rejects_zero(self) -> None:
         bucket = TokenBucket(25.0)
@@ -66,6 +72,9 @@ class TestTokenBucket:
         await bucket.acquire()
         elapsed = time.monotonic() - start
         assert 0.1 < elapsed < 0.5
+        # After waiting and consuming one newly-generated token, bucket should be near 0
+        # Direct attribute access to verify token consumption invariant
+        assert bucket._tokens <= 0.2
 
     @pytest.mark.asyncio
     async def test_concurrent_acquire_no_overdraw(self) -> None:
@@ -77,6 +86,10 @@ class TestTokenBucket:
         elapsed = time.monotonic() - start
         # Must have taken at least ~1s to serve all 10 at rate=5/s
         assert elapsed > 0.8
+        # Must not have been excessively serialized (deadlock/starvation guard)
+        assert elapsed < 3.0
+        # Direct attribute access to verify tokens near 0 after all consumed
+        assert bucket._tokens <= 0.5
 
 
 class TestAdaptiveController:

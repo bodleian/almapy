@@ -18,16 +18,17 @@ class TestBuild:
         })
         assert result == "/bibs/123/holdings/456/items/789"
 
-    def test_no_params_endpoint(self) -> None:
-        result = AlmaEndpoint.SETS.build()
-        assert result == "/conf/sets"
-
-    def test_no_params_endpoint_explicit_none(self) -> None:
-        result = AlmaEndpoint.SETS.build(None)
-        assert result == "/conf/sets"
-
-    def test_no_params_endpoint_empty_dict(self) -> None:
-        result = AlmaEndpoint.SETS.build({})
+    @pytest.mark.parametrize(
+        "params,use_default",
+        [
+            (None, True),
+            (None, False),
+            ({}, False),
+        ],
+        ids=["no_arg", "explicit_none", "empty_dict"],
+    )
+    def test_no_params_endpoint(self, params: dict[str, str] | None, use_default: bool) -> None:
+        result = AlmaEndpoint.SETS.build() if use_default else AlmaEndpoint.SETS.build(params)
         assert result == "/conf/sets"
 
     def test_missing_params_raises(self) -> None:
@@ -50,4 +51,3 @@ class TestBuild:
         """BIB_LOAN had a malformed bracket {LOAN_ID] — verify it's fixed."""
         result = AlmaEndpoint.BIB_LOAN.build({"MMS_ID": "111", "LOAN_ID": "222"})
         assert result == "/bibs/111/loans/222"
-

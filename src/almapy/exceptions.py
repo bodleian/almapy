@@ -45,7 +45,7 @@ class BarcodeNotFoundError(APIClientError):
 
     def __init__(self, code: str, msg: str) -> None:
         super().__init__(code, msg)
-        self.barcode = msg.split(" ")[-1][0:-1]
+        self.barcode = msg.split(" ")[-1][1:-1]
         self.message = f"Barcode not found: {self.barcode}"
 
 
@@ -171,7 +171,7 @@ class UserNotFoundError(APIClientError):
     def __init__(self, code: str, msg: str) -> None:
         super().__init__(code, msg)
         m = re.match(
-            r"User with identifier (?P<identifier>[A-Za-z0-9]+) was not found.",
+            r"User with identifier (?P<identifier>[A-Za-z0-9._-]+) was not found.",
             msg,
         )
         if m:

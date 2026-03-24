@@ -1,8 +1,9 @@
 """Alma API client — composed architecture, no gracy dependency."""
 
 import asyncio
+import contextlib
 from http import HTTPStatus
-from typing import Any, Literal
+from typing import Any, Literal, overload
 
 import httpx
 import stamina
@@ -15,7 +16,7 @@ from almapy._bibs import AlmaClientBibNS
 from almapy._config import AlmaClientConfigNS
 from almapy._throttle import AdaptiveController, TokenBucket
 from almapy._users import AlmaClientUserNS
-from almapy._utils import RESP_TYPE, _parse_xml, _should_retry, _validate_response
+from almapy._utils import RESP_TYPE, _ModelT, _parse_xml, _should_retry, _validate_response
 
 _LOCATIONS: dict[str, str] = {
     "America": "https://api-na.hosted.exlibrisgroup.com",
@@ -89,20 +90,43 @@ class AlmaClient:
         self.config: AlmaClientConfigNS = AlmaClientConfigNS(self)
         self.analytics: AlmaClientAnalyticsNS = AlmaClientAnalyticsNS(self)
 
+    @overload
     async def _execute(
         self,
         method: str,
         url: str,
         *,
         parser: Parser,
+        model: type[_ModelT],
         **kwargs: Any,
-    ) -> RESP_TYPE:
+    ) -> _ModelT: ...
+
+    @overload
+    async def _execute(
+        self,
+        method: str,
+        url: str,
+        *,
+        parser: Parser,
+        model: None = ...,
+        **kwargs: Any,
+    ) -> RESP_TYPE: ...
+
+    async def _execute(
+        self,
+        method: str,
+        url: str,
+        *,
+        parser: Parser,
+        model: Any = None,
+        **kwargs: Any,
+    ) -> Any:
         """Stamina retry loop; semaphore + controller acquired per attempt.
 
         Semaphore is released between attempts so backoff sleeps do not pin
         concurrency slots. record_failure is only called for retryable exceptions.
         """
-        result: RESP_TYPE | None = None
+        result: Any = None
         async for attempt in stamina.retry_context(
             on=_should_retry,
             attempts=self._retry_attempts,
@@ -119,6 +143,8 @@ class AlmaClient:
                         resp = await self._http.request(method, url, **kwargs)
                         _validate_response(resp)
                         result = self._parse(resp, parser)
+                        if model is not None:
+                            result = model.model_validate(result)
                     except Exception as exc:
                         if _should_retry(exc):
                             self._controller.record_failure()
@@ -139,6 +165,14 @@ class AlmaClient:
         if parser == "text":
             return Box({"_text": response.text})
         return Box(response.json())
+
+    def __del__(self) -> None:
+        """Schedule cleanup when the client is abandoned without being explicitly closed."""
+        http = getattr(self, "_http", None)
+        if not getattr(self, "_owns_client", False) or http is None or http.is_closed:
+            return
+        with contextlib.suppress(RuntimeError):
+            asyncio.get_running_loop().create_task(self.aclose())
 
     async def aclose(self) -> None:
         """Close the underlying HTTP client if this instance owns it."""

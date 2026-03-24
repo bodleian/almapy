@@ -7,6 +7,7 @@ from http import HTTPStatus
 from typing import (
     Any,
     TypedDict,
+    TypeVar,
     cast,
 )
 
@@ -18,6 +19,8 @@ from glom import Coalesce, GlomError, glom
 from almapy import exceptions
 
 RESP_TYPE = Box
+
+_ModelT = TypeVar("_ModelT")
 
 
 class Request(TypedDict, total=False):
