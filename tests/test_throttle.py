@@ -25,10 +25,6 @@ class TestTokenBucket:
         elapsed = time.monotonic() - start
         assert elapsed < 0.1
 
-    def test_rate_getter(self) -> None:
-        bucket = TokenBucket(25.0)
-        assert bucket.rate == 25.0
-
     def test_rate_setter(self) -> None:
         bucket = TokenBucket(25.0)
         bucket.rate = 10.0

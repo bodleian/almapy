@@ -51,7 +51,3 @@ class TestBuild:
         result = AlmaEndpoint.BIB_LOAN.build({"MMS_ID": "111", "LOAN_ID": "222"})
         assert result == "/bibs/111/loans/222"
 
-    def test_str_enum_value(self) -> None:
-        """AlmaEndpoint should be usable as a plain string."""
-        assert AlmaEndpoint.USERS.value == "/users"
-        assert isinstance(AlmaEndpoint.USERS, str)

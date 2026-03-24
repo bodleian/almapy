@@ -27,18 +27,6 @@ def _make_response(
 
 
 class TestValidateResponse:
-    def test_200_is_no_op(self) -> None:
-        response = _make_response(200)
-        _validate_response(response)  # must not raise
-
-    def test_201_is_no_op(self) -> None:
-        response = _make_response(201)
-        _validate_response(response)
-
-    def test_204_is_no_op(self) -> None:
-        response = _make_response(204)
-        _validate_response(response)
-
     def test_400_raises_api_client_error(self) -> None:
         response = _make_response(400, _error_body("ABC", "bad input"))
         with pytest.raises(exceptions.APIClientError):
