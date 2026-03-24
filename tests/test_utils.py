@@ -83,6 +83,11 @@ class TestShouldRetry:
         exc = exceptions.ThresholdError("429", "rate limited")
         assert _should_retry(exc) is True
 
+    def test_threshold_error_is_not_api_server_error(self) -> None:
+        """ThresholdError must not inherit APIServerError — retry logic is explicit in _RETRYABLE."""
+        exc = exceptions.ThresholdError("429", "rate limited")
+        assert not isinstance(exc, exceptions.APIServerError)
+
     def test_connect_error_is_retryable(self) -> None:
         exc = httpx.ConnectError("connection refused")
         assert _should_retry(exc) is True

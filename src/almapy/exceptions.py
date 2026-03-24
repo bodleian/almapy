@@ -23,7 +23,7 @@ class APIServerError(Exception):
         self.message = f"{msg} [{code}]"
 
 
-class ThresholdError(APIServerError):
+class ThresholdError(APIClientError):
     """Raised when the API rate limit is exceeded."""
 
     def __init__(self, code: str, msg: str) -> None:

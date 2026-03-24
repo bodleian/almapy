@@ -61,7 +61,8 @@ def _validate_response(response: httpx.Response) -> None:
 
 
 _RETRYABLE = (
-    exceptions.APIServerError,  # covers ThresholdError (429) and all 5xx
+    exceptions.ThresholdError,  # 429 rate limit
+    exceptions.APIServerError,  # 5xx server errors
     httpx.ConnectError,
     httpx.TimeoutException,  # base for ReadTimeout, WriteTimeout, ConnectTimeout, PoolTimeout
     httpx.RemoteProtocolError,
