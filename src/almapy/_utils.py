@@ -60,13 +60,6 @@ def _validate_response(response: httpx.Response) -> None:
         _handle_error(response)
 
 
-class AlmaErrorValidator:
-    """Compatibility shim — removed when _client.py is rewritten in task 5."""
-
-    def check(self, response: httpx.Response) -> None:
-        _validate_response(response)
-
-
 _RETRYABLE = (
     exceptions.APIServerError,  # covers ThresholdError (429) and all 5xx
     httpx.ConnectError,
