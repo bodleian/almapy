@@ -170,10 +170,12 @@ class TestAdaptiveController:
 
     @pytest.mark.asyncio
     async def test_max_wait_raises(self) -> None:
+        from almapy.exceptions import ThrottleTimeoutError
+
         bucket = TokenBucket(100.0)
         ctrl = AdaptiveController(bucket, max_rate=100.0, cooldown=10.0, max_wait=0.1)
         ctrl.record_failure()  # sets 10s cooldown
-        with pytest.raises(TimeoutError):
+        with pytest.raises(ThrottleTimeoutError):
             await ctrl.acquire()
 
     @pytest.mark.asyncio

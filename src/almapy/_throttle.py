@@ -9,6 +9,8 @@ Three separated concerns:
 import asyncio
 import time
 
+from almapy.exceptions import ThrottleTimeoutError
+
 
 class TokenBucket:
     """Async token-bucket rate limiter with mutable rate.
@@ -98,11 +100,14 @@ class AdaptiveController:
         return self._bucket.rate
 
     async def acquire(self) -> None:
-        async with asyncio.timeout(self._max_wait):
-            cool = self._cooling_until - time.monotonic()
-            if cool > 0:
-                await asyncio.sleep(cool)
-            await self._bucket.acquire()
+        try:
+            async with asyncio.timeout(self._max_wait):
+                cool = self._cooling_until - time.monotonic()
+                if cool > 0:
+                    await asyncio.sleep(cool)
+                await self._bucket.acquire()
+        except TimeoutError as exc:
+            raise ThrottleTimeoutError from exc
 
     def record_failure(self) -> None:
         now = time.monotonic()
