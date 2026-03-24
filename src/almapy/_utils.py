@@ -57,7 +57,7 @@ def _parse_xml(text: str) -> "OrderedDict[str, Any]":
 def _validate_response(response: httpx.Response) -> None:
     """Raise an appropriate exception if the response indicates an error."""
     if response.status_code >= HTTPStatus.BAD_REQUEST:
-        _handle_error(response)
+        _raise_for_error_body(response)
 
 
 _RETRYABLE = (
@@ -86,14 +86,35 @@ def _get_error_class(
     return None
 
 
-def _process_response(response: httpx.Response) -> "tuple[str, str] | None":
-    if response.status_code == HTTPStatus.OK:
-        return None
+_ERROR_MAPPING: dict[str, type[exceptions.APIServerError | exceptions.APIClientError]] = {
+    "401689": exceptions.BarcodeNotFoundError,
+    "401161": exceptions.LoanLimitError,
+    "401201": exceptions.LoanBlockedError,
+    "401873": exceptions.RequestFailedError,
+    "40166404": exceptions.InvalidFieldError,
+    "401163": exceptions.LoanBlockedError,
+    "401198": exceptions.ParallelLoanError,
+    "402504": exceptions.ScanItemRetrievalError,
+    "401129": exceptions.NoItemsCanFulfillRequestError,
+    "401136": exceptions.ParallelRequestError,
+    "401876": exceptions.POUpdateFailedError,
+    "402203": exceptions.MMSIdNotFoundError,
+    "401861": exceptions.UserNotFoundError,
+    "401823": exceptions.LoanNotFoundError,
+    "401168": exceptions.ExpiredCardError,
+    "400042": exceptions.ItemAlreadyLoanedToUserError,
+    "401690": exceptions.IllegalBarcodeError,
+    "401153": exceptions.CannotBeLoanedError,
+    "401151": exceptions.UserIsNotAPatronError,
+}
 
+
+def _raise_for_error_body(response: httpx.Response) -> None:
+    """Parse an error response body and raise the appropriate exception. Always raises."""
     ct = response.headers.get("Content-Type")
     if ct and "xml" in ct:
         body = _parse_xml(response.text)
-    elif response.headers.get("Content-Type") == "text/plain":
+    elif ct == "text/plain":
         raise exceptions.APIServerError(str(response.status_code), response.text)
     else:
         body = json.loads(response.text)
@@ -115,42 +136,5 @@ def _process_response(response: httpx.Response) -> "tuple[str, str] | None":
 
     message = code if not message else message.strip()
 
-    return code, message
-
-
-def _handle_error(response: httpx.Response) -> None:
-    if processed := _process_response(response):
-        code, message = processed
-    else:
-        return
-
-    error_mapping: dict[
-        HTTPStatus | str, type[exceptions.APIServerError | exceptions.APIClientError]
-    ] = {
-        "401689": exceptions.BarcodeNotFoundError,
-        "401161": exceptions.LoanLimitError,
-        "401201": exceptions.LoanBlockedError,
-        "401873": exceptions.RequestFailedError,
-        "40166404": exceptions.InvalidFieldError,
-        "401163": exceptions.LoanBlockedError,
-        "401198": exceptions.ParallelLoanError,
-        "402504": exceptions.ScanItemRetrievalError,
-        "401129": exceptions.NoItemsCanFulfillRequestError,
-        "401136": exceptions.ParallelRequestError,
-        "401876": exceptions.POUpdateFailedError,
-        "402203": exceptions.MMSIdNotFoundError,
-        "401861": exceptions.UserNotFoundError,
-        "401823": exceptions.LoanNotFoundError,
-        "401168": exceptions.ExpiredCardError,
-        "400042": exceptions.ItemAlreadyLoanedToUserError,
-        "401690": exceptions.IllegalBarcodeError,
-        "401153": exceptions.CannotBeLoanedError,
-        "401151": exceptions.UserIsNotAPatronError,
-    }
-
-    error_class = error_mapping.get(str(code)) or _get_error_class(response.status_code)
-
-    if error_class:
-        raise error_class(code, message)
-
-    raise exceptions.APIClientError(code, message)
+    error_class = _ERROR_MAPPING.get(str(code)) or _get_error_class(response.status_code)
+    raise error_class(code, message)  # type: ignore[misc]

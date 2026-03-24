@@ -73,6 +73,24 @@ class TestValidateResponse:
         with pytest.raises(exceptions.APIServerError):
             _validate_response(response)
 
+    def test_xml_error_body_raises_correct_exception(self) -> None:
+        xml_body = (
+            "<web_service_result>"
+            "<errorList><error>"
+            "<errorCode>401861</errorCode>"
+            "<errorMessage>User with identifier jsmith was not found.</errorMessage>"
+            "</error></errorList>"
+            "</web_service_result>"
+        )
+        response = _make_response(404, xml_body, content_type="application/xml")
+        with pytest.raises(exceptions.UserNotFoundError):
+            _validate_response(response)
+
+    def test_unrecognised_json_body_raises_api_server_error(self) -> None:
+        response = _make_response(400, '{"something": "unexpected"}')
+        with pytest.raises(exceptions.APIServerError, match="Unknown error"):
+            _validate_response(response)
+
 
 class TestShouldRetry:
     def test_api_server_error_is_retryable(self) -> None:
