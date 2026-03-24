@@ -10,6 +10,7 @@ dependencies = [
   "glom>=23.5.0",
   "gracy>=1.32.1",
   "typing-extensions (>=4.12.2,<5.0.0)",
+  "stamina>=25.2.0",
 ]
 
 [build-system]
