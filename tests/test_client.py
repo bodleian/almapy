@@ -196,3 +196,30 @@ class TestExecuteModelValidation:
         call_arg = mock_model.model_validate.call_args[0][0]
         assert isinstance(call_arg, Box)
         assert call_arg.foo == "bar"
+
+    @pytest.mark.asyncio
+    async def test_model_validate_exception_propagates(
+        self, client: AlmaClient, mock_http: AsyncMock
+    ) -> None:
+        mock_http.request.return_value = _make_response(200, '{"foo": "bar"}')
+        mock_model = MagicMock()
+        mock_model.model_validate.side_effect = ValueError("bad data")
+
+        with pytest.raises(ValueError, match="bad data"):
+            await client._execute("GET", "/users", parser="json", model=mock_model)
+
+    @pytest.mark.asyncio
+    async def test_model_receives_empty_box_on_no_content(
+        self, client: AlmaClient, mock_http: AsyncMock
+    ) -> None:
+        """204 No Content → Box() is passed to model_validate (not skipped)."""
+        mock_http.request.return_value = _make_response(204, "")
+        mock_model = MagicMock()
+        mock_model.model_validate.return_value = "empty_model"
+
+        result: str = await client._execute("GET", "/users", parser="json", model=mock_model)
+
+        assert result == "empty_model"
+        call_arg = mock_model.model_validate.call_args[0][0]
+        assert isinstance(call_arg, Box)
+        assert len(call_arg) == 0

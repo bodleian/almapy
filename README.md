@@ -60,6 +60,32 @@ if __name__ == "__main__":
 
 ```
 
+## Pydantic model validation
+
+All Box-returning methods accept an optional `model=` keyword argument. When supplied,
+the raw `Box` response is passed to `model.model_validate()` and the validated instance
+is returned. No pydantic dependency is added to almapy — validation is duck-typed, so
+any class with a `model_validate` classmethod works.
+
+```python
+from pydantic import BaseModel
+from almapy import AlmaClient
+
+class BibData(BaseModel):
+    mms_id: str
+    title: str | None = None
+
+async def main():
+    async with AlmaClient(apikey="KEY") as client:
+        # Returns BibData instead of Box
+        bib: BibData = await client.bibs.get_item("98279242", model=BibData)
+        print(bib.title)
+
+        # Default behaviour unchanged — still returns Box
+        raw = await client.bibs.get_item("98279242")
+        print(raw.bib_data.title)
+```
+
 ## TODO
 - [ ] Better documentation
 - [ ] More endpoints
