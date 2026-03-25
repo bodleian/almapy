@@ -106,7 +106,7 @@ class TestParse:
     def test_text_parser(self, client: AlmaClient) -> None:
         resp = _make_response(200, "raw text", content_type="text/plain")
         result = client._parse(resp, "text")
-        assert result["_text"] == "raw text"
+        assert result == "raw text"
 
     def test_none_parser(self, client: AlmaClient) -> None:
         resp = _make_response(200, '{"ignored": true}')

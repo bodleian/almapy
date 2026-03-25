@@ -176,12 +176,12 @@ class AlmaClient:
         await self.aclose()
 
     @staticmethod
-    def _parse(response: httpx.Response, parser: Parser) -> RESP_TYPE:
+    def _parse(response: httpx.Response, parser: Parser) -> RESP_TYPE | str:
         """Parse an httpx response according to the requested parser."""
         if parser == "none" or response.status_code == HTTPStatus.NO_CONTENT:
             return Box()
         if parser == "xml":
             return Box(_parse_xml(response.text))
         if parser == "text":
-            return Box({"_text": response.text})
+            return response.text
         return Box(response.json())

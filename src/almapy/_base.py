@@ -180,9 +180,8 @@ class BaseNamespace:  # noqa: B903
         **kwargs: Any,
     ) -> str:
         """GET returning raw response text (e.g., MARC XML records)."""
-        result = await self._get(endpoint, path, parser="text", **kwargs)
-        text: str = result["_text"]
-        return text
+        result: Any = await self._get(endpoint, path, parser="text", **kwargs)
+        return result
 
     async def _post_text(
         self,
@@ -191,9 +190,8 @@ class BaseNamespace:  # noqa: B903
         **kwargs: Any,
     ) -> str:
         """POST returning raw response text."""
-        result = await self._post(endpoint, path, parser="text", **kwargs)
-        text: str = result["_text"]
-        return text
+        result: Any = await self._post(endpoint, path, parser="text", **kwargs)
+        return result
 
     async def _put_text(
         self,
@@ -202,6 +200,5 @@ class BaseNamespace:  # noqa: B903
         **kwargs: Any,
     ) -> str:
         """PUT returning raw response text."""
-        result = await self._put(endpoint, path, parser="text", **kwargs)
-        text: str = result["_text"]
-        return text
+        result: Any = await self._put(endpoint, path, parser="text", **kwargs)
+        return result
