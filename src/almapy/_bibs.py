@@ -405,7 +405,7 @@ class AlmaClientBibRequestsNS(BaseNamespace):
         *,
         notify_user: bool,
         note: str | None = None,
-    ) -> bool:
+    ) -> None:
         params: dict[str, Any] = {"reason": reason, "notify_user": notify_user}
         if note:
             params["note"] = note
@@ -420,7 +420,6 @@ class AlmaClientBibRequestsNS(BaseNamespace):
             parser="none",
             params=params,
         )
-        return True
 
     @overload
     async def create_request(
@@ -661,14 +660,13 @@ class AlmaClientBibNS(BaseNamespace):
         override: bool = False,
         handle_holding: Literal["retain", "delete", "suppress"] = "retain",
         handle_bib: Literal["retain", "delete", "suppress"] = "retain",
-    ) -> bool:
+    ) -> None:
         await self._delete(
             AlmaEndpoint.ITEM,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
             parser="none",
             params={"bib": handle_bib, "holdings": handle_holding, "override": override},
         )
-        return True
 
     @overload
     async def get_items(
@@ -820,14 +818,13 @@ class AlmaClientBibNS(BaseNamespace):
         holding_id: str,
         *,
         handle_bib: Literal["retain", "delete", "suppress"] = "retain",
-    ) -> bool:
+    ) -> None:
         await self._delete(
             AlmaEndpoint.HOLDING,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
             parser="none",
             params={"bib": handle_bib},
         )
-        return True
 
     @overload
     async def get_holdings(self, mms_id: str, *, model: type[_ModelT]) -> _ModelT: ...
@@ -942,7 +939,7 @@ class AlmaClientBibNS(BaseNamespace):
         *,
         override: bool = True,
         cataloguer_level: str | None = None,
-    ) -> bool:
+    ) -> None:
         params: dict[str, str | bool] = {"override": override}
         if cataloguer_level:
             params["cataloguer_level"] = cataloguer_level
@@ -952,7 +949,6 @@ class AlmaClientBibNS(BaseNamespace):
             parser="none",
             params=params,
         )
-        return True
 
     @overload
     async def scan_in(

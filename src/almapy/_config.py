@@ -150,9 +150,8 @@ class AlmaClientConfigSetsNS(BaseNamespace):
             AlmaEndpoint.SET_MEMBERS, {"SET_ID": set_id}, model=model, params=params
         )
 
-    async def delete_set(self, set_id: str) -> bool:
+    async def delete_set(self, set_id: str) -> None:
         await self._delete(AlmaEndpoint.SET, {"SET_ID": set_id}, parser="none")
-        return True
 
     @overload
     async def manage_members(

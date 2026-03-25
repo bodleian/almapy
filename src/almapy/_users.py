@@ -538,7 +538,7 @@ class AlmaClientUserRequestsNS(BaseNamespace):
         *,
         notify_user: bool,
         note: str | None = None,
-    ) -> bool:
+    ) -> None:
         params: dict[str, Any] = {"reason": reason, "notify_user": notify_user}
         if note:
             params["note"] = note
@@ -548,7 +548,6 @@ class AlmaClientUserRequestsNS(BaseNamespace):
             parser="none",
             params=params,
         )
-        return True
 
 
 class AlmaClientUserNS(BaseNamespace):

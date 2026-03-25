@@ -120,7 +120,7 @@ class AlmaClientAcqNS(BaseNamespace):
         inform_vendor: bool = False,
         override: bool = False,
         bib_handling: Literal["retain", "delete", "suppress"] = "retain",
-    ) -> bool:
+    ) -> None:
         params: dict[str, Any] = {
             "reason": reason_code,
             "inform_vendor": inform_vendor,
@@ -132,4 +132,3 @@ class AlmaClientAcqNS(BaseNamespace):
         await self._delete(
             AlmaEndpoint.PO_LINE, {"PO_LINE_ID": po_line_id}, parser="none", params=params
         )
-        return True
