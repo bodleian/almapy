@@ -1,9 +1,9 @@
 import re
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from almapy._base import BaseNamespace
 from almapy._endpoints import AlmaEndpoint
-from almapy._utils import RESP_TYPE, Request
+from almapy._utils import RESP_TYPE, Request, _ModelT
 from almapy.exceptions import APIClientError, CannotRenewError, InvalidCodeError, RequestFailedError
 
 if TYPE_CHECKING:
@@ -12,6 +12,40 @@ if TYPE_CHECKING:
 
 class AlmaClientBibLoansNS(BaseNamespace):
     """Namespace for bib requests, exposed at AlmaClient.bibs.requests."""
+
+    @overload
+    async def get_loans(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        limit: int = ...,
+        offset: int = ...,
+        order_by: Literal[
+            "loan_date", "due_date", "barcode", "title", "author", "return_date"
+        ] = ...,
+        direction: Literal["asc", "desc"] = ...,
+        loan_status: Literal["Active", "Complete"] = ...,
+        *,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
+
+    @overload
+    async def get_loans(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        limit: int = ...,
+        offset: int = ...,
+        order_by: Literal[
+            "loan_date", "due_date", "barcode", "title", "author", "return_date"
+        ] = ...,
+        direction: Literal["asc", "desc"] = ...,
+        loan_status: Literal["Active", "Complete"] = ...,
+        *,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
 
     async def get_loans(
         self,
@@ -25,33 +59,10 @@ class AlmaClientBibLoansNS(BaseNamespace):
         ] = "due_date",
         direction: Literal["asc", "desc"] = "asc",
         loan_status: Literal["Active", "Complete"] = "Active",
-    ) -> RESP_TYPE:
-        """Retrieves loans for a specific item.
-
-        Args:
-            mms_id (str): The item's parent bib record MMS ID.
-            holding_id (str): The item's parent holding record ID.
-            item_id (str): The item PID.
-            limit (int, optional): The maximum number of loans to return. Defaults to 100.
-            offset (int, optional): The number of loans to skip. Defaults to 0.
-            order_by (str, optional): The field by which to sort the returned loans.
-                Options are "loan_date", "due_date", "barcode", "title", "author" and "return_date".
-                Defaults to "due_date".
-            direction (str, optional): The direction in which to sort the returned loans.
-                Options are "asc" and "desc".
-                Defaults to "asc".
-            loan_status (str, optional): The status of the loans to return.
-                Options are "Active" and "Complete".
-                Defaults to "Active".
-
-        Returns:
-            Dict[str, Any]: A response dict with the requested loan information.
-
-        Raises:
-            APIClientError: If there is an error with the input.
-            APIServerError: If there is an error with the server.
-
-        """
+        *,
+        model: Any = None,
+    ) -> Any:
+        """Retrieves loans for a specific item."""
         params = {
             "limit": limit,
             "offset": offset,
@@ -62,8 +73,37 @@ class AlmaClientBibLoansNS(BaseNamespace):
         return await self._get(
             AlmaEndpoint.ITEM_LOANS,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
+            model=model,
             params=params,
         )
+
+    @overload
+    async def create_loan(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        user_id: str,
+        circ_desk: str,
+        library: str,
+        request_id: str | None = ...,
+        *,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
+
+    @overload
+    async def create_loan(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        user_id: str,
+        circ_desk: str,
+        library: str,
+        request_id: str | None = ...,
+        *,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
 
     async def create_loan(
         self,
@@ -74,80 +114,57 @@ class AlmaClientBibLoansNS(BaseNamespace):
         circ_desk: str,
         library: str,
         request_id: str | None = None,
-    ) -> RESP_TYPE:
-        """Creates a loan for a specific copy of an item.
-
-        Args:
-            mms_id (str): The item's parent bib record MMS ID.
-            holding_id (str): The item's parent holding record ID.
-            item_id (str): The item PID.
-            user_id (str): The user identifier.
-            circ_desk (str): The circulation desk from which to loan the item.
-            library (str): The library at which to loan the item.
-            request_id (str, optional): The request identifier associated with the loan, if any.
-
-        Returns:
-            Dict[str, Any]: A response dict with the requested loan information.
-
-        Raises:
-            APIClientError: If there is an error with the input.
-            APIServerError: If there is an error with the server.
-
-        """
+        *,
+        model: Any = None,
+    ) -> Any:
+        """Creates a loan for a specific copy of an item."""
         loan: dict[str, Any] = {"circ_desk": {"value": circ_desk}, "library": {"value": library}}
         if request_id:
             loan["request_id"] = {"value": request_id}
         return await self._post(
             AlmaEndpoint.ITEM_LOANS,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
+            model=model,
             json=loan,
             params={"user_id": user_id},
         )
 
-    async def get_loan(self, mms_id: str, holding_id: str, item_id: str, loan_id: str) -> RESP_TYPE:
-        """Get the details of a specific loan on a specific copy of an item.
+    @overload
+    async def get_loan(
+        self, mms_id: str, holding_id: str, item_id: str, loan_id: str, *, model: type[_ModelT]
+    ) -> _ModelT: ...
 
-        Args:
-            mms_id (str): The item's parent bib record MMS ID.
-            holding_id (str): The item's parent holding record ID.
-            item_id (str): The item PID.
-            loan_id (str): The loan ID.
+    @overload
+    async def get_loan(
+        self, mms_id: str, holding_id: str, item_id: str, loan_id: str, *, model: None = ...
+    ) -> RESP_TYPE: ...
 
-        Returns:
-            Dict[str, Any]: A response dict with the requested loan information.
-
-        Raises:
-            APIClientError: If there is an error with the input.
-            APIServerError: If there is an error with the server.
-
-        """
+    async def get_loan(
+        self, mms_id: str, holding_id: str, item_id: str, loan_id: str, *, model: Any = None
+    ) -> Any:
+        """Get the details of a specific loan on a specific copy of an item."""
         return await self._get(
             AlmaEndpoint.ITEM_LOAN,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id, "LOAN_ID": loan_id},
+            model=model,
         )
 
+    @overload
     async def renew_loan(
-        self, mms_id: str, holding_id: str, item_id: str, loan_id: str
-    ) -> RESP_TYPE:
-        """Renew a loan on a specific copy of an item.
+        self, mms_id: str, holding_id: str, item_id: str, loan_id: str, *, model: type[_ModelT]
+    ) -> _ModelT: ...
 
-        Args:
-            mms_id (str): The item's parent bib record MMS ID.
-            holding_id (str): The item's parent holding record ID.
-            item_id (str): The item PID.
-            loan_id (str): The loan ID.
+    @overload
+    async def renew_loan(
+        self, mms_id: str, holding_id: str, item_id: str, loan_id: str, *, model: None = ...
+    ) -> RESP_TYPE: ...
 
-        Returns:
-            Dict[str, Any]: The updated loan information.
-
-        Raises:
-            CannotRenewError: If the item cannot be renewed for any reason.
-            APIClientError: If there is an error with the input.
-            APIServerError: If there is an error with the server.
-
-        """
+    async def renew_loan(
+        self, mms_id: str, holding_id: str, item_id: str, loan_id: str, *, model: Any = None
+    ) -> Any:
+        """Renew a loan on a specific copy of an item."""
         try:
-            resp: RESP_TYPE = await self._post(
+            resp: Any = await self._post(
                 AlmaEndpoint.ITEM_LOAN,
                 {
                     "MMS_ID": mms_id,
@@ -155,6 +172,7 @@ class AlmaClientBibLoansNS(BaseNamespace):
                     "ITEM_PID": item_id,
                     "LOAN_ID": loan_id,
                 },
+                model=model,
                 params={"op": "renew"},
             )
         except APIClientError as e:
@@ -163,33 +181,78 @@ class AlmaClientBibLoansNS(BaseNamespace):
             raise
         return resp
 
+    @overload
     async def change_loan_due_date(
-        self, mms_id: str, holding_id: str, item_id: str, loan_id: str, due_date: str
-    ) -> RESP_TYPE:
-        """Changes the due date of a loan on a specific copy of an item.
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        loan_id: str,
+        due_date: str,
+        *,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
 
-        Args:
-            mms_id (str): The item's parent bib record MMS ID.
-            holding_id (str): The item's parent holding record ID.
-            item_id (str): The item PID.
-            loan_id (str): The loan ID.
-            due_date (str): Due date in the format YYYY-MM-DD.
+    @overload
+    async def change_loan_due_date(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        loan_id: str,
+        due_date: str,
+        *,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
 
-        Returns:
-            Dict[str, Any]: The updated loan information.
-
-        Raises:
-            CannotRenewError: If the item cannot be renewed for any reason.
-            APIClientError: If there is an error with the input.
-            APIServerError: If there is an error with the server.
-
-        """
+    async def change_loan_due_date(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        loan_id: str,
+        due_date: str,
+        *,
+        model: Any = None,
+    ) -> Any:
+        """Changes the due date of a loan on a specific copy of an item."""
         loan = {"due_date": due_date}
         return await self._put(
             AlmaEndpoint.ITEM_LOAN,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id, "LOAN_ID": loan_id},
+            model=model,
             json=loan,
         )
+
+    @overload
+    async def get_bib_loans(
+        self,
+        mms_id: str,
+        limit: int = ...,
+        offset: int = ...,
+        order_by: Literal[
+            "loan_date", "due_date", "barcode", "title", "author", "return_date"
+        ] = ...,
+        direction: Literal["asc", "desc"] = ...,
+        loan_status: Literal["Active", "Complete"] = ...,
+        *,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
+
+    @overload
+    async def get_bib_loans(
+        self,
+        mms_id: str,
+        limit: int = ...,
+        offset: int = ...,
+        order_by: Literal[
+            "loan_date", "due_date", "barcode", "title", "author", "return_date"
+        ] = ...,
+        direction: Literal["asc", "desc"] = ...,
+        loan_status: Literal["Active", "Complete"] = ...,
+        *,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
 
     async def get_bib_loans(
         self,
@@ -201,7 +264,9 @@ class AlmaClientBibLoansNS(BaseNamespace):
         ] = "due_date",
         direction: Literal["asc", "desc"] = "asc",
         loan_status: Literal["Active", "Complete"] = "Active",
-    ) -> RESP_TYPE:
+        *,
+        model: Any = None,
+    ) -> Any:
         params = {
             "limit": limit,
             "offset": offset,
@@ -209,13 +274,47 @@ class AlmaClientBibLoansNS(BaseNamespace):
             "direction": direction,
             "loan_status": loan_status,
         }
-        return await self._get(AlmaEndpoint.BIB_LOANS, {"MMS_ID": mms_id}, params=params)
+        return await self._get(
+            AlmaEndpoint.BIB_LOANS, {"MMS_ID": mms_id}, model=model, params=params
+        )
 
-    async def get_bib_loan(self, mms_id: str, loan_id: str) -> RESP_TYPE:
-        return await self._get(AlmaEndpoint.BIB_LOAN, {"MMS_ID": mms_id, "LOAN_ID": loan_id})
+    @overload
+    async def get_bib_loan(self, mms_id: str, loan_id: str, *, model: type[_ModelT]) -> _ModelT: ...
+
+    @overload
+    async def get_bib_loan(self, mms_id: str, loan_id: str, *, model: None = ...) -> RESP_TYPE: ...
+
+    async def get_bib_loan(self, mms_id: str, loan_id: str, *, model: Any = None) -> Any:
+        return await self._get(
+            AlmaEndpoint.BIB_LOAN, {"MMS_ID": mms_id, "LOAN_ID": loan_id}, model=model
+        )
 
 
 class AlmaClientBibRequestsNS(BaseNamespace):
+    @overload
+    async def get_requests(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        request_type: Literal["all_types", "HOLD", "DIGITIZATION", "BOOKING"] = ...,
+        status: Literal["active", "history"] = ...,
+        *,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
+
+    @overload
+    async def get_requests(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        request_type: Literal["all_types", "HOLD", "DIGITIZATION", "BOOKING"] = ...,
+        status: Literal["active", "history"] = ...,
+        *,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
+
     async def get_requests(
         self,
         mms_id: str,
@@ -223,32 +322,68 @@ class AlmaClientBibRequestsNS(BaseNamespace):
         item_id: str,
         request_type: Literal["all_types", "HOLD", "DIGITIZATION", "BOOKING"] = "all_types",
         status: Literal["active", "history"] = "active",
-    ) -> RESP_TYPE:
+        *,
+        model: Any = None,
+    ) -> Any:
         params = {"request_type": request_type, "status": status}
         return await self._get(
             AlmaEndpoint.ITEM_REQUESTS,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
+            model=model,
             params=params,
         )
 
     get_requests_for_item = get_requests
+
+    @overload
+    async def get_requests_for_bib(
+        self,
+        mms_id: str,
+        request_type: Literal["all_types", "HOLD", "DIGITIZATION", "BOOKING"] = ...,
+        status: Literal["active", "history"] = ...,
+        *,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
+
+    @overload
+    async def get_requests_for_bib(
+        self,
+        mms_id: str,
+        request_type: Literal["all_types", "HOLD", "DIGITIZATION", "BOOKING"] = ...,
+        status: Literal["active", "history"] = ...,
+        *,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
 
     async def get_requests_for_bib(
         self,
         mms_id: str,
         request_type: Literal["all_types", "HOLD", "DIGITIZATION", "BOOKING"] = "all_types",
         status: Literal["active", "history"] = "active",
-    ) -> RESP_TYPE:
+        *,
+        model: Any = None,
+    ) -> Any:
         params = {"request_type": request_type, "status": status}
         return await self._get(
             AlmaEndpoint.BIB_REQUESTS,
             {"MMS_ID": mms_id},
+            model=model,
             params=params,
         )
 
+    @overload
     async def get_request(
-        self, mms_id: str, holding_id: str, item_id: str, request_id: str
-    ) -> RESP_TYPE:
+        self, mms_id: str, holding_id: str, item_id: str, request_id: str, *, model: type[_ModelT]
+    ) -> _ModelT: ...
+
+    @overload
+    async def get_request(
+        self, mms_id: str, holding_id: str, item_id: str, request_id: str, *, model: None = ...
+    ) -> RESP_TYPE: ...
+
+    async def get_request(
+        self, mms_id: str, holding_id: str, item_id: str, request_id: str, *, model: Any = None
+    ) -> Any:
         return await self._get(
             AlmaEndpoint.ITEM_REQUEST,
             {
@@ -257,6 +392,7 @@ class AlmaClientBibRequestsNS(BaseNamespace):
                 "ITEM_PID": item_id,
                 "REQUEST_ID": request_id,
             },
+            model=model,
         )
 
     async def cancel_request(
@@ -286,6 +422,34 @@ class AlmaClientBibRequestsNS(BaseNamespace):
         )
         return True
 
+    @overload
+    async def create_request(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        user_id: str,
+        request: Request,
+        user_id_type: str = ...,
+        *,
+        allow_same_request: bool = ...,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
+
+    @overload
+    async def create_request(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        user_id: str,
+        request: Request,
+        user_id_type: str = ...,
+        *,
+        allow_same_request: bool = ...,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
+
     async def create_request(
         self,
         mms_id: str,
@@ -296,7 +460,8 @@ class AlmaClientBibRequestsNS(BaseNamespace):
         user_id_type: str = "all_unique",
         *,
         allow_same_request: bool = False,
-    ) -> RESP_TYPE:
+        model: Any = None,
+    ) -> Any:
         params = {
             "user_id": user_id,
             "user_id_type": user_id_type,
@@ -305,13 +470,45 @@ class AlmaClientBibRequestsNS(BaseNamespace):
         return await self._post(
             AlmaEndpoint.ITEM_REQUESTS,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_id},
+            model=model,
             params=params,
             json=request,
         )
 
+    @overload
     async def update_request(
-        self, mms_id: str, holding_id: str, item_id: str, request_id: str, request: Request
-    ) -> RESP_TYPE:
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        request_id: str,
+        request: Request,
+        *,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
+
+    @overload
+    async def update_request(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        request_id: str,
+        request: Request,
+        *,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
+
+    async def update_request(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_id: str,
+        request_id: str,
+        request: Request,
+        *,
+        model: Any = None,
+    ) -> Any:
         return await self._put(
             AlmaEndpoint.ITEM_REQUEST,
             {
@@ -320,6 +517,7 @@ class AlmaClientBibRequestsNS(BaseNamespace):
                 "ITEM_PID": item_id,
                 "REQUEST_ID": request_id,
             },
+            model=model,
             json=request,
         )
 
@@ -336,37 +534,59 @@ class AlmaClientBibNS(BaseNamespace):
         self.loans = AlmaClientBibLoansNS(client)
         self.requests = AlmaClientBibRequestsNS(client)
 
-    async def get_item(self, item_barcode: str) -> RESP_TYPE:
-        """Get item information by barcode.
+    @overload
+    async def get_item(self, item_barcode: str, *, model: type[_ModelT]) -> _ModelT: ...
 
-        Args:
-            item_barcode (str): The item barcode.
+    @overload
+    async def get_item(self, item_barcode: str, *, model: None = ...) -> RESP_TYPE: ...
 
-        Returns:
-            Dict[str, Any]: The item dict
-
-        Raises:
-            APIClientError: If an error occurred while making the API request.
-        """
-        return await self._get(AlmaEndpoint.BARCODE, params={"item_barcode": item_barcode})
-
-    async def get_item_by_pid(self, mms_id: str, holding_id: str, item_pid: str) -> RESP_TYPE:
-        """Get item information by barcode.
-
-        Args:
-            mms_id (str): The MMS ID.
-            holding_id (str): The Holding ID.
-            item_pid (str): The Item PID.
-
-        Returns:
-            Dict[str, Any]: The item dict
-
-        Raises:
-            APIClientError: If an error occurred while making the API request.
-        """
+    async def get_item(self, item_barcode: str, *, model: Any = None) -> Any:
+        """Get item information by barcode."""
         return await self._get(
-            AlmaEndpoint.ITEM, {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid}
+            AlmaEndpoint.BARCODE, model=model, params={"item_barcode": item_barcode}
         )
+
+    @overload
+    async def get_item_by_pid(
+        self, mms_id: str, holding_id: str, item_pid: str, *, model: type[_ModelT]
+    ) -> _ModelT: ...
+
+    @overload
+    async def get_item_by_pid(
+        self, mms_id: str, holding_id: str, item_pid: str, *, model: None = ...
+    ) -> RESP_TYPE: ...
+
+    async def get_item_by_pid(
+        self, mms_id: str, holding_id: str, item_pid: str, *, model: Any = None
+    ) -> Any:
+        """Get item information by PID."""
+        return await self._get(
+            AlmaEndpoint.ITEM,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
+            model=model,
+        )
+
+    @overload
+    async def create_item(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item: dict[str, Any],
+        *,
+        generate_description: bool = ...,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
+
+    @overload
+    async def create_item(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item: dict[str, Any],
+        *,
+        generate_description: bool = ...,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
 
     async def create_item(
         self,
@@ -375,13 +595,37 @@ class AlmaClientBibNS(BaseNamespace):
         item: dict[str, Any],
         *,
         generate_description: bool = False,
-    ) -> RESP_TYPE:
+        model: Any = None,
+    ) -> Any:
         return await self._post(
             AlmaEndpoint.ITEMS,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
+            model=model,
             params={"generate_description": generate_description},
             json=item,
         )
+
+    @overload
+    async def update_item(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_pid: str,
+        item: dict[str, Any],
+        *,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
+
+    @overload
+    async def update_item(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_pid: str,
+        item: dict[str, Any],
+        *,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
 
     async def update_item(
         self,
@@ -389,26 +633,15 @@ class AlmaClientBibNS(BaseNamespace):
         holding_id: str,
         item_pid: str,
         item: dict[str, Any],
-    ) -> RESP_TYPE:
-        """Get item information by barcode.
-
-        Args:
-            mms_id (str): The MMS ID.
-            holding_id (str): The Holding ID.
-            item_pid (str): The Item PID.
-            item (Dict[str, Any]): The updated item data.
-
-        Returns:
-            Dict[str, Any]: The item dict
-
-        Raises:
-            InvalidCodeError: If a field contained an invalid code (e.g. Library).
-            APIClientError: If another error occurred while making the API request.
-        """
+        *,
+        model: Any = None,
+    ) -> Any:
+        """Update item data."""
         try:
-            resp: RESP_TYPE = await self._put(
+            resp: Any = await self._put(
                 AlmaEndpoint.ITEM,
                 {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
+                model=model,
                 json=item,
             )
         except RequestFailedError as e:
@@ -437,6 +670,58 @@ class AlmaClientBibNS(BaseNamespace):
         )
         return True
 
+    @overload
+    async def get_items(
+        self,
+        mms_id: str,
+        holding_id: str,
+        expand: str | None = ...,
+        user_id: str | None = ...,
+        limit: int = ...,
+        offset: int = ...,
+        current_library: str | None = ...,
+        current_location: str | None = ...,
+        q: str | None = ...,
+        order_by: str | None = ...,
+        direction: Literal["asc", "desc"] = ...,
+        create_date_from: str | None = ...,
+        create_date_to: str | None = ...,
+        modify_date_from: str | None = ...,
+        receive_date_from: str | None = ...,
+        receive_date_to: str | None = ...,
+        expected_receive_date_from: str | None = ...,
+        expected_receive_date_to: str | None = ...,
+        view: Literal["brief", "label"] = ...,
+        *,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
+
+    @overload
+    async def get_items(
+        self,
+        mms_id: str,
+        holding_id: str,
+        expand: str | None = ...,
+        user_id: str | None = ...,
+        limit: int = ...,
+        offset: int = ...,
+        current_library: str | None = ...,
+        current_location: str | None = ...,
+        q: str | None = ...,
+        order_by: str | None = ...,
+        direction: Literal["asc", "desc"] = ...,
+        create_date_from: str | None = ...,
+        create_date_to: str | None = ...,
+        modify_date_from: str | None = ...,
+        receive_date_from: str | None = ...,
+        receive_date_to: str | None = ...,
+        expected_receive_date_from: str | None = ...,
+        expected_receive_date_to: str | None = ...,
+        view: Literal["brief", "label"] = ...,
+        *,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
+
     async def get_items(
         self,
         mms_id: str,
@@ -458,7 +743,9 @@ class AlmaClientBibNS(BaseNamespace):
         expected_receive_date_from: str | None = None,
         expected_receive_date_to: str | None = None,
         view: Literal["brief", "label"] = "brief",
-    ) -> RESP_TYPE:
+        *,
+        model: Any = None,
+    ) -> Any:
         params: dict[str, Any] = {
             "limit": limit,
             "offset": offset,
@@ -480,12 +767,29 @@ class AlmaClientBibNS(BaseNamespace):
         }
         params = {k: v for k, v in params.items() if v is not None}
         return await self._get(
-            AlmaEndpoint.ITEMS, {"MMS_ID": mms_id, "HOLDING_ID": holding_id}, params=params
+            AlmaEndpoint.ITEMS,
+            {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
+            model=model,
+            params=params,
         )
 
-    async def get_portfolios(self, mms_id: str, limit: int = 10, offset: int = 0) -> RESP_TYPE:
+    @overload
+    async def get_portfolios(
+        self, mms_id: str, limit: int = ..., offset: int = ..., *, model: type[_ModelT]
+    ) -> _ModelT: ...
+
+    @overload
+    async def get_portfolios(
+        self, mms_id: str, limit: int = ..., offset: int = ..., *, model: None = ...
+    ) -> RESP_TYPE: ...
+
+    async def get_portfolios(
+        self, mms_id: str, limit: int = 10, offset: int = 0, *, model: Any = None
+    ) -> Any:
         params = {"limit": limit, "offset": offset}
-        return await self._get(AlmaEndpoint.PORTFOLIOS, {"MMS_ID": mms_id}, params=params)
+        return await self._get(
+            AlmaEndpoint.PORTFOLIOS, {"MMS_ID": mms_id}, model=model, params=params
+        )
 
     async def get_holding(self, mms_id: str, holding_id: str) -> str:
         return await self._get_text(
@@ -525,8 +829,14 @@ class AlmaClientBibNS(BaseNamespace):
         )
         return True
 
-    async def get_holdings(self, mms_id: str) -> RESP_TYPE:
-        return await self._get(AlmaEndpoint.HOLDINGS, {"MMS_ID": mms_id})
+    @overload
+    async def get_holdings(self, mms_id: str, *, model: type[_ModelT]) -> _ModelT: ...
+
+    @overload
+    async def get_holdings(self, mms_id: str, *, model: None = ...) -> RESP_TYPE: ...
+
+    async def get_holdings(self, mms_id: str, *, model: Any = None) -> Any:
+        return await self._get(AlmaEndpoint.HOLDINGS, {"MMS_ID": mms_id}, model=model)
 
     async def create_bib(
         self,
@@ -644,6 +954,50 @@ class AlmaClientBibNS(BaseNamespace):
         )
         return True
 
+    @overload
+    async def scan_in(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_pid: str,
+        *,
+        library: str | None = ...,
+        department: str | None = ...,
+        circ_desk: str | None = ...,
+        work_order_type: str | None = ...,
+        status: str | None = ...,
+        external_id: bool = ...,
+        request_id: str | None = ...,
+        auto_print_slip: bool = ...,
+        place_on_hold_shelf: bool = ...,
+        confirm: bool = ...,
+        register_in_house_use: bool = ...,
+        done: bool = ...,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
+
+    @overload
+    async def scan_in(
+        self,
+        mms_id: str,
+        holding_id: str,
+        item_pid: str,
+        *,
+        library: str | None = ...,
+        department: str | None = ...,
+        circ_desk: str | None = ...,
+        work_order_type: str | None = ...,
+        status: str | None = ...,
+        external_id: bool = ...,
+        request_id: str | None = ...,
+        auto_print_slip: bool = ...,
+        place_on_hold_shelf: bool = ...,
+        confirm: bool = ...,
+        register_in_house_use: bool = ...,
+        done: bool = ...,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
+
     async def scan_in(
         self,
         mms_id: str,
@@ -662,7 +1016,8 @@ class AlmaClientBibNS(BaseNamespace):
         confirm: bool = False,
         register_in_house_use: bool = False,
         done: bool = False,
-    ) -> RESP_TYPE:
+        model: Any = None,
+    ) -> Any:
         params: dict[str, Any] = {
             "op": "scan",
             "library": library,
@@ -682,5 +1037,6 @@ class AlmaClientBibNS(BaseNamespace):
         return await self._post(
             AlmaEndpoint.ITEM,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
+            model=model,
             params=params,
         )
