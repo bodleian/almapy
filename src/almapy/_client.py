@@ -91,7 +91,7 @@ class AlmaClient:
         self.analytics: AlmaClientAnalyticsNS = AlmaClientAnalyticsNS(self)
 
     @overload
-    async def _execute(
+    async def execute(
         self,
         method: str,
         url: str,
@@ -102,7 +102,7 @@ class AlmaClient:
     ) -> _ModelT: ...
 
     @overload
-    async def _execute(
+    async def execute(
         self,
         method: str,
         url: str,
@@ -112,7 +112,7 @@ class AlmaClient:
         **kwargs: Any,
     ) -> RESP_TYPE: ...
 
-    async def _execute(
+    async def execute(
         self,
         method: str,
         url: str,

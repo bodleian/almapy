@@ -3,7 +3,14 @@
 import re
 
 
-class _AlmaError(Exception):
+class AlmapyError(Exception):
+    """Root exception for all exceptions raised by almapy.
+
+    Catch this to handle any error originating from the library.
+    """
+
+
+class _AlmaError(AlmapyError):
     """Shared base for all Alma API exceptions raised by the error handler.
 
     Two tiers of exceptions exist:
@@ -251,5 +258,5 @@ class UserIsNotAPatronError(APIClientError):
     """Raised when a user cannot borrow because they either don't have a patron role or it has expired."""
 
 
-class ThrottleTimeoutError(TimeoutError):
+class ThrottleTimeoutError(TimeoutError, AlmapyError):
     """Raised when max_wait is exceeded waiting for adaptive throttle."""

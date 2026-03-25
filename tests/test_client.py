@@ -1,4 +1,4 @@
-"""Tests for AlmaClient._execute and _parse."""
+"""Tests for AlmaClient.execute and _parse."""
 
 from unittest.mock import AsyncMock, MagicMock
 
@@ -38,7 +38,7 @@ class TestExecuteOutcomeRecording:
         client._controller = MagicMock()
         client._controller.acquire = AsyncMock()
 
-        await client._execute("GET", "/users", parser="json")
+        await client.execute("GET", "/users", parser="json")
 
         client._controller.record_success.assert_called_once()
         client._controller.record_failure.assert_not_called()
@@ -52,7 +52,7 @@ class TestExecuteOutcomeRecording:
         client._controller.acquire = AsyncMock()
 
         with pytest.raises(httpx.ConnectError):
-            await client._execute("GET", "/users", parser="json")
+            await client.execute("GET", "/users", parser="json")
 
         # retry_attempts=3: ConnectError is retryable, record_failure called once per attempt
         assert client._controller.record_failure.call_count == 3
@@ -72,7 +72,7 @@ class TestExecuteOutcomeRecording:
         client._controller.acquire = AsyncMock()
 
         with pytest.raises(exceptions.UserNotFoundError) as exc_info:
-            await client._execute("GET", "/users/jsmith", parser="json")
+            await client.execute("GET", "/users/jsmith", parser="json")
 
         assert exc_info.value.user_id == ""
         client._controller.record_failure.assert_not_called()
@@ -90,7 +90,7 @@ class TestExecuteOutcomeRecording:
         client._controller.acquire = AsyncMock()
 
         with pytest.raises(exceptions.APIServerError):
-            await client._execute("GET", "/users", parser="json")
+            await client.execute("GET", "/users", parser="json")
 
         # retry_attempts=3: APIServerError is retryable, record_failure called once per attempt
         assert client._controller.record_failure.call_count == 3
@@ -122,6 +122,7 @@ class TestParse:
         xml_body = "<root><item>hello</item></root>"
         resp = _make_response(200, xml_body, content_type="application/xml")
         result = client._parse(resp, "xml")
+        assert isinstance(result, Box)
         assert result.root.item == "hello"
 
 
@@ -167,7 +168,7 @@ class TestAlmaClientInternals:
         client._controller.acquire = AsyncMock()
 
         with pytest.raises(httpx.ConnectError):
-            await client._execute("GET", "/users", parser="json")
+            await client.execute("GET", "/users", parser="json")
 
         # retry_attempts=2: httpx.request called exactly 2 times
         assert mock_http.request.call_count == 2
@@ -177,7 +178,7 @@ class TestExecuteModelValidation:
     @pytest.mark.asyncio
     async def test_model_none_returns_box(self, client: AlmaClient, mock_http: AsyncMock) -> None:
         mock_http.request.return_value = _make_response(200, '{"foo": "bar"}')
-        result = await client._execute("GET", "/users", parser="json", model=None)
+        result = await client.execute("GET", "/users", parser="json", model=None)
         assert isinstance(result, Box)
         assert result.foo == "bar"
 
@@ -189,7 +190,7 @@ class TestExecuteModelValidation:
         mock_model = MagicMock()
         mock_model.model_validate.return_value = "validated_instance"
 
-        result: str = await client._execute("GET", "/users", parser="json", model=mock_model)
+        result: str = await client.execute("GET", "/users", parser="json", model=mock_model)
 
         assert result == "validated_instance"
         mock_model.model_validate.assert_called_once()
@@ -206,7 +207,7 @@ class TestExecuteModelValidation:
         mock_model.model_validate.side_effect = ValueError("bad data")
 
         with pytest.raises(ValueError, match="bad data"):
-            await client._execute("GET", "/users", parser="json", model=mock_model)
+            await client.execute("GET", "/users", parser="json", model=mock_model)
 
     @pytest.mark.asyncio
     async def test_model_receives_empty_box_on_no_content(
@@ -217,7 +218,7 @@ class TestExecuteModelValidation:
         mock_model = MagicMock()
         mock_model.model_validate.return_value = "empty_model"
 
-        result: str = await client._execute("GET", "/users", parser="json", model=mock_model)
+        result: str = await client.execute("GET", "/users", parser="json", model=mock_model)
 
         assert result == "empty_model"
         call_arg = mock_model.model_validate.call_args[0][0]

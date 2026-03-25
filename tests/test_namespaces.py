@@ -64,7 +64,7 @@ class TestUpdateUserErrors:
         """Code 401664 re-raised as UserMissingFieldError with user_id set."""
         api_err = exceptions.APIClientError("401664", "Missing mandatory field: primary_id")
         with (
-            patch.object(client, "_execute", new=AsyncMock(side_effect=api_err)),
+            patch.object(client, "execute", new=AsyncMock(side_effect=api_err)),
             pytest.raises(exceptions.UserMissingFieldError) as exc_info,
         ):
             await client.users.update_user("jsmith", {"primary_id": "jsmith"})
@@ -76,7 +76,7 @@ class TestUpdateUserErrors:
         """Other APIClientErrors must not be swallowed as UserMissingFieldError."""
         api_err = exceptions.APIClientError("401861", "User not found")
         with (
-            patch.object(client, "_execute", new=AsyncMock(side_effect=api_err)),
+            patch.object(client, "execute", new=AsyncMock(side_effect=api_err)),
             pytest.raises(exceptions.APIClientError) as exc_info,
         ):
             await client.users.update_user("jsmith", {})
@@ -91,7 +91,7 @@ class TestCreateUserErrors:
         api_err = exceptions.APIClientError("401664", "Missing mandatory field")
         user: dict[str, Any] = {"primary_id": "jnewuser"}
         with (
-            patch.object(client, "_execute", new=AsyncMock(side_effect=api_err)),
+            patch.object(client, "execute", new=AsyncMock(side_effect=api_err)),
             pytest.raises(exceptions.UserMissingFieldError) as exc_info,
         ):
             await client.users.create_user(user)
@@ -104,7 +104,7 @@ class TestRenewLoanErrors:
         """Code 401822 re-raised as CannotRenewError with loan_id set."""
         api_err = exceptions.APIClientError("401822", "Cannot renew loan")
         with (
-            patch.object(client, "_execute", new=AsyncMock(side_effect=api_err)),
+            patch.object(client, "execute", new=AsyncMock(side_effect=api_err)),
             pytest.raises(exceptions.CannotRenewError) as exc_info,
         ):
             await client.users.loans.renew_loan("jsmith", "LOAN-123")
@@ -115,13 +115,13 @@ class TestRenewLoanErrors:
 class TestCreateRequestGuard:
     @pytest.mark.asyncio
     async def test_both_ids_raises(self, client: AlmaClient) -> None:
-        """Both mms_id and item_id provided → ValueError before _execute is called."""
+        """Both mms_id and item_id provided → ValueError before execute is called."""
         with pytest.raises(ValueError, match="exactly one of mms_id or item_id"):
             await client.users.requests.create_request("jsmith", {}, mms_id="111", item_id="222")
 
     @pytest.mark.asyncio
     async def test_neither_id_raises(self, client: AlmaClient) -> None:
-        """Neither mms_id nor item_id provided → ValueError before _execute is called."""
+        """Neither mms_id nor item_id provided → ValueError before execute is called."""
         with pytest.raises(ValueError, match="exactly one of mms_id or item_id"):
             await client.users.requests.create_request("jsmith", {}, mms_id="", item_id="")
 
@@ -133,7 +133,7 @@ class TestUpdateItemErrors:
         # e.message is "{msg} [{code}]" from _AlmaError, so regex captures "ABC [400]"
         rf_err = exceptions.RequestFailedError("400", "Request failed: Invalid Library code: ABC")
         with (
-            patch.object(client, "_execute", new=AsyncMock(side_effect=rf_err)),
+            patch.object(client, "execute", new=AsyncMock(side_effect=rf_err)),
             pytest.raises(exceptions.InvalidCodeError) as exc_info,
         ):
             await client.bibs.update_item("MMS1", "HOLD1", "ITEM1", {})
@@ -174,10 +174,10 @@ class TestAnalyticsPagination:
 class TestBaseNamespaceModelParam:
     @pytest.mark.asyncio
     async def test_get_passes_model_to_execute(self, client: AlmaClient) -> None:
-        """_get must forward model= kwarg to _execute."""
+        """_get must forward model= kwarg to execute."""
         from almapy._endpoints import AlmaEndpoint
 
         mock_model = MagicMock()
-        with patch.object(client, "_execute", new=AsyncMock(return_value=Box())) as mock_exec:
+        with patch.object(client, "execute", new=AsyncMock(return_value=Box())) as mock_exec:
             await client.users._get(AlmaEndpoint.USERS, model=mock_model)
         assert mock_exec.call_args.kwargs.get("model") is mock_model
