@@ -13,12 +13,13 @@ Uses `just` as the task runner (wraps `uv run`):
 ```bash
 just           # Run lint then test (default)
 just lint      # ruff format, ruff check --fix, mypy, deptry
-just lint-ci   # Strict CI lint (no auto-fix, format check only)
+just lint-ci   # Strict CI lint (ruff check/format, djlint, mypy — no auto-fix)
 just test      # Run pytest
 just test -k "test_name"  # Run a single test
 just upgrade   # Update lockfile and sync
 just publish   # Build and publish to GitLab package registry
 just hook      # Install pre-commit hooks
+just unhook    # Uninstall pre-commit hooks
 ```
 
 Direct equivalents:
@@ -68,6 +69,12 @@ Configured in `_client.py`:
 
 All JSON responses are wrapped in `Box` (type alias `RESP_TYPE`), enabling dot-notation access: `resp.bib_data.title`.
 
+All Box-returning methods also accept an optional `model=` keyword argument. When provided with a Pydantic model class, the response is passed through `model.model_validate(box_result)` and the typed model is returned instead of `Box`:
+
+```python
+bib: BibData = await client.bibs.get_item("98279242", model=BibData)
+```
+
 ### Endpoints
 
 All API paths are defined in `_endpoints.py` as an enum (`AlmaEndpoint`). URL parameters use `{USER_ID}`, `{MMS_ID}`, etc. placeholder conventions.
@@ -75,6 +82,11 @@ All API paths are defined in `_endpoints.py` as an enum (`AlmaEndpoint`). URL pa
 ### Testing
 
 Tests are pure unit tests — no recording/replay. The `client` fixture in `conftest.py` creates a plain `AlmaClient("test-api-key")`. No `.env` or live API key needed to run tests.
+
+**Gotchas:**
+- `--doctest-modules` is active — doctests in source files are collected and run. Bad docstring examples will fail the suite.
+- `--typeguard-packages=almapy` enables runtime type checking — type annotation errors surface as test failures.
+- Integration tests (`@pytest.mark.integration`) require `ALMA_INTEGRATION=1` env var and a valid API key.
 
 ## Key Files
 

@@ -54,7 +54,7 @@ def _parse_xml(text: str) -> "OrderedDict[str, Any]":
     except xml.parsers.expat.ExpatError:  # type: ignore  # noqa: PGH003
         text = re.sub(r"https://(.*)&(.*)", r"\g<1>&#38;\g<2>", text)
         body = xmltodict.parse(text)
-    return cast("OrderedDict[str, Any]", body)
+    return body
 
 
 def _validate_response(response: httpx.Response) -> None:

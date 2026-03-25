@@ -156,16 +156,6 @@ class AlmaClient:
             raise RuntimeError(msg)
         return result
 
-    def _parse(self, response: httpx.Response, parser: Parser) -> RESP_TYPE:
-        """Parse an httpx response according to the requested parser."""
-        if parser == "none" or response.status_code == HTTPStatus.NO_CONTENT:
-            return Box()
-        if parser == "xml":
-            return Box(_parse_xml(response.text))
-        if parser == "text":
-            return Box({"_text": response.text})
-        return Box(response.json())
-
     def __del__(self) -> None:
         """Schedule cleanup when the client is abandoned without being explicitly closed."""
         http = getattr(self, "_http", None)
@@ -184,3 +174,14 @@ class AlmaClient:
 
     async def __aexit__(self, *_: object) -> None:
         await self.aclose()
+
+    @staticmethod
+    def _parse(response: httpx.Response, parser: Parser) -> RESP_TYPE:
+        """Parse an httpx response according to the requested parser."""
+        if parser == "none" or response.status_code == HTTPStatus.NO_CONTENT:
+            return Box()
+        if parser == "xml":
+            return Box(_parse_xml(response.text))
+        if parser == "text":
+            return Box({"_text": response.text})
+        return Box(response.json())
