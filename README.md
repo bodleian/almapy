@@ -92,8 +92,46 @@ async def main():
         print(raw.bib_data.title)
 ```
 
+## Logging
+
+almapy uses stdlib `logging` and follows library best practice: a `NullHandler` is registered on the `almapy` root logger so no output is produced unless the caller configures handlers.
+
+Four semantic loggers are available:
+
+| Logger | Level | Event |
+|--------|-------|-------|
+| `almapy.http` | DEBUG | Request sent and response received (method, URL, status, elapsed ms) |
+| `almapy.retry` | WARNING | Retry attempt N/M with exception type and backoff |
+| `almapy.throttle` | DEBUG | TokenBucket wait (seconds, tokens available) |
+| `almapy.throttle` | WARNING | Rate cut by adaptive controller (old → new req/s) |
+| `almapy.throttle` | INFO | Rate recovery (old → new req/s) |
+| `almapy.error` | WARNING | Alma error code and message before raising exception |
+
+Every log record carries a `req_id` field — a `uuid4().hex` correlation ID set at the start of each `execute()` call and reset in `finally`. Use it to correlate retries, throttle events, and errors for a single request.
+
+To enable logging in your application:
+
+```python
+import logging
+
+# Show all almapy debug output
+logging.getLogger("almapy").setLevel(logging.DEBUG)
+logging.getLogger("almapy").addHandler(logging.StreamHandler())
+
+# Or filter to a specific area — e.g. only retry warnings
+logging.getLogger("almapy.retry").setLevel(logging.WARNING)
+logging.getLogger("almapy.retry").addHandler(logging.StreamHandler())
+```
+
+To include the correlation ID in your formatter:
+
+```python
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("%(levelname)s %(name)s [%(req_id)s] %(message)s"))
+logging.getLogger("almapy").addHandler(handler)
+```
+
 ## TODO
 - [ ] Better documentation
 - [ ] More endpoints
 - [ ] Specific response types
-- [ ] Logging

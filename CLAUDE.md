@@ -77,6 +77,18 @@ All Box-returning methods also accept an optional `model=` keyword argument. Whe
 bib: BibData = await client.bibs.get_item("98279242", model=BibData)
 ```
 
+### Logging
+
+Four semantic loggers under the `almapy` root: `almapy.http`, `almapy.retry`, `almapy.throttle`, `almapy.error`. A `NullHandler` is registered in `_logging.py` at import time — the library never forces output.
+
+Per-request correlation IDs are stored in a `contextvars.ContextVar[str]` (`request_id` in `_logging.py`), set to `uuid4().hex` at the start of each `execute()` call and reset in `finally`. Every log call passes `extra={"req_id": request_id.get()}`.
+
+**Key rules when adding log calls:**
+- Import `request_id` from `almapy._logging`, never create new loggers outside the four above.
+- Always include `extra={"req_id": request_id.get()}` — omitting it breaks `%(req_id)s` formatters.
+- Never log API keys or full response bodies.
+- **stamina hooks are process-global** — `stamina.instrumentation.set_on_retry_hooks()` affects all stamina callers in the process; use a manual attempt counter inside the `retry_context` loop for library-safe retry logging (see `_client.py:execute()`).
+
 ### Endpoints
 
 All API paths are defined in `_endpoints.py` as an enum (`AlmaEndpoint`). URL parameters use `{USER_ID}`, `{MMS_ID}`, etc. placeholder conventions.
@@ -94,6 +106,7 @@ Tests are pure unit tests — no recording/replay. The `client` fixture in `conf
 
 | File | Purpose |
 |------|---------|
+| `src/almapy/_logging.py` | Shared logging infrastructure — `ContextVar` for correlation IDs, `NullHandler` registration |
 | `src/almapy/_client.py` | `AlmaClient` — main entry point, httpx config, namespace wiring |
 | `src/almapy/_base.py` | `BaseNamespace` — base class for all namespace objects |
 | `src/almapy/_throttle.py` | `TokenBucket`, `AdaptiveController` — rate limiting + AIMD backpressure |
