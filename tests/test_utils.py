@@ -1,6 +1,7 @@
 """Tests for _validate_response() and _should_retry()."""
 
 import json
+import logging
 
 import httpx
 import pytest
@@ -173,6 +174,53 @@ class TestLoanBlockedErrorFallback:
         assert exc.description == ""
         assert exc.note == ""
         assert exc.scope == ""
+
+
+class TestErrorLogging:
+    def test_json_error_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+        body = _error_body("401861", "User with identifier jsmith was not found.")
+        response = _make_response(404, body)
+        with (
+            caplog.at_level(logging.WARNING, logger="almapy.error"),
+            pytest.raises(exceptions.UserNotFoundError),
+        ):
+            _validate_response(response)
+        records = [r for r in caplog.records if r.name == "almapy.error"]
+        assert len(records) == 1
+        assert "401861" in records[0].message
+
+    def test_plain_text_error_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+        response = _make_response(500, "internal error", content_type="text/plain")
+        with (
+            caplog.at_level(logging.WARNING, logger="almapy.error"),
+            pytest.raises(exceptions.APIServerError),
+        ):
+            _validate_response(response)
+        records = [r for r in caplog.records if r.name == "almapy.error"]
+        assert len(records) == 1
+        assert "500" in records[0].message
+
+    def test_unparseable_body_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+        response = _make_response(400, '{"something": "unexpected"}')
+        with (
+            caplog.at_level(logging.WARNING, logger="almapy.error"),
+            pytest.raises(exceptions.APIServerError),
+        ):
+            _validate_response(response)
+        records = [r for r in caplog.records if r.name == "almapy.error"]
+        assert len(records) == 1
+        assert "unparseable" in records[0].message
+
+    def test_error_log_records_have_req_id(self, caplog: pytest.LogCaptureFixture) -> None:
+        body = _error_body("401861", "User with identifier jsmith was not found.")
+        response = _make_response(404, body)
+        with (
+            caplog.at_level(logging.WARNING, logger="almapy.error"),
+            pytest.raises(exceptions.UserNotFoundError),
+        ):
+            _validate_response(response)
+        for record in caplog.records:
+            assert hasattr(record, "req_id")
 
 
 class TestShouldRetry:

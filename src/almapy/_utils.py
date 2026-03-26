@@ -1,4 +1,5 @@
 import json
+import logging
 import operator
 import re
 import xml
@@ -17,6 +18,9 @@ from box import Box
 from glom import Coalesce, GlomError, glom
 
 from almapy import exceptions
+from almapy._logging import request_id
+
+_error_log = logging.getLogger("almapy.error")
 
 RESP_TYPE = Box
 
@@ -118,6 +122,12 @@ def _raise_for_error_body(response: httpx.Response) -> None:
     if ct and "xml" in ct:
         body = _parse_xml(response.text)
     elif ct == "text/plain":
+        _error_log.warning(
+            "API error %s: %s",
+            response.status_code,
+            response.text,
+            extra={"req_id": request_id.get()},
+        )
         raise exceptions.APIServerError(str(response.status_code), response.text)
     else:
         body = json.loads(response.text)
@@ -135,9 +145,21 @@ def _raise_for_error_body(response: httpx.Response) -> None:
             ),
         )
     except GlomError as e:
+        _error_log.warning(
+            "API error %s: Unknown error (unparseable body)",
+            response.status_code,
+            extra={"req_id": request_id.get()},
+        )
         raise exceptions.APIServerError(str(response.status_code), "Unknown error") from e
 
     message = code if not message else message.strip()
 
     error_class = _ERROR_MAPPING.get(str(code)) or _get_error_class(response.status_code)
+    _error_log.warning(
+        "API error %s: [%s] %s",
+        response.status_code,
+        code,
+        message,
+        extra={"req_id": request_id.get()},
+    )
     raise error_class(code, message)  # type: ignore[misc]
