@@ -2,6 +2,8 @@
 
 import asyncio
 import contextlib
+import logging
+import time
 from http import HTTPStatus
 from typing import Any, Literal, overload
 
@@ -14,9 +16,13 @@ from almapy._analytics import AlmaClientAnalyticsNS
 from almapy._base import Parser
 from almapy._bibs import AlmaClientBibNS
 from almapy._config import AlmaClientConfigNS
+from almapy._logging import new_request_id, request_id
 from almapy._throttle import AdaptiveController, TokenBucket
 from almapy._users import AlmaClientUserNS
 from almapy._utils import RESP_TYPE, _ModelT, _parse_xml, _should_retry, _validate_response
+
+_http_log = logging.getLogger("almapy.http")
+_retry_log = logging.getLogger("almapy.retry")
 
 _LOCATIONS: dict[str, str] = {
     "America": "https://api-na.hosted.exlibrisgroup.com",
@@ -126,35 +132,70 @@ class AlmaClient:
         Semaphore is released between attempts so backoff sleeps do not pin
         concurrency slots. record_failure is only called for retryable exceptions.
         """
-        result: Any = None
-        async for attempt in stamina.retry_context(
-            on=_should_retry,
-            attempts=self._retry_attempts,
-            timeout=None,
-            wait_initial=0.5,
-            wait_max=30.0,
-            wait_jitter=1.0,
-            wait_exp_base=4,
-        ):
-            with attempt:
-                async with self._semaphore:
-                    await self._controller.acquire()
-                    try:
-                        resp = await self._http.request(method, url, **kwargs)
-                        _validate_response(resp)
-                        result = self._parse(resp, parser)
-                        if model is not None:
-                            result = model.model_validate(result)
-                    except Exception as exc:
-                        if _should_retry(exc):
-                            self._controller.record_failure()
-                        raise
-                    else:
-                        self._controller.record_success()
-        if result is None:
-            msg = "stamina made zero attempts"  # unreachable
-            raise RuntimeError(msg)
-        return result
+        token = request_id.set(new_request_id())
+        try:
+            result: Any = None
+            attempt_num: int = 0
+            last_exc: Exception | None = None
+            async for attempt in stamina.retry_context(
+                on=_should_retry,
+                attempts=self._retry_attempts,
+                timeout=None,
+                wait_initial=0.5,
+                wait_max=30.0,
+                wait_jitter=1.0,
+                wait_exp_base=4,
+            ):
+                with attempt:
+                    attempt_num += 1
+                    if attempt_num > 1:
+                        assert last_exc is not None  # always set before attempt_num > 1
+                        _retry_log.warning(
+                            "Retry %d/%d: %s %s - %s",
+                            attempt_num,
+                            self._retry_attempts,
+                            method,
+                            url,
+                            type(last_exc).__name__,
+                            extra={"req_id": request_id.get()},
+                        )
+                    async with self._semaphore:
+                        await self._controller.acquire()
+                        start = time.monotonic()
+                        _http_log.debug(
+                            "%s %s",
+                            method,
+                            url,
+                            extra={"req_id": request_id.get()},
+                        )
+                        try:
+                            resp = await self._http.request(method, url, **kwargs)
+                            _validate_response(resp)
+                            # Response log only fires on success — almapy.error covers failures
+                            _http_log.debug(
+                                "%s %s -> %d (%.0fms)",
+                                method,
+                                url,
+                                resp.status_code,
+                                (time.monotonic() - start) * 1000,
+                                extra={"req_id": request_id.get()},
+                            )
+                            result = self._parse(resp, parser)
+                            if model is not None:
+                                result = model.model_validate(result)
+                        except Exception as exc:
+                            last_exc = exc
+                            if _should_retry(exc):
+                                self._controller.record_failure()
+                            raise
+                        else:
+                            self._controller.record_success()
+            if result is None:
+                msg = "stamina made zero attempts"  # unreachable
+                raise RuntimeError(msg)
+            return result
+        finally:
+            request_id.reset(token)
 
     def __del__(self) -> None:
         """Schedule cleanup when the client is abandoned without being explicitly closed."""

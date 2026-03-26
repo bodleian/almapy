@@ -1,5 +1,6 @@
 """Tests for AlmaClient.execute and _parse."""
 
+import logging
 from unittest.mock import AsyncMock, MagicMock
 
 import httpx
@@ -224,3 +225,68 @@ class TestExecuteModelValidation:
         call_arg = mock_model.model_validate.call_args[0][0]
         assert isinstance(call_arg, Box)
         assert len(call_arg) == 0
+
+
+class TestExecuteLogging:
+    @pytest.mark.asyncio
+    async def test_http_logger_emits_request_and_response(
+        self, client: AlmaClient, mock_http: AsyncMock, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """almapy.http emits exactly 2 DEBUG records per successful request."""
+        mock_http.request.return_value = _make_response(200, '{"foo": "bar"}')
+        with caplog.at_level(logging.DEBUG, logger="almapy.http"):
+            await client.execute("GET", "/users", parser="json")
+        records = [r for r in caplog.records if r.name == "almapy.http"]
+        assert len(records) == 2
+        assert "GET" in records[0].message and "/users" in records[0].message
+        assert "200" in records[1].message
+
+    @pytest.mark.asyncio
+    async def test_log_records_carry_req_id(
+        self, client: AlmaClient, mock_http: AsyncMock, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Every log record emitted inside execute() must have a non-empty req_id."""
+        mock_http.request.return_value = _make_response(200, '{"foo": "bar"}')
+        with caplog.at_level(logging.DEBUG, logger="almapy.http"):
+            await client.execute("GET", "/users", parser="json")
+        for record in caplog.records:
+            assert hasattr(record, "req_id"), f"Missing req_id on {record.name} record"
+            assert getattr(record, "req_id", "") != "", "req_id must be non-empty inside execute()"
+
+    @pytest.mark.asyncio
+    async def test_req_ids_are_unique_across_calls(
+        self, client: AlmaClient, mock_http: AsyncMock, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Each execute() call must generate a distinct req_id."""
+        mock_http.request.return_value = _make_response(200, '{"foo": "bar"}')
+        req_ids: list[str] = []
+        with caplog.at_level(logging.DEBUG, logger="almapy.http"):
+            await client.execute("GET", "/users/1", parser="json")
+            req_ids.append(getattr(caplog.records[-1], "req_id", ""))
+            caplog.clear()
+            await client.execute("GET", "/users/2", parser="json")
+            req_ids.append(getattr(caplog.records[-1], "req_id", ""))
+        assert req_ids[0] != req_ids[1]
+
+    @pytest.mark.asyncio
+    async def test_retry_logger_warns_on_second_attempt(
+        self, mock_http: AsyncMock, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """almapy.retry emits a WARNING on retry (not on first attempt)."""
+        import json
+
+        client = AlmaClient("test-api-key", client=mock_http, retry_attempts=2)
+        server_error_body = json.dumps({
+            "errorList": {"error": [{"errorCode": "500", "errorMessage": "Server error"}]}
+        })
+        # First call returns 500 (retryable), second returns 200
+        mock_http.request.side_effect = [
+            _make_response(500, server_error_body),
+            _make_response(200, '{"ok": true}'),
+        ]
+        with caplog.at_level(logging.WARNING, logger="almapy.retry"):
+            await client.execute("GET", "/bibs/123", parser="json")
+        retry_records = [r for r in caplog.records if r.name == "almapy.retry"]
+        assert len(retry_records) == 1
+        assert "Retry 2/" in retry_records[0].message
+        assert "APIServerError" in retry_records[0].message

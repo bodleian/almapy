@@ -25,6 +25,7 @@ just unhook    # Uninstall pre-commit hooks
 Direct equivalents:
 ```bash
 uv run pytest tests/test_foo.py::test_bar  # Single test
+uv run python -c "..."                      # Always prefix python with uv run (deps not on system path)
 uv run mypy .                               # Type check only
 uv run ruff check --fix && uv run ruff format  # Lint only
 ```
@@ -62,6 +63,7 @@ Exception hierarchy:
 
 Configured in `_client.py`:
 - **Retry**: `stamina` handles retries; 3 attempts, exponential backoff (`backoff_factor=0.5`), retries on server errors, rate limits, timeouts
+- **stamina hooks are process-global** — `stamina.instrumentation.set_on_retry_hooks()` affects all stamina callers; use a manual attempt counter inside the `retry_context` loop for library-safe retry logging
 - **Throttle**: 25 req/sec (configurable via `rate_limit` param)
 - **Concurrency**: 150 concurrent requests max
 
