@@ -7,9 +7,13 @@ Three separated concerns:
 """
 
 import asyncio
+import logging
 import time
 
+from almapy._logging import request_id
 from almapy.exceptions import ThrottleTimeoutError
+
+_throttle_log = logging.getLogger("almapy.throttle")
 
 
 class TokenBucket:
@@ -51,6 +55,13 @@ class TokenBucket:
                     return
                 deficit = 1.0 - self._tokens
                 wait = deficit / self._rate
+                tokens_snapshot = self._tokens  # capture inside lock — avoids stale read
+            _throttle_log.debug(
+                "TokenBucket: waiting %.3fs (%.2f tokens available)",
+                wait,
+                tokens_snapshot,
+                extra={"req_id": request_id.get()},
+            )
             await asyncio.sleep(wait)
 
     def _refill(self) -> None:
@@ -112,18 +123,32 @@ class AdaptiveController:
     def record_failure(self) -> None:
         now = time.monotonic()
         if now < self._cooling_until:
-            return
-        new_rate = max(self._min_rate, self._bucket.rate * self._backoff_factor)
+            return  # suppressed — no log
+        old_rate = self._bucket.rate
+        new_rate = max(self._min_rate, old_rate * self._backoff_factor)
         self._bucket.rate = new_rate
         self._cooling_until = now + self._cooldown
+        _throttle_log.warning(
+            "AdaptiveController: rate cut %.1f -> %.1f req/s (failure)",
+            old_rate,
+            new_rate,
+            extra={"req_id": request_id.get()},
+        )
 
     def record_success(self) -> None:
         now = time.monotonic()
         if now < self._cooling_until:
-            return
+            return  # suppressed — no log
         if self._bucket.rate >= self._max_rate:
-            return
+            return  # already at max — no log
         if now - self._last_recovery < self._recovery_window:
-            return
-        self._bucket.rate = min(self._max_rate, self._bucket.rate + self._recovery_increment)
+            return  # too soon — no log
+        old_rate = self._bucket.rate
+        self._bucket.rate = min(self._max_rate, old_rate + self._recovery_increment)
         self._last_recovery = now
+        _throttle_log.info(
+            "AdaptiveController: rate recovered %.1f -> %.1f req/s",
+            old_rate,
+            self._bucket.rate,
+            extra={"req_id": request_id.get()},
+        )

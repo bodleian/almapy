@@ -1,7 +1,9 @@
 """Tests for TokenBucket and AdaptiveController."""
 
 import asyncio
+import logging
 import time
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -212,3 +214,67 @@ class TestAdaptiveController:
         assert ctrl.current_rate == pytest.approx(20.0)
         ctrl.record_failure()
         assert ctrl.current_rate == pytest.approx(10.0)
+
+
+class TestThrottleLogging:
+    @pytest.mark.asyncio
+    async def test_token_bucket_logs_wait(self, caplog: pytest.LogCaptureFixture) -> None:
+        """TokenBucket logs DEBUG when it has to wait for tokens."""
+        bucket = TokenBucket(1.0)
+        bucket._tokens = 0.0  # force wait path
+        with (
+            caplog.at_level(logging.DEBUG, logger="almapy.throttle"),
+            patch("almapy._throttle.asyncio.sleep", new_callable=AsyncMock) as mock_sleep,
+        ):
+            mock_sleep.side_effect = [None, asyncio.CancelledError()]
+            with pytest.raises(asyncio.CancelledError):
+                await bucket.acquire()
+        records = [r for r in caplog.records if r.name == "almapy.throttle"]
+        assert len(records) >= 1
+        assert "TokenBucket" in records[0].message
+        assert "waiting" in records[0].message
+
+    def test_record_failure_logs_rate_cut(self, caplog: pytest.LogCaptureFixture) -> None:
+        """record_failure logs WARNING with old and new rate."""
+        bucket = TokenBucket(20.0)
+        ctrl = AdaptiveController(bucket, max_rate=20.0)
+        with caplog.at_level(logging.WARNING, logger="almapy.throttle"):
+            ctrl.record_failure()
+        records = [r for r in caplog.records if r.name == "almapy.throttle"]
+        assert len(records) == 1
+        assert "rate cut" in records[0].message
+        assert "20.0" in records[0].message
+        assert "10.0" in records[0].message
+
+    def test_record_success_logs_recovery(self, caplog: pytest.LogCaptureFixture) -> None:
+        """record_success logs INFO with old and new rate."""
+        bucket = TokenBucket(10.0)
+        ctrl = AdaptiveController(bucket, max_rate=20.0, recovery_window=0.0)
+        with caplog.at_level(logging.INFO, logger="almapy.throttle"):
+            ctrl.record_success()
+        records = [r for r in caplog.records if r.name == "almapy.throttle"]
+        assert len(records) == 1
+        assert "recovered" in records[0].message
+
+    def test_record_failure_suppressed_during_cooldown_does_not_log(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """When in cooldown, record_failure returns early — no log emitted."""
+        bucket = TokenBucket(20.0)
+        ctrl = AdaptiveController(bucket, max_rate=20.0)
+        ctrl.record_failure()  # starts cooldown
+        caplog.clear()  # discard the first failure log; only check the suppressed call
+        with caplog.at_level(logging.WARNING, logger="almapy.throttle"):
+            ctrl.record_failure()  # suppressed by cooldown — no log
+        records = [r for r in caplog.records if r.name == "almapy.throttle"]
+        assert len(records) == 0
+
+    def test_log_records_carry_req_id_field(self, caplog: pytest.LogCaptureFixture) -> None:
+        """almapy.throttle records must carry req_id (empty string outside execute())."""
+        bucket = TokenBucket(20.0)
+        ctrl = AdaptiveController(bucket, max_rate=20.0)
+        with caplog.at_level(logging.WARNING, logger="almapy.throttle"):
+            ctrl.record_failure()
+        for record in caplog.records:
+            assert hasattr(record, "req_id"), f"Missing req_id on {record.name}"
+            assert isinstance(getattr(record, "req_id", None), str)
