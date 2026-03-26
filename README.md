@@ -32,16 +32,20 @@ from almapy.exceptions import APIClientError, APIServerError
 
 BARCODES = ["98279242", "24569754", "345782365"]
 
+
 async def fetch_item(client: AlmaClient, barcode: str):
     resp = await client.bibs.get_item(barcode)
     return resp
+
 
 async def main():
     client = AlmaClient(apikey="KEY", rate_limit=10)
     tasks = [fetch_item(client, barcode) for barcode in BARCODES]
 
     # Option One
-    results = asyncio.gather(*tasks)  # Can use return_exceptions=True to include exceptions in the list instead of interrupting
+    results = asyncio.gather(
+        *tasks
+    )  # Can use return_exceptions=True to include exceptions in the list instead of interrupting
     for result in results:
         print(result.bib_data.title)
 
@@ -55,9 +59,9 @@ async def main():
         except APIClientError as e:
             print(f"Client error: {e}")
 
+
 if __name__ == "__main__":
     asyncio.run(main())
-
 ```
 
 ## Pydantic model validation
@@ -71,9 +75,11 @@ any class with a `model_validate` classmethod works.
 from pydantic import BaseModel
 from almapy import AlmaClient
 
+
 class BibData(BaseModel):
     mms_id: str
     title: str | None = None
+
 
 async def main():
     async with AlmaClient(apikey="KEY") as client:

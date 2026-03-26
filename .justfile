@@ -1,5 +1,3 @@
-set shell := ["bash", "-c"]
-
 default: lint test
 
 lint:
@@ -22,7 +20,7 @@ test *args:
     uv run --no-sync pytest {{ args }}
 
 publish:
-    rm -r -fo dist
+    rm -rf dist
     uv build
     uv publish --username __token__
 

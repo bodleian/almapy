@@ -31,10 +31,10 @@ class TestTokenBucket:
     def test_rate_setter(self) -> None:
         bucket = TokenBucket(25.0)
         bucket.rate = 10.0
-        assert bucket.rate == 10.0
+        assert bucket.rate == pytest.approx(10.0)
         # Direct attribute access to verify token consumption invariant:
         # setter does self._tokens = min(self._tokens, value) → min(25.0, 10.0)
-        assert bucket._tokens == 10.0
+        assert bucket._tokens == pytest.approx(10.0)
 
     def test_rate_setter_rejects_zero(self) -> None:
         bucket = TokenBucket(25.0)
@@ -102,29 +102,29 @@ class TestAdaptiveController:
         bucket = TokenBucket(20.0)
         ctrl = AdaptiveController(bucket, max_rate=20.0)
         ctrl.record_failure()
-        assert bucket.rate == 10.0
+        assert bucket.rate == pytest.approx(10.0)
 
     def test_record_failure_respects_min_rate(self) -> None:
         bucket = TokenBucket(2.0)
         ctrl = AdaptiveController(bucket, max_rate=20.0, min_rate=2.0)
         bucket.rate = 2.0
         ctrl.record_failure()
-        assert bucket.rate == 2.0  # can't go below min_rate
+        assert bucket.rate == pytest.approx(2.0)  # can't go below min_rate
 
     def test_cooldown_suppresses_failure(self) -> None:
         bucket = TokenBucket(20.0)
         ctrl = AdaptiveController(bucket, max_rate=20.0, cooldown=10.0)
         ctrl.record_failure()  # halves to 10, starts cooldown
-        assert bucket.rate == 10.0
+        assert bucket.rate == pytest.approx(10.0)
         ctrl.record_failure()  # should be suppressed (still in cooldown)
-        assert bucket.rate == 10.0  # unchanged
+        assert bucket.rate == pytest.approx(10.0)  # unchanged
 
     def test_cooldown_suppresses_success(self) -> None:
         bucket = TokenBucket(20.0)
         ctrl = AdaptiveController(bucket, max_rate=20.0, cooldown=10.0)
         ctrl.record_failure()  # halves to 10, starts cooldown
         ctrl.record_success()  # should be suppressed (still in cooldown)
-        assert bucket.rate == 10.0  # unchanged
+        assert bucket.rate == pytest.approx(10.0)  # unchanged
 
     def test_recovery_is_time_gated(self) -> None:
         bucket = TokenBucket(20.0)
@@ -137,9 +137,9 @@ class TestAdaptiveController:
         )
         bucket.rate = 10.0
         ctrl.record_success()  # first: should increase
-        assert bucket.rate == 11.0
+        assert bucket.rate == pytest.approx(11.0)
         ctrl.record_success()  # second: too soon, should be no-op
-        assert bucket.rate == 11.0
+        assert bucket.rate == pytest.approx(11.0)
 
     def test_recovery_adds_increment(self) -> None:
         bucket = TokenBucket(20.0)
@@ -152,7 +152,7 @@ class TestAdaptiveController:
         )
         bucket.rate = 10.0
         ctrl.record_success()
-        assert bucket.rate == 12.0
+        assert bucket.rate == pytest.approx(12.0)
 
     def test_recovery_capped_at_max(self) -> None:
         bucket = TokenBucket(20.0)
@@ -165,7 +165,7 @@ class TestAdaptiveController:
         )
         bucket.rate = 18.0
         ctrl.record_success()
-        assert bucket.rate == 20.0  # capped, not 23
+        assert bucket.rate == pytest.approx(20.0)  # capped, not 23
 
     @pytest.mark.asyncio
     async def test_acquire_waits_cooldown(self) -> None:
@@ -204,11 +204,11 @@ class TestAdaptiveController:
         for _ in range(10):
             ctrl.record_failure()
         # Rate should be halved once (10.0), not halved 10 times
-        assert bucket.rate == 10.0
+        assert bucket.rate == pytest.approx(10.0)
 
     def test_current_rate_property(self) -> None:
         bucket = TokenBucket(20.0)
         ctrl = AdaptiveController(bucket, max_rate=20.0)
-        assert ctrl.current_rate == 20.0
+        assert ctrl.current_rate == pytest.approx(20.0)
         ctrl.record_failure()
-        assert ctrl.current_rate == 10.0
+        assert ctrl.current_rate == pytest.approx(10.0)
