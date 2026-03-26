@@ -1,0 +1,280 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [Unreleased]
+
+
+## [7.0.0] - 2026-03-26
+
+### Added
+- **_utils**: add almapy.error logging for error parsing events
+- **_throttle**: add almapy.throttle logging for rate limiting events
+- **_client**: add almapy.http and almapy.retry logging with per-request correlation IDs
+- **_logging**: add shared logging infrastructure with per-request correlation IDs
+- **exceptions**: add public AlmapyError root exception
+- **_acq**: add model= overloads to all 3 Box-returning acq namespace methods
+- **_config**: add model= overloads to all 26 Box-returning config namespace methods
+- **_bibs**: add model= overloads to all 20 Box-returning bib namespace methods
+- **_users**: add model= overloads to all 19 Box-returning user namespace methods
+- **deps**: remove gracy, export ThrottleTimeoutError
+- **namespaces**: migrate all namespace files from GracyNamespace to BaseNamespace
+- **_client.py**: rewrite as composed AlmaClient without gracy
+- **_base.py**: add BaseNamespace replacing GracyNamespace
+- **_endpoints.py**: remove gracy dependency, add build() with strict validation
+- **exceptions.py**: add UserIsNotAPatronError
+- **AlmaClientUserFinesNS**: add remaining fine/fee methods
+- **bibs**: add update_request method
+- **exceptions.py**: add CannotBeLoanedError
+- **config**: add integration profile methods
+- **bibs**: add delete_bib and update_bib
+- **bibs**: add get_holdings
+- **exceptions**: add IllegalBarcodeError
+- **exceptions**: add ItemAlreadyLoanedToUserError
+- **exceptions**: add ExpiredCardError
+- **exceptions.py**: add LoanNotFoundError
+- **config**: add code table endpoints
+- **users**: raise a UserNotFoundError in any method
+- **exceptions**: add MMSIdNotFoundError
+- **exceptions**: add API error code to exception message
+- **exceptions**: add POUpdateFailedError
+- **config**: add jobs methods
+- **exceptions**: add ParallelRequestError
+- **bibs**: add delete_holding and withdraw_item methods
+- **users**: add cancel_request method
+- **users**: add get_requests method
+- **bibs**: add create_item and create_bib methods
+- **exceptions**: add NoItemsCanFulfillRequestError
+- **users**: add create_user_attachment method
+- **acq**: add update_po_line method
+- **acq**: add cancel_po_line method
+- **acq**: add receive_existing_item method
+- **bibs**: add get_requests_for_bib and get_request methods, and get_requests_for_item alias for get_requests
+- **AlmaClient**: improve exception handling
+- **bibs**: add get_bib method
+- **bibs**: add get_item_by_pid method
+- **exceptions**: add ScanItemRetrievalError (402504)
+- **AlmaClient**: add concurrent_requests param and up timeout to 60
+- **users**: add get_users
+- **AlmaClient**: allow specifying per-second ratelimit via rate_limit param
+- total rewrite to use gracy under the hood
+- **bibs.py**: add create_holding method
+- **users.py**: add update_request method
+- **users.py**: add users.request.create_request method
+- **acq.py**: add acq client and acq.get_po_line
+- **bibs.py**: add bibs.requests.create_request method
+- **users.py**: throw UserNotFoundError for get_loans
+- **users,utils**: add UserNotFoundError exception
+- **bibs.py**: add bibs.requests.cancel_request an bibs.requests.get_requests
+- **users.py**: add create_user method
+- **client.py**: add jitter to retries
+- **exceptions.py**: add specific exceptions for invalid item fields
+- **users.py**: add notify_user param to change_loan_due_date
+- **bibs.py**: add update_item method
+- **client.py**: add call logging
+- **config.py**: add location methods to config.libraries
+- **bibs.py**: add scan_in method
+- **config.py**: add manage_members set method
+- **exceptions.py**: add LoanBlockedError
+- **exceptions.py**: move exceptions and add LoanLimitError
+- **analytics.py**: add Analytics
+- add retries and change exceptions
+- **users.py**: add users.requests and get_request method
+- **users.py**: add request_id param
+
+### Changed
+- **_users,_acq,_bibs,_config**: deletion methods return None instead of bool
+- **_client,_base**: text parser returns str directly instead of Box
+- **_client**: move _parse back into AlmaClient as @staticmethod
+- **_base**: remove __slots__ and noqa suppression
+- **_client**: semaphore per-attempt; remove _raw_request
+- **exceptions**: extract _AlmaError base; document two-tier pattern
+- **_utils**: flatten to _raise_for_error_body; add XML + glom-failure tests
+- **_client**: wire _should_retry into stamina
+- **exceptions**: ThresholdError → APIClientError; explicit _RETRYABLE
+- **_utils**: rename process_response → _process_response
+- **_utils**: remove AlmaErrorValidator compatibility shim
+- up minimum python to 3.11
+- typing changes
+- **AlmaClient**: tweak retries and limits
+- add py.typed
+- **AlmaClient**: remove logging of concurrent request limit
+- **AlmaClient**: retry more timeout exceptions
+- **AlmaClient**: tweaks to timeout, retries
+- **utils.py**: print response body of unknown errors
+- **utils.py**: add debug statements for unexpected xml
+- **exceptions.py**: make APIServerError inherit from Exception, rather than APIClientError
+- **pypoetry.toml**: bump deps
+- use glom for server error -> exception mungeing
+
+### Tests
+- **_client**: add edge-case tests for model= validation pathway
+- **quality**: remove 5 RED tautological/line-hitter tests
+- add unit tests for endpoints, utils, throttle; remove gracy fixtures
+
+### Style
+- **_base**: restore noqa: B903 as explicit false-positive suppression
+- **tests**: apply ruff fixes to test_client.py
+- run formatters
+
+### Fixed
+- **_client**: only record_failure for retryable exceptions
+- **_throttle**: raise ThrottleTimeoutError on max_wait exceeded
+- **_users.py**: fix type checking bug
+- **AlmaClient**: disable gracy log propagation and tweak retry log messages
+- **AlmaClientUserFinesNS**: take floats for fee amounts
+- **AlmaClientUserFinesNS**: fix update_fee
+- **AlmaClient**: retry on httpx.ReadError
+- **AlmaClientUserFinesNS**: fix missing user_id parameter in get_fee
+- **AlmaClientUserNS**: alias users.fines as users.fees
+- **AlmaClient**: retry GracyParseFailed
+- **bibs**: fix update_bib and delete_bib endpoints
+- **_config.py**: fix sets.create and sets.manage_members
+- fix assert_never breakage <3.11
+- **utils**: include HTTP 401 in APIClientError handling
+- **analytics**: fix deprecated gracy decorator
+- **exceptions**: fix POUpdateFailedError
+- **users**: fix get_fines TypeError
+- **exceptions**: fix LoanNotFoundError
+- **utils**: fix 'NoneType is not iterable' on 504 (hopefully)
+- **users**: change_loan_due_date now uses PUT instead of GET
+- **config**: fix submit_job
+- **client**: handle HTTP 403 as APIClientError
+- **bibs**: put methods back in namespace
+- **bibs**: fix create_bib Content-Type
+- **analytics**: fix error when report only has one row
+- **AlmaClient**: fix retries for rate limit errors
+- **acq**: fix receive_existing_item using GET instead of POST
+- **analytics**: fix error when report has no rows
+- **acq**: fix po line item endpoint
+- **bibs**: fix create_holding parsing
+- **bibs**: fix create_holding endpoint
+- **_endpoints.py**: fix PO_LINE endpoint
+- **AlmaClient**: retry all timeouts
+- **AlmaClient**: retry httpx.ReadTimeout
+- **analytics**: fix broken endpoint and resumption token
+- fix POST body params
+- **bibs**: fix default None params
+- **AlmaEndpoint**: fix set member endpoint
+- **AlmaClient**: add back analytics namespace (oops)
+- **AlmaClient**: tweak limits
+- **AlmaClient**: raise pool limits to prevent PoolTimeout
+- **users**: fix expand param for get_users
+- **users**: add default for order_by in get_users
+- **_handle_utils**: fix custom exception use
+- **AlmaClient**: follow redirects (for barcode lookup)
+- **_client.py**: set httpx logging level to critical
+- **AlmaClient**: fix user -> users namespace
+- **__init__.py**: fix self.acq namespace
+- **bibs.py**: fix create_request
+- **utils.py**: handle weird XML server errors with generic exceptions
+- **client.py**: retry RemoteProtocolError
+- **utils.py**: raise LoanBlockedError for loan failures due to cash limits
+- **bibs.py**: fix exception string
+- **bibs.py**: fix RequestFailedError regex
+- **utils.py**: use InvalidFieldError
+- **Client,AlmaClient**: retry httpx.ConnectTimeout, add httpx trasnport retries, and up retry count and wait times
+- **utils.py**: strip leading whitespace from server errors
+- **client.py**: retry ThresholdError
+- **client.py**: make post requests respect rate limit
+- **__init__.py**: fix import error
+- **__init__.py,users.py,client.py,utils.py**: fix bodyless post, exception changes, follow redirects
+- **users.py**: fix create_loan method
+- **users.py**: fix create_loan method
+- **client.py**: fix inconsistencies between methods for xml/json handling
+
+### Other
+- final cleanup — remove typing-extensions, add deptry config, fix test assertion
+- version 5.27.7 → 5.28.0
+- version 5.27.6 → 5.27.7
+- version 5.27.5 → 5.27.6
+- version 5.27.4 → 5.27.5
+- version 5.27.3 → 5.27.4
+- version 5.27.2 → 5.27.3
+- version 5.27.1 → 5.27.2
+- version 5.27.0 → 5.27.1
+- version 5.26.0 → 5.27.0
+- version 5.25.0 → 5.26.0
+- version 5.24.0 → 5.25.0
+- version 5.23.0 → 5.24.0
+- version 5.22.0 → 5.22.1
+- version 5.21.0 → 5.22.0
+- version 5.20.0 → 5.20.1
+- version 5.19.0 → 5.20.0
+- version 5.18.0 → 5.19.0
+- version 5.17.0 → 5.18.0
+- version 5.16.0 → 5.17.0
+- version 5.15.0 → 5.16.0
+- version 5.14.0 → 5.15.0
+- version 5.13.0 → 5.14.0
+- version 5.12.0 → 5.13.0
+- version 5.11.0 → 5.12.0
+- version 5.10.0 → 5.11.0
+- version 5.9.0 → 5.10.0
+- version 5.8.0 → 5.9.0
+- version 5.7.0 → 5.8.0
+- version 5.6.0 → 5.7.0
+- version 5.5.0 → 5.6.0
+- version 5.4.0 → 5.5.0
+- version 5.3.0 → 5.4.0
+- version 5.2.0 → 5.3.0
+- version 5.1.1 → 5.2.0
+- version 5.1.0 → 5.1.1
+- version 5.0.1 → 5.1.0
+- version 5.0.0 → 5.0.1
+- version 4.11.0 → 5.0.0
+- version 4.10.0 → 4.11.0
+- version 4.9.0 → 4.10.0
+- version 4.8.0 → 4.9.0
+- version 4.7.1 → 4.8.0
+- version 4.7.0 → 4.7.1
+- version 4.6.0 → 4.7.0
+- version 4.5.0 → 4.6.0
+- version 4.4.2 → 4.5.0
+- version 4.4.1 → 4.4.2
+- version 4.4.0 → 4.4.1
+- version 4.3.1 → 4.4.0
+- version 4.3.0 → 4.3.1
+- version 4.2.3 → 4.3.0
+- version 4.2.2 → 4.2.3
+- version 4.2.1 → 4.2.2
+- version 4.2.0 → 4.2.1
+- version 4.1.0 → 4.2.0
+- version 4.0.0 → 4.1.0
+- version 3.1.1 → 4.0.0
+- version 4.0.0 → 5.0.0
+- version 3.1.0 → 3.1.1
+- version 3.0.0 → 3.1.0
+- version 2.4.0 → 3.0.0
+- version 2.3.0 → 2.4.0
+- version 2.2.0 → 2.3.0
+- version 2.1.0 → 2.2.0
+- version 2.0.1 → 2.1.0
+- version 2.0.0 → 2.0.1
+- version 1.1.0 → 2.0.0
+- version 1.0.3 → 1.1.0
+- version 1.0.2 → 1.0.3
+- version 1.0.1 → 1.0.2
+- version 1.0.0 → 1.0.1
+- version 0.2.0 → 1.0.0
+- version 0.1.0 → 0.2.0
+- version 0.0.5 → 0.1.0
+- version 0.0.1 → 0.0.5
+
+### Build
+- drop poetry in favour of uv
+- **pyproject.toml**: add project section and support uv
+- remove requirements.txt
+- **deps**: bump httpx version
+- **deps**: revert version of pyrate-limiter for now
+- **deps**: bump deps
+- **pypoetry.toml**: bump loguru
+- **pyproject.toml**: bump version to 0.2.0
+- **pyproject.toml**: add commitizen config
+- **pyproject.toml**: add commitizen, pre-commit, black, ruff, isort, mypy
+
+### Performance
+- **client**: increase starting (and therefore all subsequent) retry delays
+
+### Documentation
+- **README**: fix numerous errors in example code
