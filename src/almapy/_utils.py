@@ -126,7 +126,7 @@ def _raise_for_error_body(response: httpx.Response) -> None:
             "API error %s: %s",
             response.status_code,
             response.text,
-            extra={"req_id": request_id.get()},
+            extra={"req_id": request_id.get(), "status_code": response.status_code},
         )
         raise exceptions.APIServerError(str(response.status_code), response.text)
     else:
@@ -148,7 +148,7 @@ def _raise_for_error_body(response: httpx.Response) -> None:
         _error_log.warning(
             "API error %s: Unknown error (unparseable body)",
             response.status_code,
-            extra={"req_id": request_id.get()},
+            extra={"req_id": request_id.get(), "status_code": response.status_code},
         )
         raise exceptions.APIServerError(str(response.status_code), "Unknown error") from e
 
@@ -160,6 +160,10 @@ def _raise_for_error_body(response: httpx.Response) -> None:
         response.status_code,
         code,
         message,
-        extra={"req_id": request_id.get()},
+        extra={
+            "req_id": request_id.get(),
+            "status_code": response.status_code,
+            "alma_code": str(code),
+        },
     )
     raise error_class(code, message)  # type: ignore[misc]

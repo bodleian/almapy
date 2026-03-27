@@ -157,7 +157,12 @@ class AlmaClient:
                             method,
                             url,
                             type(last_exc).__name__,
-                            extra={"req_id": request_id.get()},
+                            extra={
+                                "req_id": request_id.get(),
+                                "attempt": attempt_num,
+                                "max_attempts": self._retry_attempts,
+                                "exc_type": type(last_exc).__name__,
+                            },
                         )
                     async with self._semaphore:
                         await self._controller.acquire()
@@ -166,19 +171,26 @@ class AlmaClient:
                             "%s %s",
                             method,
                             url,
-                            extra={"req_id": request_id.get()},
+                            extra={"req_id": request_id.get(), "method": method, "url": url},
                         )
                         try:
                             resp = await self._http.request(method, url, **kwargs)
                             _validate_response(resp)
+                            elapsed_ms = (time.monotonic() - start) * 1000
                             # Response log only fires on success — almapy.error covers failures
                             _http_log.debug(
                                 "%s %s -> %d (%.0fms)",
                                 method,
                                 url,
                                 resp.status_code,
-                                (time.monotonic() - start) * 1000,
-                                extra={"req_id": request_id.get()},
+                                elapsed_ms,
+                                extra={
+                                    "req_id": request_id.get(),
+                                    "method": method,
+                                    "url": url,
+                                    "status_code": resp.status_code,
+                                    "elapsed_ms": round(elapsed_ms, 1),
+                                },
                             )
                             result = self._parse(resp, parser)
                             if model is not None:

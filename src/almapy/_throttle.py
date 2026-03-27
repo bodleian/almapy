@@ -60,7 +60,11 @@ class TokenBucket:
                 "TokenBucket: waiting %.3fs (%.2f tokens available)",
                 wait,
                 tokens_snapshot,
-                extra={"req_id": request_id.get()},
+                extra={
+                    "req_id": request_id.get(),
+                    "wait_secs": round(wait, 3),
+                    "tokens_available": round(tokens_snapshot, 2),
+                },
             )
             await asyncio.sleep(wait)
 
@@ -132,7 +136,7 @@ class AdaptiveController:
             "AdaptiveController: rate cut %.1f -> %.1f req/s (failure)",
             old_rate,
             new_rate,
-            extra={"req_id": request_id.get()},
+            extra={"req_id": request_id.get(), "old_rate": old_rate, "new_rate": new_rate},
         )
 
     def record_success(self) -> None:
@@ -150,5 +154,5 @@ class AdaptiveController:
             "AdaptiveController: rate recovered %.1f -> %.1f req/s",
             old_rate,
             self._bucket.rate,
-            extra={"req_id": request_id.get()},
+            extra={"req_id": request_id.get(), "old_rate": old_rate, "new_rate": self._bucket.rate},
         )
