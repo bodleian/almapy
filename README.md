@@ -98,16 +98,17 @@ almapy uses stdlib `logging` and follows library best practice: a `NullHandler` 
 
 Four semantic loggers are available:
 
-| Logger | Level | Event |
-|--------|-------|-------|
-| `almapy.http` | DEBUG | Request sent and response received (method, URL, status, elapsed ms) |
-| `almapy.retry` | WARNING | Retry attempt N/M with exception type and backoff |
-| `almapy.throttle` | DEBUG | TokenBucket wait (seconds, tokens available) |
-| `almapy.throttle` | WARNING | Rate cut by adaptive controller (old → new req/s) |
-| `almapy.throttle` | INFO | Rate recovery (old → new req/s) |
-| `almapy.error` | WARNING | Alma error code and message before raising exception |
+| Logger | Level | Event | Extra fields |
+|--------|-------|-------|--------------|
+| `almapy.http` | DEBUG | Request sent | `method`, `url` |
+| `almapy.http` | DEBUG | Response received | `method`, `url`, `status_code`, `elapsed_ms` |
+| `almapy.retry` | WARNING | Retry attempt | `attempt`, `max_attempts`, `exc_type` |
+| `almapy.throttle` | DEBUG | TokenBucket wait | `wait_secs`, `tokens_available` |
+| `almapy.throttle` | WARNING | Rate cut (AIMD backoff) | `old_rate`, `new_rate` |
+| `almapy.throttle` | INFO | Rate recovery | `old_rate`, `new_rate` |
+| `almapy.error` | WARNING | Alma error before raising | `status_code`, `alma_code` (where applicable) |
 
-Every log record carries a `req_id` field — a `uuid4().hex` correlation ID set at the start of each `execute()` call and reset in `finally`. Use it to correlate retries, throttle events, and errors for a single request.
+Every log record also carries a `req_id` field — a `uuid4().hex` correlation ID set at the start of each `execute()` call and reset in `finally`. Use it to correlate retries, throttle events, and errors for a single request.
 
 To enable logging in your application:
 
@@ -129,6 +130,40 @@ To include the correlation ID in your formatter:
 handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter("%(levelname)s %(name)s [%(req_id)s] %(message)s"))
 logging.getLogger("almapy").addHandler(handler)
+```
+
+### structlog integration
+
+All extra fields flow automatically into structlog via `ExtraAdder()`:
+
+```python
+import logging
+import structlog
+
+structlog.configure(
+    processors=[
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+)
+
+formatter = structlog.stdlib.ProcessorFormatter(
+    foreign_pre_chain=[
+        structlog.stdlib.ExtraAdder(),   # pulls req_id, status_code, elapsed_ms, etc.
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+    ],
+    processors=[
+        structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+        structlog.processors.JSONRenderer(),
+    ],
+)
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+logging.getLogger("almapy").addHandler(handler)
+logging.getLogger("almapy").setLevel(logging.DEBUG)
 ```
 
 ## TODO
