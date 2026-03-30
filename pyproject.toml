@@ -4,7 +4,7 @@ version = "7.1.0"
 requires-python = ">=3.11.0, <4.0.0"
 authors = [{ name = "Ben Gable", email = "ben.gable@bodleian.ox.ac.uk" }]
 dependencies = [
-  "httpx>=0.27.0",
+  "niquests>=3.18.0",
   "xmltodict>=0.13.0",
   "python-box>=7.2.0",
   "glom>=23.5.0",

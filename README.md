@@ -151,7 +151,7 @@ structlog.configure(
 
 formatter = structlog.stdlib.ProcessorFormatter(
     foreign_pre_chain=[
-        structlog.stdlib.ExtraAdder(),   # pulls req_id, status_code, elapsed_ms, etc.
+        structlog.stdlib.ExtraAdder(),  # pulls req_id, status_code, elapsed_ms, etc.
         structlog.stdlib.add_log_level,
         structlog.processors.TimeStamper(fmt="iso"),
     ],

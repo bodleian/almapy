@@ -12,7 +12,7 @@ from typing import (
     cast,
 )
 
-import httpx
+import niquests
 import xmltodict
 from box import Box
 from glom import Coalesce, GlomError, glom
@@ -61,8 +61,9 @@ def _parse_xml(text: str) -> "OrderedDict[str, Any]":
     return cast("OrderedDict[str, Any]", body)
 
 
-def _validate_response(response: httpx.Response) -> None:
+def _validate_response(response: niquests.Response) -> None:
     """Raise an appropriate exception if the response indicates an error."""
+    assert response.status_code is not None
     if response.status_code >= HTTPStatus.BAD_REQUEST:
         _raise_for_error_body(response)
 
@@ -70,9 +71,9 @@ def _validate_response(response: httpx.Response) -> None:
 _RETRYABLE = (
     exceptions.ThresholdError,  # 429 rate limit
     exceptions.APIServerError,  # 5xx server errors
-    httpx.ConnectError,
-    httpx.TimeoutException,  # base for ReadTimeout, WriteTimeout, ConnectTimeout, PoolTimeout
-    httpx.RemoteProtocolError,
+    niquests.ConnectionError,
+    niquests.Timeout,  # base for ReadTimeout, ConnectTimeout
+    niquests.exceptions.ChunkedEncodingError,  # server drops connection mid-response
 )
 
 
@@ -116,8 +117,10 @@ _ERROR_MAPPING: dict[str, type[exceptions.APIServerError | exceptions.APIClientE
 }
 
 
-def _raise_for_error_body(response: httpx.Response) -> None:
+def _raise_for_error_body(response: niquests.Response) -> None:
     """Parse an error response body and raise the appropriate exception. Always raises."""
+    assert response.status_code is not None
+    assert response.text is not None
     ct = response.headers.get("Content-Type")
     if ct and "xml" in ct:
         body = _parse_xml(response.text)

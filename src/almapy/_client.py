@@ -7,7 +7,7 @@ import time
 from http import HTTPStatus
 from typing import Any, Literal, overload
 
-import httpx
+import niquests
 import stamina
 from box import Box
 
@@ -36,7 +36,7 @@ _LOCATIONS: dict[str, str] = {
 class AlmaClient:
     """Async API wrapper for the Alma library management system.
 
-    Composed of: httpx.AsyncClient (transport), TokenBucket (rate limiting),
+    Composed of: niquests.AsyncSession (transport), TokenBucket (rate limiting),
     AdaptiveController (AIMD backpressure), asyncio.Semaphore (concurrency cap).
     """
 
@@ -53,7 +53,7 @@ class AlmaClient:
         recovery_window: float = 10.0,
         cooldown: float = 5.0,
         max_wait: float | None = None,
-        client: httpx.AsyncClient | None = None,
+        client: niquests.AsyncSession | None = None,
     ) -> None:
         if not apikey:
             msg = "apikey must be provided"
@@ -76,19 +76,19 @@ class AlmaClient:
         self._semaphore = asyncio.Semaphore(concurrent_requests)
 
         if client is None:
-            self._http = httpx.AsyncClient(
+            self._http = niquests.AsyncSession(
                 base_url=_LOCATIONS[location] + "/almaws/v1",
                 headers={
                     "Accept": "application/json",
                     "Authorization": f"apikey {apikey}",
                 },
-                follow_redirects=True,
-                timeout=httpx.Timeout(30, connect=30, read=90, pool=120),
+                timeout=(30, 90),
             )
             self._owns_client = True
         else:
             self._http = client
             self._owns_client = False
+        self._closed = False
 
         self.users: AlmaClientUserNS = AlmaClientUserNS(self)
         self.bibs: AlmaClientBibNS = AlmaClientBibNS(self)
@@ -212,7 +212,11 @@ class AlmaClient:
     def __del__(self) -> None:
         """Schedule cleanup when the client is abandoned without being explicitly closed."""
         http = getattr(self, "_http", None)
-        if not getattr(self, "_owns_client", False) or http is None or http.is_closed:
+        if (
+            not getattr(self, "_owns_client", False)
+            or http is None
+            or getattr(self, "_closed", False)
+        ):
             return
         with contextlib.suppress(RuntimeError):
             asyncio.get_running_loop().create_task(self.aclose())
@@ -220,7 +224,8 @@ class AlmaClient:
     async def aclose(self) -> None:
         """Close the underlying HTTP client if this instance owns it."""
         if self._owns_client:
-            await self._http.aclose()
+            await self._http.close()
+            self._closed = True
 
     async def __aenter__(self) -> "AlmaClient":
         return self
@@ -229,10 +234,11 @@ class AlmaClient:
         await self.aclose()
 
     @staticmethod
-    def _parse(response: httpx.Response, parser: Parser) -> RESP_TYPE | str:
-        """Parse an httpx response according to the requested parser."""
+    def _parse(response: niquests.Response, parser: Parser) -> RESP_TYPE | str:
+        """Parse a niquests response according to the requested parser."""
         if parser == "none" or response.status_code == HTTPStatus.NO_CONTENT:
             return Box()
+        assert response.text is not None
         if parser == "xml":
             return Box(_parse_xml(response.text))
         if parser == "text":
