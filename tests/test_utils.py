@@ -3,8 +3,9 @@
 import json
 import logging
 
-import httpx
+import niquests
 import pytest
+from niquests.structures import CaseInsensitiveDict
 
 from almapy import exceptions
 from almapy._utils import _should_retry, _validate_response
@@ -12,8 +13,6 @@ from almapy._utils import _should_retry, _validate_response
 
 def _error_body(code: str, message: str) -> str:
     """Return a JSON error body matching the errorList.error.0 glom path."""
-    import json
-
     return json.dumps({"errorList": {"error": [{"errorCode": code, "errorMessage": message}]}})
 
 
@@ -21,12 +20,13 @@ def _make_response(
     status_code: int,
     body: str = "",
     content_type: str = "application/json",
-) -> httpx.Response:
-    return httpx.Response(
-        status_code=status_code,
-        headers={"Content-Type": content_type},
-        content=body.encode(),
-    )
+) -> niquests.Response:
+    r = niquests.Response()
+    r.status_code = status_code
+    r.headers = CaseInsensitiveDict({"Content-Type": content_type})
+    r._content = body.encode()
+    r._content_consumed = True
+    return r
 
 
 class TestValidateResponse:
@@ -97,13 +97,17 @@ class TestValidateResponse:
     def test_missing_content_type_treated_as_json(self) -> None:
         """No Content-Type header → falls through to json.loads (correct fallback)."""
         body = _error_body("401861", "User with identifier jsmith was not found.")
-        response = httpx.Response(status_code=404, content=body.encode())
+        r = niquests.Response()
+        r.status_code = 404
+        r.headers = CaseInsensitiveDict({})
+        r._content = body.encode()
+        r._content_consumed = True
         with pytest.raises(exceptions.UserNotFoundError) as exc_info:
-            _validate_response(response)
+            _validate_response(r)
         assert exc_info.value.user_id == "jsmith"
 
     def test_content_type_with_charset_suffix_treated_as_json(self) -> None:
-        """'application/json; charset=utf-8' ≠ 'text/plain', doesn't contain 'xml' → json.loads path."""
+        """'application/json; charset=utf-8' != 'text/plain', doesn't contain 'xml' → json.loads path."""
         body = _error_body("401861", "User with identifier jsmith was not found.")
         response = _make_response(404, body, content_type="application/json; charset=utf-8")
         with pytest.raises(exceptions.UserNotFoundError) as exc_info:
@@ -121,7 +125,6 @@ class TestValidateResponse:
             "</web_service_result>"
         )
         response = _make_response(404, xml_body, content_type="application/xml")
-        # Must not raise ExpatError — the retry path in _parse_xml handles it
         with pytest.raises(exceptions.UserNotFoundError):
             _validate_response(response)
 
@@ -136,12 +139,11 @@ class TestValidateResponse:
             }
         })
         response = _make_response(404, body)
-        # Known limitation: single-dict error body hits GlomError fallback
         with pytest.raises(exceptions.APIServerError, match="Unknown error"):
             _validate_response(response)
 
     def test_empty_error_message_falls_back_to_code(self) -> None:
-        """Empty errorMessage → code is used as the message (line: message = code if not message)."""
+        """Empty errorMessage → code is used as the message."""
         body = json.dumps({"errorList": {"error": [{"errorCode": "ABC", "errorMessage": ""}]}})
         response = _make_response(400, body)
         with pytest.raises(exceptions.APIClientError) as exc_info:
@@ -150,7 +152,6 @@ class TestValidateResponse:
         assert exc_info.value.code == "ABC"
 
     def test_user_not_found_with_dotted_identifier(self) -> None:
-        """UserNotFoundError regex [A-Za-z0-9._-]+ now matches dotted/hyphenated identifiers."""
         body = _error_body("401861", "User with identifier john.doe was not found.")
         response = _make_response(404, body)
         with pytest.raises(exceptions.UserNotFoundError) as exc_info:
@@ -158,7 +159,6 @@ class TestValidateResponse:
         assert exc_info.value.user_id == "john.doe"
 
     def test_barcode_brackets_stripped_correctly(self) -> None:
-        """BarcodeNotFoundError strips both [ and ] from '[ABC]' → 'ABC' (fixed from [0:-1] to [1:-1])."""
         body = _error_body("401689", "Input barcode [ITEM-42]")
         response = _make_response(400, body)
         with pytest.raises(exceptions.BarcodeNotFoundError) as exc_info:
@@ -168,7 +168,6 @@ class TestValidateResponse:
 
 class TestLoanBlockedErrorFallback:
     def test_non_matching_message_all_attributes_empty(self) -> None:
-        """LoanBlockedError fallback: regex no-match sets all 4 domain attrs to empty string."""
         exc = exceptions.LoanBlockedError("401201", "This message does not match the pattern")
         assert exc.type == ""
         assert exc.description == ""
@@ -233,24 +232,24 @@ class TestShouldRetry:
         assert _should_retry(exc) is True
 
     def test_threshold_error_is_not_api_server_error(self) -> None:
-        """ThresholdError must not inherit APIServerError — retry logic is explicit in _RETRYABLE."""
         exc = exceptions.ThresholdError("429", "rate limited")
         assert not isinstance(exc, exceptions.APIServerError)
 
     def test_connect_error_is_retryable(self) -> None:
-        exc = httpx.ConnectError("connection refused")
+        exc = niquests.ConnectionError("connection refused")
         assert _should_retry(exc) is True
 
-    def test_timeout_exception_is_retryable(self) -> None:
-        exc = httpx.TimeoutException("timed out")
+    def test_timeout_is_retryable(self) -> None:
+        exc = niquests.Timeout("timed out")
         assert _should_retry(exc) is True
 
     def test_read_timeout_is_retryable(self) -> None:
-        exc = httpx.ReadTimeout("read timed out")
+        exc = niquests.ReadTimeout("read timed out")
         assert _should_retry(exc) is True
 
-    def test_remote_protocol_error_is_retryable(self) -> None:
-        exc = httpx.RemoteProtocolError("server dropped connection")
+    def test_chunked_encoding_error_is_retryable(self) -> None:
+        """niquests.ChunkedEncodingError replaces httpx.RemoteProtocolError for dropped connections."""
+        exc = niquests.exceptions.ChunkedEncodingError("server dropped connection")
         assert _should_retry(exc) is True
 
     def test_api_client_error_is_not_retryable(self) -> None:

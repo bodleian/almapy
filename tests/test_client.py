@@ -79,9 +79,7 @@ class TestExecuteOutcomeRecording:
         client._controller.record_success.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_5xx_calls_record_failure(
-        self, client: AlmaClient, rsps: NiquestsMock
-    ) -> None:
+    async def test_5xx_calls_record_failure(self, client: AlmaClient, rsps: NiquestsMock) -> None:
         rsps.add(
             responses.GET,
             f"{_BASE}/users",
@@ -161,9 +159,7 @@ class TestAlmaClientInternals:
         assert client._closed is True
 
     @pytest.mark.asyncio
-    async def test_execute_retries_correct_number_of_times(
-        self, rsps: NiquestsMock
-    ) -> None:
+    async def test_execute_retries_correct_number_of_times(self, rsps: NiquestsMock) -> None:
         client = AlmaClient("test-api-key", retry_attempts=2)
         rsps.add(responses.GET, f"{_BASE}/users", body=niquests.ConnectionError("refused"))
         client._controller = MagicMock()
@@ -177,9 +173,7 @@ class TestAlmaClientInternals:
 
 class TestExecuteModelValidation:
     @pytest.mark.asyncio
-    async def test_model_none_returns_box(
-        self, client: AlmaClient, rsps: NiquestsMock
-    ) -> None:
+    async def test_model_none_returns_box(self, client: AlmaClient, rsps: NiquestsMock) -> None:
         rsps.add(responses.GET, f"{_BASE}/users", json={"foo": "bar"})
         result = await client.execute("GET", "/users", parser="json", model=None)
         assert isinstance(result, Box)
