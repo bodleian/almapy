@@ -76,6 +76,7 @@ class AlmaClient:
         self._semaphore = asyncio.Semaphore(concurrent_requests)
 
         if client is None:
+            pool_size = max(10, concurrent_requests)
             self._http = niquests.AsyncSession(
                 base_url=_LOCATIONS[location] + "/almaws/v1",
                 headers={
@@ -83,6 +84,10 @@ class AlmaClient:
                     "Authorization": f"apikey {apikey}",
                 },
                 timeout=(30, 90),
+                pool_connections=pool_size,
+                pool_maxsize=pool_size,
+                disable_http2=True,
+                disable_http3=True,
             )
             self._owns_client = True
         else:

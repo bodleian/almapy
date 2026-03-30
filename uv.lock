@@ -4,13 +4,14 @@ requires-python = ">=3.11.0, <4.0.0"
 
 [[package]]
 name = "almapy"
-version = "7.1.0"
+version = "8.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "glom" },
     { name = "niquests" },
     { name = "python-box" },
     { name = "stamina" },
+    { name = "urllib3-future" },
     { name = "xmltodict" },
 ]
 
@@ -38,6 +39,7 @@ requires-dist = [
     { name = "niquests", specifier = ">=3.18.0" },
     { name = "python-box", specifier = ">=7.2.0" },
     { name = "stamina", specifier = ">=25.2.0" },
+    { name = "urllib3-future", specifier = ">=2.19.900" },
     { name = "xmltodict", specifier = ">=0.13.0" },
 ]
 

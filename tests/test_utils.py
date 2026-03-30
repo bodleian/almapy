@@ -1,7 +1,9 @@
 """Tests for _validate_response() and _should_retry()."""
 
+import importlib.util
 import json
 import logging
+from pathlib import Path
 
 import niquests
 import pytest
@@ -223,6 +225,76 @@ class TestErrorLogging:
 
 
 class TestShouldRetry:
+    def test_urllib3_transport_assertion_is_retryable(self, tmp_path: Path) -> None:
+        module_path = tmp_path / "site-packages" / "urllib3" / "backend" / "_async" / "hface.py"
+        module_path.parent.mkdir(parents=True)
+        module_path.write_text("def boom():\n    raise AssertionError()\n")
+
+        spec = importlib.util.spec_from_file_location("fake_urllib3_hface", module_path)
+        assert spec is not None
+        assert spec.loader is not None
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with pytest.raises(AssertionError) as exc_info:
+            module.boom()
+
+        assert _should_retry(exc_info.value) is True
+
+    def test_non_urllib3_assertion_is_not_retryable(self) -> None:
+        with pytest.raises(AssertionError) as exc_info:
+            raise AssertionError()
+
+        assert _should_retry(exc_info.value) is False
+
+    def test_urllib3_http1_reuse_runtime_error_is_retryable(self, tmp_path: Path) -> None:
+        module_path = tmp_path / "site-packages" / "urllib3" / "contrib" / "hface.py"
+        module_path.parent.mkdir(parents=True)
+        module_path.write_text(
+            "def boom():\n"
+            "    raise RuntimeError(\n"
+            "        'Cannot generate a new stream ID because the connection is not idle. '\n"
+            "        'HTTP/1.1 is not multiplexed and we do not support HTTP pipelining.'\n"
+            "    )\n"
+        )
+
+        spec = importlib.util.spec_from_file_location("fake_urllib3_http1", module_path)
+        assert spec is not None
+        assert spec.loader is not None
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with pytest.raises(RuntimeError) as exc_info:
+            module.boom()
+
+        assert _should_retry(exc_info.value) is True
+
+    def test_urllib3_async_pending_signal_value_error_is_retryable(self, tmp_path: Path) -> None:
+        module_path = (
+            tmp_path / "site-packages" / "urllib3" / "util" / "_async" / "traffic_police.py"
+        )
+        module_path.parent.mkdir(parents=True)
+        module_path.write_text(
+            "def boom():\n"
+            "    raise ValueError('AsyncPendingSignal(owner_task=<Task cancelling>, event=<Event>, "
+            "target_conn_or_pool=None, target_obj_id=None, conn_or_pool=None, "
+            "states=(<TrafficState.USED: 1>, <TrafficState.IDLE: 0>)) is not in deque')\n"
+        )
+
+        spec = importlib.util.spec_from_file_location("fake_urllib3_tp", module_path)
+        assert spec is not None
+        assert spec.loader is not None
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with pytest.raises(ValueError) as exc_info:
+            module.boom()
+
+        assert _should_retry(exc_info.value) is True
+
     def test_api_server_error_is_retryable(self) -> None:
         exc = exceptions.APIServerError("500", "server error")
         assert _should_retry(exc) is True

@@ -2,6 +2,7 @@ import json
 import logging
 import operator
 import re
+import traceback
 import xml
 from collections import OrderedDict
 from http import HTTPStatus
@@ -77,9 +78,40 @@ _RETRYABLE = (
 )
 
 
+def _is_urllib3_transport_assertion(exc: BaseException) -> bool:
+    """Treat urllib3-future async transport assertions as transient request failures."""
+    if not isinstance(exc, AssertionError):
+        return False
+
+    return any("urllib3" in frame.filename for frame in traceback.extract_tb(exc.__traceback__))
+
+
+def _is_urllib3_http1_reuse_race(exc: BaseException) -> bool:
+    """Treat known urllib3-future HTTP/1.1 async pool races as transient transport failures."""
+    frames = traceback.extract_tb(exc.__traceback__)
+    from_urllib3 = any("urllib3" in frame.filename for frame in frames)
+    if not from_urllib3:
+        return False
+
+    if isinstance(exc, RuntimeError):
+        return str(exc) == (
+            "Cannot generate a new stream ID because the connection is not idle. "
+            "HTTP/1.1 is not multiplexed and we do not support HTTP pipelining."
+        )
+
+    if isinstance(exc, ValueError):
+        return str(exc).endswith("is not in deque") and "AsyncPendingSignal(" in str(exc)
+
+    return False
+
+
 def _should_retry(exc: BaseException) -> bool:
     """Return True if the exception is one that stamina should retry."""
-    return isinstance(exc, _RETRYABLE)
+    return (
+        isinstance(exc, _RETRYABLE)
+        or _is_urllib3_transport_assertion(exc)
+        or _is_urllib3_http1_reuse_race(exc)
+    )
 
 
 def _get_error_class(

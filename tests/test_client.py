@@ -135,6 +135,14 @@ class TestAlmaClientInternals:
         with pytest.raises(ValueError, match="Invalid location"):
             AlmaClient("test-api-key", location="Antarctica")  # type: ignore[arg-type]
 
+    def test_owned_session_pool_matches_concurrency(self) -> None:
+        client = AlmaClient("test-api-key", concurrent_requests=150)
+        https_adapter = client._http.adapters["https://"]
+        assert client._http._pool_connections == 150
+        assert client._http._pool_maxsize == 150
+        assert https_adapter.poolmanager._num_pools == 150
+        assert https_adapter.poolmanager.connection_pool_kw["maxsize"] == 150
+
     @pytest.mark.asyncio
     async def test_aclose_closes_owned_client(self) -> None:
         client = AlmaClient("test-api-key")
