@@ -55,17 +55,6 @@ class TokenBucket:
                     return
                 deficit = 1.0 - self._tokens
                 wait = deficit / self._rate
-                tokens_snapshot = self._tokens  # capture inside lock — avoids stale read
-            _throttle_log.debug(
-                "TokenBucket: waiting %.3fs (%.2f tokens available)",
-                wait,
-                tokens_snapshot,
-                extra={
-                    "req_id": request_id.get(),
-                    "wait_secs": round(wait, 3),
-                    "tokens_available": round(tokens_snapshot, 2),
-                },
-            )
             await asyncio.sleep(wait)
 
     def _refill(self) -> None:

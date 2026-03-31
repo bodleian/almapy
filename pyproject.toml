@@ -1,15 +1,15 @@
 [project]
 name = "almapy"
-version = "8.0.1"
+version = "8.1.0"
 requires-python = ">=3.11.0, <4.0.0"
 authors = [{ name = "Ben Gable", email = "ben.gable@bodleian.ox.ac.uk" }]
 dependencies = [
-  "niquests>=3.18.0",
+  "niquests>=3.18.4",
   "xmltodict>=0.13.0",
   "python-box>=7.2.0",
   "glom>=23.5.0",
   "stamina>=25.2.0",
-  "urllib3-future>=2.19.900",
+  "urllib3-future[rtls]>=2.19.902",
 ]
 
 [build-system]

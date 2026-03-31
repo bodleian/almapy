@@ -140,8 +140,8 @@ class TestAlmaClientInternals:
         https_adapter = client._http.adapters["https://"]
         assert client._http._pool_connections == 150
         assert client._http._pool_maxsize == 150
-        assert https_adapter.poolmanager._num_pools == 150
-        assert https_adapter.poolmanager.connection_pool_kw["maxsize"] == 150
+        assert https_adapter.poolmanager._num_pools == 150  # type: ignore[attr-defined]
+        assert https_adapter.poolmanager.connection_pool_kw["maxsize"] == 150  # type: ignore[attr-defined]
 
     @pytest.mark.asyncio
     async def test_aclose_closes_owned_client(self) -> None:
@@ -292,3 +292,34 @@ class TestExecuteLogging:
         assert len(retry_records) == 1
         assert "Retry 2/" in retry_records[0].message
         assert "APIServerError" in retry_records[0].message
+
+
+class TestSanitizeUrl:
+    """Unit tests for the _sanitize_url helper."""
+
+    def test_no_query_string_unchanged(self) -> None:
+        """Relative paths without query strings pass through untouched."""
+        from almapy._client import _sanitize_url
+
+        assert _sanitize_url("/bibs/123") == "/bibs/123"
+
+    def test_strips_apikey_only_param(self) -> None:
+        """URL with only apikey= becomes a bare path (catches: apikey exposure)."""
+        from almapy._client import _sanitize_url
+
+        assert _sanitize_url("/bibs/123?apikey=supersecret") == "/bibs/123"
+
+    def test_strips_apikey_preserves_other_params(self) -> None:
+        """apikey is removed but other query params are kept (catches: over-stripping)."""
+        from almapy._client import _sanitize_url
+
+        result = _sanitize_url("/bibs/123?apikey=supersecret&limit=10&offset=0")
+        assert "apikey" not in result
+        assert "limit=10" in result
+        assert "offset=0" in result
+
+    def test_strips_apikey_case_insensitive(self) -> None:
+        """APIKEY= and ApiKey= are also stripped (catches: case-bypass)."""
+        from almapy._client import _sanitize_url
+
+        assert _sanitize_url("/bibs/123?APIKEY=supersecret") == "/bibs/123"

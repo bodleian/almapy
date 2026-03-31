@@ -12,6 +12,12 @@ import uuid
 # Multiple NullHandlers from module reload are harmless (both discard all records).
 logging.getLogger("almapy").addHandler(logging.NullHandler())
 
+# Suppress debug output from transitive HTTP dependencies to prevent credential leaks.
+# niquests and urllib3 log full request URLs at DEBUG level, which can expose apikeys.
+# WARNING+ is still propagated (connection errors, SSL warnings remain visible).
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("niquests").setLevel(logging.WARNING)
+
 # Per-request correlation ID. Set at the start of AlmaClient._execute(),
 # reset in finally. Unique across process restarts (full UUID128 as 32 hex chars).
 # Default is "" (empty string) — callers using %(req_id)s in formatters will see

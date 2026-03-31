@@ -6,6 +6,7 @@ import logging
 import time
 from http import HTTPStatus
 from typing import Any, Literal, overload
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import niquests
 import stamina
@@ -23,6 +24,16 @@ from almapy._utils import RESP_TYPE, _ModelT, _parse_xml, _should_retry, _valida
 
 _http_log = logging.getLogger("almapy.http")
 _retry_log = logging.getLogger("almapy.retry")
+
+
+def _sanitize_url(url: str) -> str:
+    """Strip the ``apikey`` query parameter from a URL before logging."""
+    parsed = urlparse(url)
+    if not parsed.query:
+        return url
+    filtered = [(k, v) for k, v in parse_qsl(parsed.query) if k.lower() != "apikey"]
+    return urlunparse(parsed._replace(query=urlencode(filtered)))
+
 
 _LOCATIONS: dict[str, str] = {
     "America": "https://api-na.hosted.exlibrisgroup.com",
@@ -160,7 +171,7 @@ class AlmaClient:
                             attempt_num,
                             self._retry_attempts,
                             method,
-                            url,
+                            _sanitize_url(url),
                             type(last_exc).__name__,
                             extra={
                                 "req_id": request_id.get(),
@@ -172,11 +183,12 @@ class AlmaClient:
                     async with self._semaphore:
                         await self._controller.acquire()
                         start = time.monotonic()
+                        safe_url = _sanitize_url(url)
                         _http_log.debug(
                             "%s %s",
                             method,
-                            url,
-                            extra={"req_id": request_id.get(), "method": method, "url": url},
+                            safe_url,
+                            extra={"req_id": request_id.get(), "method": method, "url": safe_url},
                         )
                         try:
                             resp = await self._http.request(method, url, **kwargs)
@@ -186,13 +198,13 @@ class AlmaClient:
                             _http_log.debug(
                                 "%s %s -> %d (%.0fms)",
                                 method,
-                                url,
+                                safe_url,
                                 resp.status_code,
                                 elapsed_ms,
                                 extra={
                                     "req_id": request_id.get(),
                                     "method": method,
-                                    "url": url,
+                                    "url": safe_url,
                                     "status_code": resp.status_code,
                                     "elapsed_ms": round(elapsed_ms, 1),
                                 },

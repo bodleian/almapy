@@ -218,8 +218,8 @@ class TestAdaptiveController:
 
 class TestThrottleLogging:
     @pytest.mark.asyncio
-    async def test_token_bucket_logs_wait(self, caplog: pytest.LogCaptureFixture) -> None:
-        """TokenBucket logs DEBUG when it has to wait for tokens."""
+    async def test_token_bucket_wait_emits_no_logs(self, caplog: pytest.LogCaptureFixture) -> None:
+        """TokenBucket wait path is silent — no DEBUG noise on every throttled request."""
         bucket = TokenBucket(1.0)
         bucket._tokens = 0.0  # force wait path
         with (
@@ -230,9 +230,7 @@ class TestThrottleLogging:
             with pytest.raises(asyncio.CancelledError):
                 await bucket.acquire()
         records = [r for r in caplog.records if r.name == "almapy.throttle"]
-        assert len(records) >= 1
-        assert "TokenBucket" in records[0].message
-        assert "waiting" in records[0].message
+        assert len(records) == 0
 
     def test_record_failure_logs_rate_cut(self, caplog: pytest.LogCaptureFixture) -> None:
         """record_failure logs WARNING with old and new rate."""
