@@ -8,9 +8,14 @@ import contextvars
 import logging
 import uuid
 
+import stamina
+
 # Library best practice: register NullHandler so no output is forced on callers.
 # Multiple NullHandlers from module reload are harmless (both discard all records).
 logging.getLogger("almapy").addHandler(logging.NullHandler())
+
+# Disable stamina's process-global retry instrumentation; almapy emits retry logs itself.
+stamina.instrumentation.set_on_retry_hooks(())
 
 # Suppress debug output from transitive HTTP dependencies to prevent credential leaks.
 # niquests and urllib3 log full request URLs at DEBUG level, which can expose apikeys.

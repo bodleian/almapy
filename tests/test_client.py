@@ -293,6 +293,26 @@ class TestExecuteLogging:
         assert "Retry 2/" in retry_records[0].message
         assert "APIServerError" in retry_records[0].message
 
+    @pytest.mark.asyncio
+    async def test_stamina_retry_logger_is_suppressed(
+        self, rsps: NiquestsMock, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Retry logging must come from almapy.retry only, never stamina."""
+        client = AlmaClient("test-api-key", retry_attempts=2)
+        rsps.add(
+            responses.GET,
+            f"{_BASE}/bibs/123",
+            json={"errorList": {"error": [{"errorCode": "500", "errorMessage": "Server error"}]}},
+            status=500,
+        )
+        rsps.add(responses.GET, f"{_BASE}/bibs/123", json={"ok": True})
+
+        with caplog.at_level(logging.WARNING):
+            await client.execute("GET", "/bibs/123", parser="json")
+
+        assert [r for r in caplog.records if r.name == "almapy.retry"]
+        assert [r for r in caplog.records if r.name == "stamina"] == []
+
 
 class TestSanitizeUrl:
     """Unit tests for the _sanitize_url helper."""
