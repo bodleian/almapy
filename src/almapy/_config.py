@@ -13,40 +13,42 @@ class AlmaClientConfigSetsNS(BaseNamespace):
 
     @overload
     async def get_list(
-        self,
-        content_type: str | None = ...,
-        set_type: Literal["ITEMIZED", "LOGICAL"] | None = ...,
-        q: str | None = ...,
-        limit: int = ...,
-        offset: int = ...,
-        set_origin: Literal["UI", "UI_CZ"] = ...,
-        *,
-        model: type[_ModelT],
-    ) -> _ModelT: ...
+            self,
+            content_type: str | None = ...,
+            set_type: Literal["ITEMIZED", "LOGICAL"] | None = ...,
+            q: str | None = ...,
+            limit: int = ...,
+            offset: int = ...,
+            set_origin: Literal["UI", "UI_CZ"] = ...,
+            *,
+            model: type[_ModelT],
+    ) -> _ModelT:
+        ...
 
     @overload
     async def get_list(
-        self,
-        content_type: str | None = ...,
-        set_type: Literal["ITEMIZED", "LOGICAL"] | None = ...,
-        q: str | None = ...,
-        limit: int = ...,
-        offset: int = ...,
-        set_origin: Literal["UI", "UI_CZ"] = ...,
-        *,
-        model: None = ...,
-    ) -> RESP_TYPE: ...
+            self,
+            content_type: str | None = ...,
+            set_type: Literal["ITEMIZED", "LOGICAL"] | None = ...,
+            q: str | None = ...,
+            limit: int = ...,
+            offset: int = ...,
+            set_origin: Literal["UI", "UI_CZ"] = ...,
+            *,
+            model: None = ...,
+    ) -> RESP_TYPE:
+        ...
 
     async def get_list(
-        self,
-        content_type: str | None = None,
-        set_type: Literal["ITEMIZED", "LOGICAL"] | None = None,
-        q: str | None = None,
-        limit: int = 10,
-        offset: int = 0,
-        set_origin: Literal["UI", "UI_CZ"] = "UI",
-        *,
-        model: Any = None,
+            self,
+            content_type: str | None = None,
+            set_type: Literal["ITEMIZED", "LOGICAL"] | None = None,
+            q: str | None = None,
+            limit: int = 10,
+            offset: int = 0,
+            set_origin: Literal["UI", "UI_CZ"] = "UI",
+            *,
+            model: Any = None,
     ) -> Any:
         params: dict[str, Any] = {
             "content_type": content_type,
@@ -59,59 +61,63 @@ class AlmaClientConfigSetsNS(BaseNamespace):
         return await self._get(AlmaEndpoint.SETS, model=model, params=params)
 
     @overload
-    async def get_set(self, set_id: str, *, model: type[_ModelT]) -> _ModelT: ...
+    async def get_set(self, set_id: str, *, model: type[_ModelT]) -> _ModelT:
+        ...
 
     @overload
-    async def get_set(self, set_id: str, *, model: None = ...) -> RESP_TYPE: ...
+    async def get_set(self, set_id: str, *, model: None = ...) -> RESP_TYPE:
+        ...
 
     async def get_set(self, set_id: str, *, model: Any = None) -> Any:
         return await self._get(AlmaEndpoint.SET, {"SET_ID": set_id}, model=model)
 
     @overload
     async def create(
-        self,
-        data: RESP_TYPE,
-        population: str | None = ...,
-        job_instance_id: str | None = ...,
-        from_logical_set: str | None = ...,
-        combine: str | None = ...,
-        set1: str | None = ...,
-        set2: str | None = ...,
-        nz_set_from_iz_set: str | None = ...,
-        indication_rule: str | None = ...,
-        *,
-        model: type[_ModelT],
-    ) -> _ModelT: ...
+            self,
+            data: RESP_TYPE,
+            population: str | None = ...,
+            job_instance_id: str | None = ...,
+            from_logical_set: str | None = ...,
+            combine: str | None = ...,
+            set1: str | None = ...,
+            set2: str | None = ...,
+            nz_set_from_iz_set: str | None = ...,
+            indication_rule: str | None = ...,
+            *,
+            model: type[_ModelT],
+    ) -> _ModelT:
+        ...
 
     @overload
     async def create(
-        self,
-        data: RESP_TYPE,
-        population: str | None = ...,
-        job_instance_id: str | None = ...,
-        from_logical_set: str | None = ...,
-        combine: str | None = ...,
-        set1: str | None = ...,
-        set2: str | None = ...,
-        nz_set_from_iz_set: str | None = ...,
-        indication_rule: str | None = ...,
-        *,
-        model: None = ...,
-    ) -> RESP_TYPE: ...
+            self,
+            data: RESP_TYPE,
+            population: str | None = ...,
+            job_instance_id: str | None = ...,
+            from_logical_set: str | None = ...,
+            combine: str | None = ...,
+            set1: str | None = ...,
+            set2: str | None = ...,
+            nz_set_from_iz_set: str | None = ...,
+            indication_rule: str | None = ...,
+            *,
+            model: None = ...,
+    ) -> RESP_TYPE:
+        ...
 
     async def create(
-        self,
-        data: RESP_TYPE,
-        population: str | None = None,
-        job_instance_id: str | None = None,
-        from_logical_set: str | None = None,
-        combine: str | None = None,
-        set1: str | None = None,
-        set2: str | None = None,
-        nz_set_from_iz_set: str | None = None,
-        indication_rule: str | None = None,
-        *,
-        model: Any = None,
+            self,
+            data: RESP_TYPE,
+            population: str | None = None,
+            job_instance_id: str | None = None,
+            from_logical_set: str | None = None,
+            combine: str | None = None,
+            set1: str | None = None,
+            set2: str | None = None,
+            nz_set_from_iz_set: str | None = None,
+            indication_rule: str | None = None,
+            *,
+            model: Any = None,
     ) -> Any:
         params: dict[str, Any] = {}
         if population:
@@ -134,16 +140,18 @@ class AlmaClientConfigSetsNS(BaseNamespace):
 
     @overload
     async def get_members(
-        self, set_id: str, limit: int = ..., offset: int = ..., *, model: type[_ModelT]
-    ) -> _ModelT: ...
+            self, set_id: str, limit: int = ..., offset: int = ..., *, model: type[_ModelT]
+    ) -> _ModelT:
+        ...
 
     @overload
     async def get_members(
-        self, set_id: str, limit: int = ..., offset: int = ..., *, model: None = ...
-    ) -> RESP_TYPE: ...
+            self, set_id: str, limit: int = ..., offset: int = ..., *, model: None = ...
+    ) -> RESP_TYPE:
+        ...
 
     async def get_members(
-        self, set_id: str, limit: int = 100, offset: int = 0, *, model: Any = None
+            self, set_id: str, limit: int = 100, offset: int = 0, *, model: Any = None
     ) -> Any:
         params: dict[str, Any] = {"limit": limit, "offset": offset}
         return await self._get(
@@ -155,37 +163,39 @@ class AlmaClientConfigSetsNS(BaseNamespace):
 
     @overload
     async def manage_members(
-        self,
-        set_id: str,
-        member_id_list: list[str],
-        *,
-        id_type: str | None = ...,
-        op: Literal["add_members", "delete_members", "replace_members"],
-        fail_on_invalid: bool = ...,
-        model: type[_ModelT],
-    ) -> _ModelT: ...
+            self,
+            set_id: str,
+            member_id_list: list[str],
+            *,
+            id_type: str | None = ...,
+            op: Literal["add_members", "delete_members", "replace_members"],
+            fail_on_invalid: bool = ...,
+            model: type[_ModelT],
+    ) -> _ModelT:
+        ...
 
     @overload
     async def manage_members(
-        self,
-        set_id: str,
-        member_id_list: list[str],
-        *,
-        id_type: str | None = ...,
-        op: Literal["add_members", "delete_members", "replace_members"],
-        fail_on_invalid: bool = ...,
-        model: None = ...,
-    ) -> RESP_TYPE: ...
+            self,
+            set_id: str,
+            member_id_list: list[str],
+            *,
+            id_type: str | None = ...,
+            op: Literal["add_members", "delete_members", "replace_members"],
+            fail_on_invalid: bool = ...,
+            model: None = ...,
+    ) -> RESP_TYPE:
+        ...
 
     async def manage_members(
-        self,
-        set_id: str,
-        member_id_list: list[str],
-        *,
-        id_type: str | None = None,
-        op: Literal["add_members", "delete_members", "replace_members"],
-        fail_on_invalid: bool = True,
-        model: Any = None,
+            self,
+            set_id: str,
+            member_id_list: list[str],
+            *,
+            id_type: str | None = None,
+            op: Literal["add_members", "delete_members", "replace_members"],
+            fail_on_invalid: bool = True,
+            model: Any = None,
     ) -> Any:
         params: dict[str, Any] = {"op": op, "fail_on_invalid": fail_on_invalid}
         if id_type:
@@ -229,17 +239,38 @@ class AlmaClientConfigLibrariesNS(BaseNamespace):
 
     @overload
     async def get_location(
-        self, library: str, location: str, *, model: type[_ModelT]
+            self, library: str, location: str, *, model: type[_ModelT]
     ) -> _ModelT: ...
 
     @overload
     async def get_location(
-        self, library: str, location: str, *, model: None = ...
+            self, library: str, location: str, *, model: None = ...
     ) -> RESP_TYPE: ...
 
     async def get_location(self, library: str, location: str, *, model: Any = None) -> Any:
         return await self._get(
             AlmaEndpoint.LOCATION, {"LIBRARY_CODE": library, "LOCATION_CODE": location}, model=model
+        )
+
+    @overload
+    async def get_departments(self, department_type: Literal["DIGI", "ALL"] = "ALL",
+                              view: Literal["brief", "FULL"] = "brief", library: str | None = None, *,
+                              model: type[_ModelT]) -> _ModelT: ...
+    
+    @overload
+    async def get_departments(self, department_type: Literal["DIGI", "ALL"] = "ALL",
+                              view: Literal["brief", "FULL"] = "brief", library: str | None = None, *,
+                              model: None = ...) -> RESP_TYPE: ...
+    
+    async def get_departments(self, department_type: Literal["DIGI", "ALL"] = "ALL",
+                              view: Literal["brief", "FULL"] = "brief", library: str | None = None, *,
+                              model: Any = None) -> Any:
+        params = {"type": department_type, "view": view}
+        if library is not None:
+            params["library"] = library
+        return await self._get(
+            AlmaEndpoint.DEPARTMENTS, {}, params=params,
+            model=model
         )
 
 
@@ -275,7 +306,7 @@ class AlmaClientConfigLettersNS(BaseNamespace):
 
     @overload
     async def update_letter(
-        self, letter_id: str, data: str, *, model: type[_ModelT]
+            self, letter_id: str, data: str, *, model: type[_ModelT]
     ) -> _ModelT: ...
 
     @overload
@@ -294,37 +325,39 @@ class AlmaClientConfigLettersNS(BaseNamespace):
 class AlmaClientConfigJobsNS(BaseNamespace):
     @overload
     async def get_jobs(
-        self,
-        limit: int = ...,
-        offset: int = ...,
-        *,
-        category: str | None = ...,
-        job_type: Literal["MANUAL", "SCHEDULED", "OTHER"] | None = ...,
-        profile_id: str | None = ...,
-        model: type[_ModelT],
-    ) -> _ModelT: ...
+            self,
+            limit: int = ...,
+            offset: int = ...,
+            *,
+            category: str | None = ...,
+            job_type: Literal["MANUAL", "SCHEDULED", "OTHER"] | None = ...,
+            profile_id: str | None = ...,
+            model: type[_ModelT],
+    ) -> _ModelT:
+        ...
 
     @overload
     async def get_jobs(
-        self,
-        limit: int = ...,
-        offset: int = ...,
-        *,
-        category: str | None = ...,
-        job_type: Literal["MANUAL", "SCHEDULED", "OTHER"] | None = ...,
-        profile_id: str | None = ...,
-        model: None = ...,
-    ) -> RESP_TYPE: ...
+            self,
+            limit: int = ...,
+            offset: int = ...,
+            *,
+            category: str | None = ...,
+            job_type: Literal["MANUAL", "SCHEDULED", "OTHER"] | None = ...,
+            profile_id: str | None = ...,
+            model: None = ...,
+    ) -> RESP_TYPE:
+        ...
 
     async def get_jobs(
-        self,
-        limit: int = 10,
-        offset: int = 0,
-        *,
-        category: str | None = None,
-        job_type: Literal["MANUAL", "SCHEDULED", "OTHER"] | None = None,
-        profile_id: str | None = None,
-        model: Any = None,
+            self,
+            limit: int = 10,
+            offset: int = 0,
+            *,
+            category: str | None = None,
+            job_type: Literal["MANUAL", "SCHEDULED", "OTHER"] | None = None,
+            profile_id: str | None = None,
+            model: Any = None,
     ) -> Any:
         params: dict[str, str | int] = {"limit": limit, "offset": offset}
         if category:
@@ -336,38 +369,42 @@ class AlmaClientConfigJobsNS(BaseNamespace):
         return await self._get(AlmaEndpoint.JOBS, model=model, params=params)
 
     @overload
-    async def get_job(self, job_id: str, *, model: type[_ModelT]) -> _ModelT: ...
+    async def get_job(self, job_id: str, *, model: type[_ModelT]) -> _ModelT:
+        ...
 
     @overload
-    async def get_job(self, job_id: str, *, model: None = ...) -> RESP_TYPE: ...
+    async def get_job(self, job_id: str, *, model: None = ...) -> RESP_TYPE:
+        ...
 
     async def get_job(self, job_id: str, *, model: Any = None) -> Any:
         return await self._get(AlmaEndpoint.JOB, {"JOB_ID": job_id}, model=model)
 
     @overload
     async def submit_job(
-        self,
-        job_id: str,
-        job: dict[str, str | dict[str, str | dict[str, str]]],
-        *,
-        model: type[_ModelT],
-    ) -> _ModelT: ...
+            self,
+            job_id: str,
+            job: dict[str, str | dict[str, str | dict[str, str]]],
+            *,
+            model: type[_ModelT],
+    ) -> _ModelT:
+        ...
 
     @overload
     async def submit_job(
-        self,
-        job_id: str,
-        job: dict[str, str | dict[str, str | dict[str, str]]],
-        *,
-        model: None = ...,
-    ) -> RESP_TYPE: ...
+            self,
+            job_id: str,
+            job: dict[str, str | dict[str, str | dict[str, str]]],
+            *,
+            model: None = ...,
+    ) -> RESP_TYPE:
+        ...
 
     async def submit_job(
-        self,
-        job_id: str,
-        job: dict[str, str | dict[str, str | dict[str, str]]],
-        *,
-        model: Any = None,
+            self,
+            job_id: str,
+            job: dict[str, str | dict[str, str | dict[str, str]]],
+            *,
+            model: Any = None,
     ) -> Any:
         return await self._post(
             AlmaEndpoint.JOB, {"JOB_ID": job_id}, model=model, json=job, params={"op": "run"}
@@ -375,40 +412,42 @@ class AlmaClientConfigJobsNS(BaseNamespace):
 
     @overload
     async def get_job_instances(
-        self,
-        job_id: str,
-        limit: int = ...,
-        offset: int = ...,
-        submit_date_from: str | None = ...,
-        submit_date_to: str | None = ...,
-        status: str | None = ...,
-        *,
-        model: type[_ModelT],
-    ) -> _ModelT: ...
+            self,
+            job_id: str,
+            limit: int = ...,
+            offset: int = ...,
+            submit_date_from: str | None = ...,
+            submit_date_to: str | None = ...,
+            status: str | None = ...,
+            *,
+            model: type[_ModelT],
+    ) -> _ModelT:
+        ...
 
     @overload
     async def get_job_instances(
-        self,
-        job_id: str,
-        limit: int = ...,
-        offset: int = ...,
-        submit_date_from: str | None = ...,
-        submit_date_to: str | None = ...,
-        status: str | None = ...,
-        *,
-        model: None = ...,
-    ) -> RESP_TYPE: ...
+            self,
+            job_id: str,
+            limit: int = ...,
+            offset: int = ...,
+            submit_date_from: str | None = ...,
+            submit_date_to: str | None = ...,
+            status: str | None = ...,
+            *,
+            model: None = ...,
+    ) -> RESP_TYPE:
+        ...
 
     async def get_job_instances(
-        self,
-        job_id: str,
-        limit: int = 10,
-        offset: int = 0,
-        submit_date_from: str | None = None,
-        submit_date_to: str | None = None,
-        status: str | None = None,
-        *,
-        model: Any = None,
+            self,
+            job_id: str,
+            limit: int = 10,
+            offset: int = 0,
+            submit_date_from: str | None = None,
+            submit_date_to: str | None = None,
+            status: str | None = None,
+            *,
+            model: Any = None,
     ) -> Any:
         params: dict[str, str | int] = {"limit": limit, "offset": offset}
         if submit_date_to:
@@ -423,13 +462,15 @@ class AlmaClientConfigJobsNS(BaseNamespace):
 
     @overload
     async def get_job_instance(
-        self, job_id: str, instance_id: str, *, model: type[_ModelT]
-    ) -> _ModelT: ...
+            self, job_id: str, instance_id: str, *, model: type[_ModelT]
+    ) -> _ModelT:
+        ...
 
     @overload
     async def get_job_instance(
-        self, job_id: str, instance_id: str, *, model: None = ...
-    ) -> RESP_TYPE: ...
+            self, job_id: str, instance_id: str, *, model: None = ...
+    ) -> RESP_TYPE:
+        ...
 
     async def get_job_instance(self, job_id: str, instance_id: str, *, model: Any = None) -> Any:
         return await self._get(
@@ -438,37 +479,39 @@ class AlmaClientConfigJobsNS(BaseNamespace):
 
     @overload
     async def get_job_instance_matches(
-        self,
-        job_id: str,
-        instance_id: str,
-        single_or_multi: Literal["single", "multi"],
-        limit: int = ...,
-        offset: int = ...,
-        *,
-        model: type[_ModelT],
-    ) -> _ModelT: ...
+            self,
+            job_id: str,
+            instance_id: str,
+            single_or_multi: Literal["single", "multi"],
+            limit: int = ...,
+            offset: int = ...,
+            *,
+            model: type[_ModelT],
+    ) -> _ModelT:
+        ...
 
     @overload
     async def get_job_instance_matches(
-        self,
-        job_id: str,
-        instance_id: str,
-        single_or_multi: Literal["single", "multi"],
-        limit: int = ...,
-        offset: int = ...,
-        *,
-        model: None = ...,
-    ) -> RESP_TYPE: ...
+            self,
+            job_id: str,
+            instance_id: str,
+            single_or_multi: Literal["single", "multi"],
+            limit: int = ...,
+            offset: int = ...,
+            *,
+            model: None = ...,
+    ) -> RESP_TYPE:
+        ...
 
     async def get_job_instance_matches(
-        self,
-        job_id: str,
-        instance_id: str,
-        single_or_multi: Literal["single", "multi"],
-        limit: int = 10,
-        offset: int = 0,
-        *,
-        model: Any = None,
+            self,
+            job_id: str,
+            instance_id: str,
+            single_or_multi: Literal["single", "multi"],
+            limit: int = 10,
+            offset: int = 0,
+            *,
+            model: Any = None,
     ) -> Any:
         params: dict[str, str | int] = {"limit": limit, "offset": offset}
         if single_or_multi == "multi":
@@ -486,34 +529,36 @@ class AlmaClientConfigJobsNS(BaseNamespace):
 
     @overload
     async def get_integration_profiles(
-        self,
-        profile_type: str | None = ...,
-        query: str | None = ...,
-        limit: int = ...,
-        offset: int = ...,
-        *,
-        model: type[_ModelT],
-    ) -> _ModelT: ...
+            self,
+            profile_type: str | None = ...,
+            query: str | None = ...,
+            limit: int = ...,
+            offset: int = ...,
+            *,
+            model: type[_ModelT],
+    ) -> _ModelT:
+        ...
 
     @overload
     async def get_integration_profiles(
-        self,
-        profile_type: str | None = ...,
-        query: str | None = ...,
-        limit: int = ...,
-        offset: int = ...,
-        *,
-        model: None = ...,
-    ) -> RESP_TYPE: ...
+            self,
+            profile_type: str | None = ...,
+            query: str | None = ...,
+            limit: int = ...,
+            offset: int = ...,
+            *,
+            model: None = ...,
+    ) -> RESP_TYPE:
+        ...
 
     async def get_integration_profiles(
-        self,
-        profile_type: str | None = None,
-        query: str | None = None,
-        limit: int = 10,
-        offset: int = 0,
-        *,
-        model: Any = None,
+            self,
+            profile_type: str | None = None,
+            query: str | None = None,
+            limit: int = 10,
+            offset: int = 0,
+            *,
+            model: Any = None,
     ) -> Any:
         params: dict[str, str | int] = {"limit": limit, "offset": offset}
         if profile_type:
@@ -524,11 +569,13 @@ class AlmaClientConfigJobsNS(BaseNamespace):
 
     @overload
     async def get_integration_profile(
-        self, profile_id: str, *, model: type[_ModelT]
-    ) -> _ModelT: ...
+            self, profile_id: str, *, model: type[_ModelT]
+    ) -> _ModelT:
+        ...
 
     @overload
-    async def get_integration_profile(self, profile_id: str, *, model: None = ...) -> RESP_TYPE: ...
+    async def get_integration_profile(self, profile_id: str, *, model: None = ...) -> RESP_TYPE:
+        ...
 
     async def get_integration_profile(self, profile_id: str, *, model: Any = None) -> Any:
         return await self._get(
@@ -537,16 +584,18 @@ class AlmaClientConfigJobsNS(BaseNamespace):
 
     @overload
     async def update_integration_profile(
-        self, profile_id: str, data: dict[str, Any], *, model: type[_ModelT]
-    ) -> _ModelT: ...
+            self, profile_id: str, data: dict[str, Any], *, model: type[_ModelT]
+    ) -> _ModelT:
+        ...
 
     @overload
     async def update_integration_profile(
-        self, profile_id: str, data: dict[str, Any], *, model: None = ...
-    ) -> RESP_TYPE: ...
+            self, profile_id: str, data: dict[str, Any], *, model: None = ...
+    ) -> RESP_TYPE:
+        ...
 
     async def update_integration_profile(
-        self, profile_id: str, data: dict[str, Any], *, model: Any = None
+            self, profile_id: str, data: dict[str, Any], *, model: Any = None
     ) -> Any:
         return await self._put(
             AlmaEndpoint.INTEGRATION_PROFILE, {"PROFILE_ID": profile_id}, model=model, json=data
@@ -554,13 +603,15 @@ class AlmaClientConfigJobsNS(BaseNamespace):
 
     @overload
     async def create_integration_profile(
-        self, data: dict[str, Any], *, model: type[_ModelT]
-    ) -> _ModelT: ...
+            self, data: dict[str, Any], *, model: type[_ModelT]
+    ) -> _ModelT:
+        ...
 
     @overload
     async def create_integration_profile(
-        self, data: dict[str, Any], *, model: None = ...
-    ) -> RESP_TYPE: ...
+            self, data: dict[str, Any], *, model: None = ...
+    ) -> RESP_TYPE:
+        ...
 
     async def create_integration_profile(self, data: dict[str, Any], *, model: Any = None) -> Any:
         return await self._post(AlmaEndpoint.INTEGRATION_PROFILES, model=model, json=data)
@@ -580,12 +631,12 @@ class AlmaClientConfigCodeTablesNS(BaseNamespace):
 
     @overload
     async def get_code_table(
-        self, table_code: str, *, lang: str = ..., model: type[_ModelT]
+            self, table_code: str, *, lang: str = ..., model: type[_ModelT]
     ) -> _ModelT: ...
 
     @overload
     async def get_code_table(
-        self, table_code: str, *, lang: str = ..., model: None = ...
+            self, table_code: str, *, lang: str = ..., model: None = ...
     ) -> RESP_TYPE: ...
 
     async def get_code_table(self, table_code: str, *, lang: str = "en", model: Any = None) -> Any:
@@ -595,16 +646,16 @@ class AlmaClientConfigCodeTablesNS(BaseNamespace):
 
     @overload
     async def update_code_table(
-        self, table_code: str, data: dict[str, Any], *, lang: str = ..., model: type[_ModelT]
+            self, table_code: str, data: dict[str, Any], *, lang: str = ..., model: type[_ModelT]
     ) -> _ModelT: ...
 
     @overload
     async def update_code_table(
-        self, table_code: str, data: dict[str, Any], *, lang: str = ..., model: None = ...
+            self, table_code: str, data: dict[str, Any], *, lang: str = ..., model: None = ...
     ) -> RESP_TYPE: ...
 
     async def update_code_table(
-        self, table_code: str, data: dict[str, Any], *, lang: str = "en", model: Any = None
+            self, table_code: str, data: dict[str, Any], *, lang: str = "en", model: Any = None
     ) -> Any:
         return await self._put(
             AlmaEndpoint.CODE_TABLE,

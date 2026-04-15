@@ -43,6 +43,7 @@ class AlmaEndpoint(StrEnum):
     LOCATIONS = "/conf/libraries/{LIBRARY_CODE}/locations"
     LOCATION = "/conf/libraries/{LIBRARY_CODE}/locations/{LOCATION_CODE}"
     CIRC_DESKS = "/conf/libraries/{LIBRARY_CODE}/circ-desks"
+    DEPARTMENTS = "/conf/departments"
     LETTERS = "/conf/letters"
     LETTER = "/conf/letters/{LETTER_ID}"
     JOBS = "/conf/jobs"
