@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import logging
 import time
+from collections.abc import Callable
 from http import HTTPStatus
 from typing import Any, Literal, overload
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -18,6 +19,7 @@ from almapy._base import Parser
 from almapy._bibs import AlmaClientBibNS
 from almapy._config import AlmaClientConfigNS
 from almapy._logging import new_request_id, request_id
+from almapy._primo import AlmaClientPrimoNS
 from almapy._throttle import AdaptiveController, TokenBucket
 from almapy._users import AlmaClientUserNS
 from almapy._utils import RESP_TYPE, _ModelT, _parse_xml, _should_retry, _validate_response
@@ -85,6 +87,9 @@ class AlmaClient:
             max_wait=max_wait,
         )
         self._semaphore = asyncio.Semaphore(concurrent_requests)
+        # Regional gateway root (before the /almaws/v1 suffix) — the Primo
+        # namespace targets /primo/v1 on this same host with the same key.
+        self._gateway = _LOCATIONS[location]
 
         if client is None:
             pool_size = max(10, concurrent_requests)
@@ -111,6 +116,7 @@ class AlmaClient:
         self.acq: AlmaClientAcqNS = AlmaClientAcqNS(self)
         self.config: AlmaClientConfigNS = AlmaClientConfigNS(self)
         self.analytics: AlmaClientAnalyticsNS = AlmaClientAnalyticsNS(self)
+        self.primo: AlmaClientPrimoNS = AlmaClientPrimoNS(self)
 
     @overload
     async def execute(
@@ -141,6 +147,7 @@ class AlmaClient:
         *,
         parser: Parser,
         model: Any = None,
+        validate: Callable[[niquests.Response], None] = _validate_response,
         **kwargs: Any,
     ) -> Any:
         """Stamina retry loop; semaphore + controller acquired per attempt.
@@ -192,7 +199,7 @@ class AlmaClient:
                         )
                         try:
                             resp = await self._http.request(method, url, **kwargs)
-                            _validate_response(resp)
+                            validate(resp)
                             elapsed_ms = (time.monotonic() - start) * 1000
                             # Response log only fires on success — almapy.error covers failures
                             _http_log.debug(

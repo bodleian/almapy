@@ -1,16 +1,22 @@
 """Base namespace for Alma API client namespaces."""
 
-from collections.abc import Mapping
-from typing import Any, Literal, Protocol, cast, overload
+from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING, Any, Literal, Protocol, cast, overload
 
 from almapy._endpoints import AlmaEndpoint
 from almapy._utils import RESP_TYPE, _ModelT
+
+if TYPE_CHECKING:
+    import niquests
 
 Parser = Literal["json", "xml", "none", "text"]
 
 
 class _AlmaExecutable(Protocol):
     """Protocol for the execute method AlmaClient provides."""
+
+    _gateway: str
+    """Regional gateway root (e.g. https://api-eu.hosted.exlibrisgroup.com)."""
 
     @overload
     async def execute(
@@ -29,6 +35,7 @@ class _AlmaExecutable(Protocol):
         *,
         parser: Parser,
         model: Any = None,
+        validate: "Callable[[niquests.Response], None]" = ...,
         **kwargs: Any,
     ) -> Any: ...
 
