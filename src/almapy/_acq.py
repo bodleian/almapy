@@ -3,7 +3,7 @@ from typing import Any, Literal, overload
 
 from almapy._base import BaseNamespace
 from almapy._endpoints import AlmaEndpoint
-from almapy._utils import RESP_TYPE, _ModelT
+from almapy._utils import RESP_TYPE, Body, _ModelT
 
 
 class AlmaClientAcqNS(BaseNamespace):
@@ -22,7 +22,7 @@ class AlmaClientAcqNS(BaseNamespace):
     async def update_po_line(
         self,
         po_line_id: str,
-        updated_po_line: dict[str, Any],
+        updated_po_line: Body,
         *,
         update_inventory: bool = ...,
         redistribute_funds: bool = ...,
@@ -33,7 +33,7 @@ class AlmaClientAcqNS(BaseNamespace):
     async def update_po_line(
         self,
         po_line_id: str,
-        updated_po_line: dict[str, Any],
+        updated_po_line: Body,
         *,
         update_inventory: bool = ...,
         redistribute_funds: bool = ...,
@@ -43,7 +43,7 @@ class AlmaClientAcqNS(BaseNamespace):
     async def update_po_line(
         self,
         po_line_id: str,
-        updated_po_line: dict[str, Any],
+        updated_po_line: Body,
         *,
         update_inventory: bool = False,
         redistribute_funds: bool = False,
@@ -66,7 +66,7 @@ class AlmaClientAcqNS(BaseNamespace):
         receive_date: date | None = ...,
         department: str | None = ...,
         department_library: str | None = ...,
-        updated_item: dict[str, Any] | None = ...,
+        updated_item: Body | None = ...,
         model: type[_ModelT],
     ) -> _ModelT: ...
 
@@ -79,7 +79,7 @@ class AlmaClientAcqNS(BaseNamespace):
         receive_date: date | None = ...,
         department: str | None = ...,
         department_library: str | None = ...,
-        updated_item: dict[str, Any] | None = ...,
+        updated_item: Body | None = ...,
         model: None = ...,
     ) -> RESP_TYPE: ...
 
@@ -91,7 +91,7 @@ class AlmaClientAcqNS(BaseNamespace):
         receive_date: date | None = None,
         department: str | None = None,
         department_library: str | None = None,
-        updated_item: dict[str, Any] | None = None,
+        updated_item: Body | None = None,
         model: Any = None,
     ) -> Any:
         if updated_item is None:

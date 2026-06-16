@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Literal, overload
 
 from almapy._base import BaseNamespace
 from almapy._endpoints import AlmaEndpoint
-from almapy._utils import RESP_TYPE, Request, _ModelT
+from almapy._utils import RESP_TYPE, Body, Dumpable, Request, _ModelT
 from almapy.exceptions import (
     APIClientError,
     CannotRenewError,
@@ -235,16 +235,12 @@ class AlmaClientUserFinesNS(BaseNamespace):
     get_fees = get_fines
 
     @overload
-    async def create_fee(
-        self, user_id: str, fine: dict[str, Any], *, model: type[_ModelT]
-    ) -> _ModelT: ...
+    async def create_fee(self, user_id: str, fine: Body, *, model: type[_ModelT]) -> _ModelT: ...
 
     @overload
-    async def create_fee(
-        self, user_id: str, fine: dict[str, Any], *, model: None = ...
-    ) -> RESP_TYPE: ...
+    async def create_fee(self, user_id: str, fine: Body, *, model: None = ...) -> RESP_TYPE: ...
 
-    async def create_fee(self, user_id: str, fine: dict[str, Any], *, model: Any = None) -> Any:
+    async def create_fee(self, user_id: str, fine: Body, *, model: Any = None) -> Any:
         return await self._post(
             AlmaEndpoint.USER_FEES, {"USER_ID": user_id}, model=model, json=fine
         )
@@ -630,16 +626,12 @@ class AlmaClientUserNS(BaseNamespace):
         return await self._get(AlmaEndpoint.USER, {"USER_ID": user_id}, model=model)
 
     @overload
-    async def update_user(
-        self, user_id: str, user: dict[str, Any], *, model: type[_ModelT]
-    ) -> _ModelT: ...
+    async def update_user(self, user_id: str, user: Body, *, model: type[_ModelT]) -> _ModelT: ...
 
     @overload
-    async def update_user(
-        self, user_id: str, user: dict[str, Any], *, model: None = ...
-    ) -> RESP_TYPE: ...
+    async def update_user(self, user_id: str, user: Body, *, model: None = ...) -> RESP_TYPE: ...
 
-    async def update_user(self, user_id: str, user: dict[str, Any], *, model: Any = None) -> Any:
+    async def update_user(self, user_id: str, user: Body, *, model: Any = None) -> Any:
         """Update a user.
 
         Args:
@@ -664,12 +656,12 @@ class AlmaClientUserNS(BaseNamespace):
         return resp
 
     @overload
-    async def create_user(self, user: dict[str, Any], *, model: type[_ModelT]) -> _ModelT: ...
+    async def create_user(self, user: Body, *, model: type[_ModelT]) -> _ModelT: ...
 
     @overload
-    async def create_user(self, user: dict[str, Any], *, model: None = ...) -> RESP_TYPE: ...
+    async def create_user(self, user: Body, *, model: None = ...) -> RESP_TYPE: ...
 
-    async def create_user(self, user: dict[str, Any], *, model: Any = None) -> Any:
+    async def create_user(self, user: Body, *, model: Any = None) -> Any:
         """Create a new user.
 
         Args:
@@ -686,7 +678,8 @@ class AlmaClientUserNS(BaseNamespace):
             resp: Any = await self._post(AlmaEndpoint.USERS, model=model, json=user)
         except APIClientError as e:
             if e.code == "401664":
-                raise UserMissingFieldError(e.error, user["primary_id"]) from e
+                body = user.dump(mode="json") if isinstance(user, Dumpable) else user
+                raise UserMissingFieldError(e.error, body["primary_id"]) from e
             raise
         return resp
 

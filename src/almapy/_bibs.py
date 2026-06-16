@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Literal, overload
 
 from almapy._base import BaseNamespace
 from almapy._endpoints import AlmaEndpoint
-from almapy._utils import RESP_TYPE, Request, _ModelT
+from almapy._utils import RESP_TYPE, Body, Request, _ModelT
 from almapy.exceptions import APIClientError, CannotRenewError, InvalidCodeError, RequestFailedError
 
 if TYPE_CHECKING:
@@ -570,7 +570,7 @@ class AlmaClientBibNS(BaseNamespace):
         self,
         mms_id: str,
         holding_id: str,
-        item: dict[str, Any],
+        item: Body,
         *,
         generate_description: bool = ...,
         model: type[_ModelT],
@@ -581,7 +581,7 @@ class AlmaClientBibNS(BaseNamespace):
         self,
         mms_id: str,
         holding_id: str,
-        item: dict[str, Any],
+        item: Body,
         *,
         generate_description: bool = ...,
         model: None = ...,
@@ -591,7 +591,7 @@ class AlmaClientBibNS(BaseNamespace):
         self,
         mms_id: str,
         holding_id: str,
-        item: dict[str, Any],
+        item: Body,
         *,
         generate_description: bool = False,
         model: Any = None,
@@ -610,7 +610,7 @@ class AlmaClientBibNS(BaseNamespace):
         mms_id: str,
         holding_id: str,
         item_pid: str,
-        item: dict[str, Any],
+        item: Body,
         *,
         model: type[_ModelT],
     ) -> _ModelT: ...
@@ -621,7 +621,7 @@ class AlmaClientBibNS(BaseNamespace):
         mms_id: str,
         holding_id: str,
         item_pid: str,
-        item: dict[str, Any],
+        item: Body,
         *,
         model: None = ...,
     ) -> RESP_TYPE: ...
@@ -631,7 +631,7 @@ class AlmaClientBibNS(BaseNamespace):
         mms_id: str,
         holding_id: str,
         item_pid: str,
-        item: dict[str, Any],
+        item: Body,
         *,
         model: Any = None,
     ) -> Any:

@@ -8,9 +8,11 @@ from collections import OrderedDict
 from http import HTTPStatus
 from typing import (
     Any,
+    Protocol,
     TypedDict,
     TypeVar,
     cast,
+    runtime_checkable,
 )
 
 import niquests
@@ -26,6 +28,21 @@ _error_log = logging.getLogger("almapy.error")
 RESP_TYPE = Box
 
 _ModelT = TypeVar("_ModelT")
+
+
+@runtime_checkable
+class Dumpable(Protocol):
+    """Structural type for objects that serialize to a JSON-safe dict.
+
+    Satisfied by any object exposing ``dump(mode: str) -> dict[str, Any]`` —
+    notably alma_models' base model class — without requiring an import or
+    inheritance relationship in either direction.
+    """
+
+    def dump(self, mode: str = ...) -> dict[str, Any]: ...
+
+
+Body = dict[str, Any] | Dumpable
 
 
 class Request(TypedDict, total=False):

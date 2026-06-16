@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any, Literal, assert_never, overload
 
 from almapy._base import BaseNamespace
 from almapy._endpoints import AlmaEndpoint
-from almapy._utils import RESP_TYPE, _ModelT
+from almapy._utils import RESP_TYPE, Body, _ModelT
 
 if TYPE_CHECKING:
     from almapy._base import _AlmaExecutable
@@ -570,32 +570,28 @@ class AlmaClientConfigJobsNS(BaseNamespace):
 
     @overload
     async def update_integration_profile(
-        self, profile_id: str, data: dict[str, Any], *, model: type[_ModelT]
+        self, profile_id: str, data: Body, *, model: type[_ModelT]
     ) -> _ModelT: ...
 
     @overload
     async def update_integration_profile(
-        self, profile_id: str, data: dict[str, Any], *, model: None = ...
+        self, profile_id: str, data: Body, *, model: None = ...
     ) -> RESP_TYPE: ...
 
     async def update_integration_profile(
-        self, profile_id: str, data: dict[str, Any], *, model: Any = None
+        self, profile_id: str, data: Body, *, model: Any = None
     ) -> Any:
         return await self._put(
             AlmaEndpoint.INTEGRATION_PROFILE, {"PROFILE_ID": profile_id}, model=model, json=data
         )
 
     @overload
-    async def create_integration_profile(
-        self, data: dict[str, Any], *, model: type[_ModelT]
-    ) -> _ModelT: ...
+    async def create_integration_profile(self, data: Body, *, model: type[_ModelT]) -> _ModelT: ...
 
     @overload
-    async def create_integration_profile(
-        self, data: dict[str, Any], *, model: None = ...
-    ) -> RESP_TYPE: ...
+    async def create_integration_profile(self, data: Body, *, model: None = ...) -> RESP_TYPE: ...
 
-    async def create_integration_profile(self, data: dict[str, Any], *, model: Any = None) -> Any:
+    async def create_integration_profile(self, data: Body, *, model: Any = None) -> Any:
         return await self._post(AlmaEndpoint.INTEGRATION_PROFILES, model=model, json=data)
 
 
@@ -628,16 +624,16 @@ class AlmaClientConfigCodeTablesNS(BaseNamespace):
 
     @overload
     async def update_code_table(
-        self, table_code: str, data: dict[str, Any], *, lang: str = ..., model: type[_ModelT]
+        self, table_code: str, data: Body, *, lang: str = ..., model: type[_ModelT]
     ) -> _ModelT: ...
 
     @overload
     async def update_code_table(
-        self, table_code: str, data: dict[str, Any], *, lang: str = ..., model: None = ...
+        self, table_code: str, data: Body, *, lang: str = ..., model: None = ...
     ) -> RESP_TYPE: ...
 
     async def update_code_table(
-        self, table_code: str, data: dict[str, Any], *, lang: str = "en", model: Any = None
+        self, table_code: str, data: Body, *, lang: str = "en", model: Any = None
     ) -> Any:
         return await self._put(
             AlmaEndpoint.CODE_TABLE,

@@ -22,7 +22,14 @@ from almapy._logging import new_request_id, request_id
 from almapy._primo import AlmaClientPrimoNS
 from almapy._throttle import AdaptiveController, TokenBucket
 from almapy._users import AlmaClientUserNS
-from almapy._utils import RESP_TYPE, _ModelT, _parse_xml, _should_retry, _validate_response
+from almapy._utils import (
+    RESP_TYPE,
+    Dumpable,
+    _ModelT,
+    _parse_xml,
+    _should_retry,
+    _validate_response,
+)
 
 _http_log = logging.getLogger("almapy.http")
 _retry_log = logging.getLogger("almapy.retry")
@@ -155,6 +162,8 @@ class AlmaClient:
         Semaphore is released between attempts so backoff sleeps do not pin
         concurrency slots. record_failure is only called for retryable exceptions.
         """
+        if isinstance(kwargs.get("json"), Dumpable):
+            kwargs["json"] = kwargs["json"].dump(mode="json")
         token = request_id.set(new_request_id())
         try:
             result: Any = None

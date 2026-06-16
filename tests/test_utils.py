@@ -10,7 +10,7 @@ import pytest
 from niquests.structures import CaseInsensitiveDict
 
 from almapy import exceptions
-from almapy._utils import _should_retry, _validate_response
+from almapy._utils import Dumpable, _should_retry, _validate_response
 
 
 def _error_body(code: str, message: str) -> str:
@@ -337,3 +337,23 @@ class TestShouldRetry:
 
     def test_runtime_error_is_not_retryable(self) -> None:
         assert _should_retry(RuntimeError("oops")) is False
+
+
+class _FakeModel:
+    """Structurally satisfies Dumpable without importing or inheriting almapy."""
+
+    def __init__(self, payload: dict[str, object] | None = None) -> None:
+        self._payload = payload or {"primary_id": "jdoe"}
+
+    def dump(self, mode: str = "json") -> dict[str, object]:
+        return self._payload
+
+
+class TestDumpableProtocol:
+    def test_object_with_compatible_dump_satisfies_protocol(self) -> None:
+        """An object exposing dump(mode) -> dict is a Dumpable at runtime."""
+        assert isinstance(_FakeModel(), Dumpable) is True
+
+    def test_plain_dict_does_not_satisfy_protocol(self) -> None:
+        """A plain dict has no dump() method, so it is not Dumpable."""
+        assert isinstance({"primary_id": "jdoe"}, Dumpable) is False

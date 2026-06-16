@@ -2,6 +2,7 @@
 
 import json
 import logging
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import niquests
@@ -343,3 +344,58 @@ class TestSanitizeUrl:
         from almapy._client import _sanitize_url
 
         assert _sanitize_url("/bibs/123?APIKEY=supersecret") == "/bibs/123"
+
+
+class _FakeModel:
+    """Dumpable test double: records the mode each .dump() is called with."""
+
+    def __init__(self, payload: dict[str, Any]) -> None:
+        self._payload = payload
+        self.dump_modes: list[str] = []
+
+    def dump(self, mode: str = "json") -> dict[str, Any]:
+        self.dump_modes.append(mode)
+        return self._payload
+
+
+class TestExecuteDumpableConversion:
+    @pytest.mark.asyncio
+    async def test_plain_dict_body_passes_through_unchanged(
+        self, client: AlmaClient, rsps: NiquestsMock
+    ) -> None:
+        """A dict json= body reaches the HTTP client untouched (catches: over-eager conversion)."""
+        rsps.add(responses.POST, f"{_BASE}/users", json={"ok": True})
+        body = {"primary_id": "jdoe", "first_name": "Jane"}
+
+        await client.execute("POST", "/users", parser="json", json=body)
+
+        assert json.loads(rsps.calls[0].request.body) == body
+
+    @pytest.mark.asyncio
+    async def test_dumpable_body_is_converted_via_dump_json(
+        self, client: AlmaClient, rsps: NiquestsMock
+    ) -> None:
+        """A Dumpable json= body is serialized via .dump(mode="json") before sending."""
+        rsps.add(responses.POST, f"{_BASE}/users", json={"ok": True})
+        payload = {"primary_id": "jdoe", "first_name": "Jane"}
+        model = _FakeModel(payload)
+
+        await client.execute("POST", "/users", parser="json", json=model)
+
+        assert json.loads(rsps.calls[0].request.body) == payload
+        assert model.dump_modes == ["json"]
+
+    @pytest.mark.asyncio
+    async def test_dumpable_converted_once_before_retry_loop(self, rsps: NiquestsMock) -> None:
+        """.dump() runs exactly once even when the request retries (catches: per-attempt dump)."""
+        client = AlmaClient("test-api-key", retry_attempts=3)
+        rsps.add(responses.POST, f"{_BASE}/users", body=niquests.ConnectionError("refused"))
+        client._controller = MagicMock()
+        client._controller.acquire = AsyncMock()
+        model = _FakeModel({"primary_id": "jdoe"})
+
+        with pytest.raises(niquests.ConnectionError):
+            await client.execute("POST", "/users", parser="json", json=model)
+
+        assert len(rsps.calls) == 3
+        assert model.dump_modes == ["json"]
