@@ -163,3 +163,9 @@ cython_debug/
 .gut
 reports/
 tests/barcodes.txt
+
+# Dev / session artifacts
+.beads/
+.remember/
+.claude/
+openspec/

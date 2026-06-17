@@ -1,6 +1,10 @@
 """Tests for almapy._logging — shared logging infrastructure."""
 
+import contextlib
 import logging
+
+import pytest
+import stamina
 
 from almapy._logging import new_request_id, request_id
 
@@ -9,6 +13,32 @@ def test_null_handler_registered() -> None:
     """almapy root logger must have NullHandler — library must not force output."""
     handlers = logging.getLogger("almapy").handlers
     assert any(isinstance(h, logging.NullHandler) for h in handlers)
+
+
+def test_stamina_retry_log_suppressed_even_when_hooks_reenabled(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """almapy emits its own retry logs; stamina's must stay suppressed.
+
+    Importing almapy disables stamina's hooks, but they are process-global and
+    last-writer-wins. The logging filter on the 'stamina' logger is the
+    order-independent backstop, so re-enabling defaults must NOT leak the log.
+    """
+    stamina.instrumentation.set_on_retry_hooks(None)  # re-enable stamina defaults
+    try:
+
+        retry_msg = "trigger a scheduled retry"
+
+        @stamina.retry(on=ValueError, attempts=2, wait_initial=0.001)
+        def boom() -> None:
+            raise ValueError(retry_msg)
+
+        with caplog.at_level(logging.WARNING, logger="stamina"), contextlib.suppress(ValueError):
+            boom()
+
+        assert not any(r.msg == "stamina.retry_scheduled" for r in caplog.records)
+    finally:
+        stamina.instrumentation.set_on_retry_hooks(())  # restore almapy's suppression
 
 
 def test_new_request_id_is_unique() -> None:
