@@ -319,7 +319,7 @@ class AlmaClientConfigLettersNS(BaseNamespace):
             AlmaEndpoint.LETTER,
             {"LETTER_ID": letter_id},
             model=model,
-            content=data,
+            data=data,
             headers={"Content-Type": "application/xml"},
         )
 

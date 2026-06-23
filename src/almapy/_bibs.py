@@ -801,7 +801,7 @@ class AlmaClientBibNS(BaseNamespace):
             AlmaEndpoint.HOLDING,
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id},
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
-            content=record,
+            data=record,
         )
 
     async def create_holding(self, mms_id: str, record: str) -> str:
@@ -809,7 +809,7 @@ class AlmaClientBibNS(BaseNamespace):
             AlmaEndpoint.HOLDINGS,
             {"MMS_ID": mms_id},
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
-            content=record,
+            data=record,
         )
 
     async def delete_holding(
@@ -862,7 +862,7 @@ class AlmaClientBibNS(BaseNamespace):
             params["import_profile"] = import_profile
         return await self._post_text(
             AlmaEndpoint.BIBS,
-            content=record,
+            data=record,
             params=params,
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
         )
@@ -928,7 +928,7 @@ class AlmaClientBibNS(BaseNamespace):
         return await self._put_text(
             AlmaEndpoint.BIB,
             {"MMS_ID": mms_id},
-            content=record,
+            data=record,
             params=params,
             headers={"Accept": "application/xml", "Content-Type": "application/xml"},
         )

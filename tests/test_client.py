@@ -399,3 +399,47 @@ class TestExecuteDumpableConversion:
 
         assert len(rsps.calls) == 3
         assert model.dump_modes == ["json"]
+
+
+class TestRawBodyWrites:
+    """Raw XML body writes must reach niquests via data=, not content=.
+
+    niquests.request() has no content= parameter (that is httpx terminology);
+    passing it raises TypeError before any request is sent. These tests drive
+    the full namespace -> execute -> niquests.request path so the wrong kwarg
+    name surfaces as a failure rather than only at runtime against live Alma.
+    """
+
+    _XML = "<holding><record>data</record></holding>"
+
+    @pytest.mark.asyncio
+    async def test_update_holding_sends_raw_body(
+        self, client: AlmaClient, rsps: NiquestsMock
+    ) -> None:
+        rsps.add(
+            responses.PUT,
+            f"{_BASE}/bibs/99/holdings/22",
+            body=self._XML,
+            content_type="application/xml",
+        )
+
+        result = await client.bibs.update_holding("99", "22", self._XML)
+
+        assert result == self._XML
+        assert rsps.calls[0].request.body == self._XML
+
+    @pytest.mark.asyncio
+    async def test_create_holding_sends_raw_body(
+        self, client: AlmaClient, rsps: NiquestsMock
+    ) -> None:
+        rsps.add(
+            responses.POST,
+            f"{_BASE}/bibs/99/holdings",
+            body=self._XML,
+            content_type="application/xml",
+        )
+
+        result = await client.bibs.create_holding("99", self._XML)
+
+        assert result == self._XML
+        assert rsps.calls[0].request.body == self._XML
