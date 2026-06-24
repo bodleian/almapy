@@ -51,3 +51,7 @@ class TestBuild:
         """BIB_LOAN had a malformed bracket {LOAN_ID] — verify it's fixed."""
         result = AlmaEndpoint.BIB_LOAN.build({"MMS_ID": "111", "LOAN_ID": "222"})
         assert result == "/bibs/111/loans/222"
+
+    def test_bib_request_single(self) -> None:
+        result = AlmaEndpoint.BIB_REQUEST.build({"MMS_ID": "111", "REQUEST_ID": "222"})
+        assert result == "/bibs/111/requests/222"

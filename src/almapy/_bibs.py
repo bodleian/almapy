@@ -372,6 +372,82 @@ class AlmaClientBibRequestsNS(BaseNamespace):
         )
 
     @overload
+    async def get_request_for_bib(
+        self, mms_id: str, request_id: str, *, model: type[_ModelT]
+    ) -> _ModelT: ...
+
+    @overload
+    async def get_request_for_bib(
+        self, mms_id: str, request_id: str, *, model: None = ...
+    ) -> RESP_TYPE: ...
+
+    async def get_request_for_bib(self, mms_id: str, request_id: str, *, model: Any = None) -> Any:
+        return await self._get(
+            AlmaEndpoint.BIB_REQUEST,
+            {"MMS_ID": mms_id, "REQUEST_ID": request_id},
+            model=model,
+        )
+
+    @overload
+    async def update_request_for_bib(
+        self, mms_id: str, request_id: str, request: Request, *, model: type[_ModelT]
+    ) -> _ModelT: ...
+
+    @overload
+    async def update_request_for_bib(
+        self, mms_id: str, request_id: str, request: Request, *, model: None = ...
+    ) -> RESP_TYPE: ...
+
+    async def update_request_for_bib(
+        self, mms_id: str, request_id: str, request: Request, *, model: Any = None
+    ) -> Any:
+        return await self._put(
+            AlmaEndpoint.BIB_REQUEST,
+            {"MMS_ID": mms_id, "REQUEST_ID": request_id},
+            model=model,
+            json=request,
+        )
+
+    @overload
+    async def process_request_for_bib(
+        self,
+        mms_id: str,
+        request_id: str,
+        op: str = ...,
+        *,
+        release_item: bool = ...,
+        model: type[_ModelT],
+    ) -> _ModelT: ...
+
+    @overload
+    async def process_request_for_bib(
+        self,
+        mms_id: str,
+        request_id: str,
+        op: str = ...,
+        *,
+        release_item: bool = ...,
+        model: None = ...,
+    ) -> RESP_TYPE: ...
+
+    async def process_request_for_bib(
+        self,
+        mms_id: str,
+        request_id: str,
+        op: str = "next_step",
+        *,
+        release_item: bool = False,
+        model: Any = None,
+    ) -> Any:
+        params = {"op": op, "release_item": release_item}
+        return await self._post(
+            AlmaEndpoint.BIB_REQUEST,
+            {"MMS_ID": mms_id, "REQUEST_ID": request_id},
+            model=model,
+            params=params,
+        )
+
+    @overload
     async def get_request(
         self, mms_id: str, holding_id: str, item_id: str, request_id: str, *, model: type[_ModelT]
     ) -> _ModelT: ...

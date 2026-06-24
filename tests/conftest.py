@@ -1,14 +1,13 @@
 """Fixtures."""
 
 import os
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
 from pathlib import Path
 
 import pytest
 from environs import Env
 
 from almapy import AlmaClient
-from tests._niquests_mock import NiquestsMock
 
 _BARCODES_FILE = Path(__file__).parent / "barcodes.txt"
 
@@ -46,13 +45,6 @@ async def fast_integration_client() -> AsyncGenerator[AlmaClient, None]:
     api_key = _load_api_key() or pytest.skip("API_KEY not set in tests/.env")
     async with AlmaClient(api_key, rate_limit=200.0) as client:
         yield client
-
-
-@pytest.fixture
-def rsps() -> Generator[NiquestsMock, None, None]:
-    """Intercept niquests HTTP calls at the adapter level (sync + async)."""
-    with NiquestsMock(assert_all_requests_are_fired=False) as m:
-        yield m
 
 
 @pytest.fixture(scope="session")

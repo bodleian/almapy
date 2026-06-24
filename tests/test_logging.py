@@ -26,7 +26,6 @@ def test_stamina_retry_log_suppressed_even_when_hooks_reenabled(
     """
     stamina.instrumentation.set_on_retry_hooks(None)  # re-enable stamina defaults
     try:
-
         retry_msg = "trigger a scheduled retry"
 
         @stamina.retry(on=ValueError, attempts=2, wait_initial=0.001)

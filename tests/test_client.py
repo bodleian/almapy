@@ -2,19 +2,37 @@
 
 import json
 import logging
+from collections.abc import Callable
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import niquests
 import pytest
-import responses
 from box import Box
 from niquests.structures import CaseInsensitiveDict
+from niquests_mock import MockRouter, build_response
 
 from almapy import AlmaClient, exceptions
-from tests._niquests_mock import NiquestsMock
 
 _BASE = "https://api-eu.hosted.exlibrisgroup.com/almaws/v1"
+
+
+def _responder_sequence(
+    *specs: dict[str, Any],
+) -> Callable[[niquests.PreparedRequest], niquests.Response]:
+    """side_effect that returns each response spec in turn, repeating the last.
+
+    niquests-mock has no response queue, so sequential per-attempt responses
+    (e.g. 500 then 200 across a retry) are modelled with a stateful responder.
+    """
+    state = {"i": 0}
+
+    def responder(request: niquests.PreparedRequest) -> niquests.Response:
+        spec = specs[min(state["i"], len(specs) - 1)]
+        state["i"] += 1
+        return build_response(request, **spec)
+
+    return responder
 
 
 def _make_response(
@@ -22,7 +40,7 @@ def _make_response(
 ) -> niquests.Response:
     """Build a niquests.Response for use in _parse() unit tests only.
 
-    Not for execute() tests — use the rsps fixture to register URLs instead.
+    Not for execute() tests — use the niquests_mock fixture to register URLs instead.
     """
     r = niquests.Response()
     r.status_code = status_code
@@ -35,9 +53,9 @@ def _make_response(
 class TestExecuteOutcomeRecording:
     @pytest.mark.asyncio
     async def test_success_calls_record_success(
-        self, client: AlmaClient, rsps: NiquestsMock
+        self, client: AlmaClient, niquests_mock: MockRouter
     ) -> None:
-        rsps.add(responses.GET, f"{_BASE}/users", json={"foo": "bar"})
+        niquests_mock.get(f"{_BASE}/users").respond(json={"foo": "bar"})
         client._controller = MagicMock()
         client._controller.acquire = AsyncMock()
 
@@ -48,9 +66,9 @@ class TestExecuteOutcomeRecording:
 
     @pytest.mark.asyncio
     async def test_retryable_error_calls_record_failure(
-        self, client: AlmaClient, rsps: NiquestsMock
+        self, client: AlmaClient, niquests_mock: MockRouter
     ) -> None:
-        rsps.add(responses.GET, f"{_BASE}/users", body=niquests.ConnectionError("refused"))
+        niquests_mock.get(f"{_BASE}/users").mock(side_effect=niquests.ConnectionError("refused"))
         client._controller = MagicMock()
         client._controller.acquire = AsyncMock()
 
@@ -63,12 +81,12 @@ class TestExecuteOutcomeRecording:
 
     @pytest.mark.asyncio
     async def test_non_retryable_4xx_does_not_call_record_failure(
-        self, client: AlmaClient, rsps: NiquestsMock
+        self, client: AlmaClient, niquests_mock: MockRouter
     ) -> None:
         body = json.dumps({
             "errorList": {"error": [{"errorCode": "401861", "errorMessage": "User not found."}]}
         })
-        rsps.add(responses.GET, f"{_BASE}/users/jsmith", json=json.loads(body), status=404)
+        niquests_mock.get(f"{_BASE}/users/jsmith").respond(status_code=404, json=json.loads(body))
         client._controller = MagicMock()
         client._controller.acquire = AsyncMock()
 
@@ -80,12 +98,12 @@ class TestExecuteOutcomeRecording:
         client._controller.record_success.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_5xx_calls_record_failure(self, client: AlmaClient, rsps: NiquestsMock) -> None:
-        rsps.add(
-            responses.GET,
-            f"{_BASE}/users",
+    async def test_5xx_calls_record_failure(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        niquests_mock.get(f"{_BASE}/users").respond(
+            status_code=500,
             json={"errorList": {"error": [{"errorCode": "500", "errorMessage": "Server error"}]}},
-            status=500,
         )
         client._controller = MagicMock()
         client._controller.acquire = AsyncMock()
@@ -168,31 +186,33 @@ class TestAlmaClientInternals:
         assert client._closed is True
 
     @pytest.mark.asyncio
-    async def test_execute_retries_correct_number_of_times(self, rsps: NiquestsMock) -> None:
+    async def test_execute_retries_correct_number_of_times(self, niquests_mock: MockRouter) -> None:
         client = AlmaClient("test-api-key", retry_attempts=2)
-        rsps.add(responses.GET, f"{_BASE}/users", body=niquests.ConnectionError("refused"))
+        niquests_mock.get(f"{_BASE}/users").mock(side_effect=niquests.ConnectionError("refused"))
         client._controller = MagicMock()
         client._controller.acquire = AsyncMock()
 
         with pytest.raises(niquests.ConnectionError):
             await client.execute("GET", "/users", parser="json")
 
-        assert len(rsps.calls) == 2
+        assert len(niquests_mock.calls) == 2
 
 
 class TestExecuteModelValidation:
     @pytest.mark.asyncio
-    async def test_model_none_returns_box(self, client: AlmaClient, rsps: NiquestsMock) -> None:
-        rsps.add(responses.GET, f"{_BASE}/users", json={"foo": "bar"})
+    async def test_model_none_returns_box(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        niquests_mock.get(f"{_BASE}/users").respond(json={"foo": "bar"})
         result = await client.execute("GET", "/users", parser="json", model=None)
         assert isinstance(result, Box)
         assert result.foo == "bar"
 
     @pytest.mark.asyncio
     async def test_model_provided_calls_model_validate(
-        self, client: AlmaClient, rsps: NiquestsMock
+        self, client: AlmaClient, niquests_mock: MockRouter
     ) -> None:
-        rsps.add(responses.GET, f"{_BASE}/users", json={"foo": "bar"})
+        niquests_mock.get(f"{_BASE}/users").respond(json={"foo": "bar"})
         mock_model = MagicMock()
         mock_model.model_validate.return_value = "validated_instance"
 
@@ -206,9 +226,9 @@ class TestExecuteModelValidation:
 
     @pytest.mark.asyncio
     async def test_model_validate_exception_propagates(
-        self, client: AlmaClient, rsps: NiquestsMock
+        self, client: AlmaClient, niquests_mock: MockRouter
     ) -> None:
-        rsps.add(responses.GET, f"{_BASE}/users", json={"foo": "bar"})
+        niquests_mock.get(f"{_BASE}/users").respond(json={"foo": "bar"})
         mock_model = MagicMock()
         mock_model.model_validate.side_effect = ValueError("bad data")
 
@@ -217,10 +237,10 @@ class TestExecuteModelValidation:
 
     @pytest.mark.asyncio
     async def test_model_receives_empty_box_on_no_content(
-        self, client: AlmaClient, rsps: NiquestsMock
+        self, client: AlmaClient, niquests_mock: MockRouter
     ) -> None:
         """204 No Content → Box() is passed to model_validate (not skipped)."""
-        rsps.add(responses.GET, f"{_BASE}/users", status=204, body="")
+        niquests_mock.get(f"{_BASE}/users").respond(status_code=204)
         mock_model = MagicMock()
         mock_model.model_validate.return_value = "empty_model"
 
@@ -235,10 +255,10 @@ class TestExecuteModelValidation:
 class TestExecuteLogging:
     @pytest.mark.asyncio
     async def test_http_logger_emits_request_and_response(
-        self, client: AlmaClient, rsps: NiquestsMock, caplog: pytest.LogCaptureFixture
+        self, client: AlmaClient, niquests_mock: MockRouter, caplog: pytest.LogCaptureFixture
     ) -> None:
         """almapy.http emits exactly 2 DEBUG records per successful request."""
-        rsps.add(responses.GET, f"{_BASE}/users", json={"foo": "bar"})
+        niquests_mock.get(f"{_BASE}/users").respond(json={"foo": "bar"})
         with caplog.at_level(logging.DEBUG, logger="almapy.http"):
             await client.execute("GET", "/users", parser="json")
         records = [r for r in caplog.records if r.name == "almapy.http"]
@@ -248,10 +268,10 @@ class TestExecuteLogging:
 
     @pytest.mark.asyncio
     async def test_log_records_carry_req_id(
-        self, client: AlmaClient, rsps: NiquestsMock, caplog: pytest.LogCaptureFixture
+        self, client: AlmaClient, niquests_mock: MockRouter, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Every log record emitted inside execute() must have a non-empty req_id."""
-        rsps.add(responses.GET, f"{_BASE}/users", json={"foo": "bar"})
+        niquests_mock.get(f"{_BASE}/users").respond(json={"foo": "bar"})
         with caplog.at_level(logging.DEBUG, logger="almapy.http"):
             await client.execute("GET", "/users", parser="json")
         for record in caplog.records:
@@ -260,11 +280,11 @@ class TestExecuteLogging:
 
     @pytest.mark.asyncio
     async def test_req_ids_are_unique_across_calls(
-        self, client: AlmaClient, rsps: NiquestsMock, caplog: pytest.LogCaptureFixture
+        self, client: AlmaClient, niquests_mock: MockRouter, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Each execute() call must generate a distinct req_id."""
-        rsps.add(responses.GET, f"{_BASE}/users/1", json={"foo": "bar"})
-        rsps.add(responses.GET, f"{_BASE}/users/2", json={"foo": "bar"})
+        niquests_mock.get(f"{_BASE}/users/1").respond(json={"foo": "bar"})
+        niquests_mock.get(f"{_BASE}/users/2").respond(json={"foo": "bar"})
         req_ids: list[str] = []
         with caplog.at_level(logging.DEBUG, logger="almapy.http"):
             await client.execute("GET", "/users/1", parser="json")
@@ -276,17 +296,23 @@ class TestExecuteLogging:
 
     @pytest.mark.asyncio
     async def test_retry_logger_warns_on_second_attempt(
-        self, rsps: NiquestsMock, caplog: pytest.LogCaptureFixture
+        self, niquests_mock: MockRouter, caplog: pytest.LogCaptureFixture
     ) -> None:
         """almapy.retry emits a WARNING on retry (not on first attempt)."""
         client = AlmaClient("test-api-key", retry_attempts=2)
-        rsps.add(
-            responses.GET,
-            f"{_BASE}/bibs/123",
-            json={"errorList": {"error": [{"errorCode": "500", "errorMessage": "Server error"}]}},
-            status=500,
+        niquests_mock.get(f"{_BASE}/bibs/123").mock(
+            side_effect=_responder_sequence(
+                {
+                    "status_code": 500,
+                    "json": {
+                        "errorList": {
+                            "error": [{"errorCode": "500", "errorMessage": "Server error"}]
+                        }
+                    },
+                },
+                {"status_code": 200, "json": {"ok": True}},
+            )
         )
-        rsps.add(responses.GET, f"{_BASE}/bibs/123", json={"ok": True})
         with caplog.at_level(logging.WARNING, logger="almapy.retry"):
             await client.execute("GET", "/bibs/123", parser="json")
         retry_records = [r for r in caplog.records if r.name == "almapy.retry"]
@@ -296,17 +322,23 @@ class TestExecuteLogging:
 
     @pytest.mark.asyncio
     async def test_stamina_retry_logger_is_suppressed(
-        self, rsps: NiquestsMock, caplog: pytest.LogCaptureFixture
+        self, niquests_mock: MockRouter, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Retry logging must come from almapy.retry only, never stamina."""
         client = AlmaClient("test-api-key", retry_attempts=2)
-        rsps.add(
-            responses.GET,
-            f"{_BASE}/bibs/123",
-            json={"errorList": {"error": [{"errorCode": "500", "errorMessage": "Server error"}]}},
-            status=500,
+        niquests_mock.get(f"{_BASE}/bibs/123").mock(
+            side_effect=_responder_sequence(
+                {
+                    "status_code": 500,
+                    "json": {
+                        "errorList": {
+                            "error": [{"errorCode": "500", "errorMessage": "Server error"}]
+                        }
+                    },
+                },
+                {"status_code": 200, "json": {"ok": True}},
+            )
         )
-        rsps.add(responses.GET, f"{_BASE}/bibs/123", json={"ok": True})
 
         with caplog.at_level(logging.WARNING):
             await client.execute("GET", "/bibs/123", parser="json")
@@ -361,35 +393,41 @@ class _FakeModel:
 class TestExecuteDumpableConversion:
     @pytest.mark.asyncio
     async def test_plain_dict_body_passes_through_unchanged(
-        self, client: AlmaClient, rsps: NiquestsMock
+        self, client: AlmaClient, niquests_mock: MockRouter
     ) -> None:
         """A dict json= body reaches the HTTP client untouched (catches: over-eager conversion)."""
-        rsps.add(responses.POST, f"{_BASE}/users", json={"ok": True})
+        niquests_mock.post(f"{_BASE}/users").respond(json={"ok": True})
         body = {"primary_id": "jdoe", "first_name": "Jane"}
 
         await client.execute("POST", "/users", parser="json", json=body)
 
-        assert json.loads(rsps.calls[0].request.body) == body
+        sent = niquests_mock.calls[0].request.body
+        assert isinstance(sent, bytes)
+        assert json.loads(sent) == body
 
     @pytest.mark.asyncio
     async def test_dumpable_body_is_converted_via_dump_json(
-        self, client: AlmaClient, rsps: NiquestsMock
+        self, client: AlmaClient, niquests_mock: MockRouter
     ) -> None:
         """A Dumpable json= body is serialized via .dump(mode="json") before sending."""
-        rsps.add(responses.POST, f"{_BASE}/users", json={"ok": True})
+        niquests_mock.post(f"{_BASE}/users").respond(json={"ok": True})
         payload = {"primary_id": "jdoe", "first_name": "Jane"}
         model = _FakeModel(payload)
 
         await client.execute("POST", "/users", parser="json", json=model)
 
-        assert json.loads(rsps.calls[0].request.body) == payload
+        sent = niquests_mock.calls[0].request.body
+        assert isinstance(sent, bytes)
+        assert json.loads(sent) == payload
         assert model.dump_modes == ["json"]
 
     @pytest.mark.asyncio
-    async def test_dumpable_converted_once_before_retry_loop(self, rsps: NiquestsMock) -> None:
+    async def test_dumpable_converted_once_before_retry_loop(
+        self, niquests_mock: MockRouter
+    ) -> None:
         """.dump() runs exactly once even when the request retries (catches: per-attempt dump)."""
         client = AlmaClient("test-api-key", retry_attempts=3)
-        rsps.add(responses.POST, f"{_BASE}/users", body=niquests.ConnectionError("refused"))
+        niquests_mock.post(f"{_BASE}/users").mock(side_effect=niquests.ConnectionError("refused"))
         client._controller = MagicMock()
         client._controller.acquire = AsyncMock()
         model = _FakeModel({"primary_id": "jdoe"})
@@ -397,7 +435,7 @@ class TestExecuteDumpableConversion:
         with pytest.raises(niquests.ConnectionError):
             await client.execute("POST", "/users", parser="json", json=model)
 
-        assert len(rsps.calls) == 3
+        assert len(niquests_mock.calls) == 3
         assert model.dump_modes == ["json"]
 
 
@@ -414,32 +452,26 @@ class TestRawBodyWrites:
 
     @pytest.mark.asyncio
     async def test_update_holding_sends_raw_body(
-        self, client: AlmaClient, rsps: NiquestsMock
+        self, client: AlmaClient, niquests_mock: MockRouter
     ) -> None:
-        rsps.add(
-            responses.PUT,
-            f"{_BASE}/bibs/99/holdings/22",
-            body=self._XML,
-            content_type="application/xml",
+        niquests_mock.put(f"{_BASE}/bibs/99/holdings/22").respond(
+            content=self._XML, headers={"Content-Type": "application/xml"}
         )
 
         result = await client.bibs.update_holding("99", "22", self._XML)
 
         assert result == self._XML
-        assert rsps.calls[0].request.body == self._XML
+        assert niquests_mock.calls[0].request.body == self._XML
 
     @pytest.mark.asyncio
     async def test_create_holding_sends_raw_body(
-        self, client: AlmaClient, rsps: NiquestsMock
+        self, client: AlmaClient, niquests_mock: MockRouter
     ) -> None:
-        rsps.add(
-            responses.POST,
-            f"{_BASE}/bibs/99/holdings",
-            body=self._XML,
-            content_type="application/xml",
+        niquests_mock.post(f"{_BASE}/bibs/99/holdings").respond(
+            content=self._XML, headers={"Content-Type": "application/xml"}
         )
 
         result = await client.bibs.create_holding("99", self._XML)
 
         assert result == self._XML
-        assert rsps.calls[0].request.body == self._XML
+        assert niquests_mock.calls[0].request.body == self._XML

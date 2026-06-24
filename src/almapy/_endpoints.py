@@ -30,6 +30,7 @@ class AlmaEndpoint(StrEnum):
     BIB_LOANS = "/bibs/{MMS_ID}/loans"
     BIB_LOAN = "/bibs/{MMS_ID}/loans/{LOAN_ID}"
     BIB_REQUESTS = "/bibs/{MMS_ID}/requests"
+    BIB_REQUEST = "/bibs/{MMS_ID}/requests/{REQUEST_ID}"
     ITEM_REQUESTS = "/bibs/{MMS_ID}/holdings/{HOLDING_ID}/items/{ITEM_PID}/requests"
     ITEM_REQUEST = "/bibs/{MMS_ID}/holdings/{HOLDING_ID}/items/{ITEM_PID}/requests/{REQUEST_ID}"
 
