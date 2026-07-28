@@ -425,14 +425,21 @@ class TestExecuteDumpableConversion:
     async def test_dumpable_converted_once_before_retry_loop(
         self, niquests_mock: MockRouter
     ) -> None:
-        """.dump() runs exactly once even when the request retries (catches: per-attempt dump)."""
+        """.dump() runs exactly once even when the request retries (catches: per-attempt dump).
+
+        Uses a 429, the one failure a POST is still replayed on — a connection
+        error or 5xx on a write is deliberately not retried.
+        """
         client = AlmaClient("test-api-key", retry_attempts=3)
-        niquests_mock.post(f"{_BASE}/users").mock(side_effect=niquests.ConnectionError("refused"))
+        niquests_mock.post(f"{_BASE}/users").respond(
+            status_code=429,
+            json={"errorList": {"error": [{"errorCode": "TOO_MANY", "errorMessage": "slow down"}]}},
+        )
         client._controller = MagicMock()
         client._controller.acquire = AsyncMock()
         model = _FakeModel({"primary_id": "jdoe"})
 
-        with pytest.raises(niquests.ConnectionError):
+        with pytest.raises(exceptions.ThresholdError):
             await client.execute("POST", "/users", parser="json", json=model)
 
         assert len(niquests_mock.calls) == 3
@@ -475,3 +482,137 @@ class TestRawBodyWrites:
 
         assert result == self._XML
         assert niquests_mock.calls[0].request.body == self._XML
+
+
+class TestWriteRetryPolicy:
+    """Non-idempotent verbs must not be replayed on ambiguous failures.
+
+    A read timeout, connection error or 5xx on a POST usually means Alma applied
+    the write and the response was lost, so a replay creates a second loan,
+    request or PO line. Only failures that prove the request never landed — a
+    429 rejection or a connect timeout — stay retryable for writes.
+    """
+
+    @staticmethod
+    def _mocked(attempts: int = 3) -> AlmaClient:
+        client = AlmaClient("test-api-key", retry_attempts=attempts)
+        client._controller = MagicMock()
+        client._controller.acquire = AsyncMock()
+        return client
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("method", ["POST", "PATCH"])
+    async def test_write_not_retried_on_connection_error(
+        self, niquests_mock: MockRouter, method: str
+    ) -> None:
+        client = self._mocked()
+        niquests_mock.request(method, f"{_BASE}/users").mock(
+            side_effect=niquests.ConnectionError("reset")
+        )
+
+        with pytest.raises(niquests.ConnectionError):
+            await client.execute(method, "/users", parser="json")
+
+        assert len(niquests_mock.calls) == 1
+
+    @pytest.mark.asyncio
+    async def test_write_not_retried_on_read_timeout(self, niquests_mock: MockRouter) -> None:
+        """The dangerous case: Alma created the record, the response never arrived."""
+        client = self._mocked()
+        niquests_mock.post(f"{_BASE}/users").mock(side_effect=niquests.ReadTimeout("timed out"))
+
+        with pytest.raises(niquests.ReadTimeout):
+            await client.execute("POST", "/users", parser="json")
+
+        assert len(niquests_mock.calls) == 1
+
+    @pytest.mark.asyncio
+    async def test_write_not_retried_on_server_error(self, niquests_mock: MockRouter) -> None:
+        client = self._mocked()
+        niquests_mock.post(f"{_BASE}/users").respond(
+            status_code=500,
+            json={"errorList": {"error": [{"errorCode": "500", "errorMessage": "boom"}]}},
+        )
+
+        with pytest.raises(exceptions.APIServerError):
+            await client.execute("POST", "/users", parser="json")
+
+        assert len(niquests_mock.calls) == 1
+
+    @pytest.mark.asyncio
+    async def test_write_still_retried_on_429(self, niquests_mock: MockRouter) -> None:
+        """A 429 is a gateway rejection — Alma never saw the body, so replay is safe."""
+        client = self._mocked()
+        niquests_mock.post(f"{_BASE}/users").respond(
+            status_code=429,
+            json={"errorList": {"error": [{"errorCode": "TOO_MANY", "errorMessage": "slow down"}]}},
+        )
+
+        with pytest.raises(exceptions.ThresholdError):
+            await client.execute("POST", "/users", parser="json")
+
+        assert len(niquests_mock.calls) == 3
+
+    @pytest.mark.asyncio
+    async def test_write_still_retried_on_connect_timeout(self, niquests_mock: MockRouter) -> None:
+        """No connection was established, so the request cannot have been applied."""
+        client = self._mocked()
+        niquests_mock.post(f"{_BASE}/users").mock(side_effect=niquests.ConnectTimeout("no route"))
+
+        with pytest.raises(niquests.ConnectTimeout):
+            await client.execute("POST", "/users", parser="json")
+
+        assert len(niquests_mock.calls) == 3
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("method", ["GET", "PUT", "DELETE"])
+    async def test_idempotent_methods_still_retry(
+        self, niquests_mock: MockRouter, method: str
+    ) -> None:
+        client = self._mocked()
+        niquests_mock.request(method, f"{_BASE}/users").mock(
+            side_effect=niquests.ConnectionError("reset")
+        )
+
+        with pytest.raises(niquests.ConnectionError):
+            await client.execute(method, "/users", parser="json")
+
+        assert len(niquests_mock.calls) == 3
+
+    @pytest.mark.asyncio
+    async def test_retry_true_opts_a_write_back_in(self, niquests_mock: MockRouter) -> None:
+        client = self._mocked()
+        niquests_mock.post(f"{_BASE}/users").mock(side_effect=niquests.ConnectionError("reset"))
+
+        with pytest.raises(niquests.ConnectionError):
+            await client.execute("POST", "/users", parser="json", retry=True)
+
+        assert len(niquests_mock.calls) == 3
+
+    @pytest.mark.asyncio
+    async def test_retry_false_disables_retries_for_a_read(self, niquests_mock: MockRouter) -> None:
+        client = self._mocked()
+        niquests_mock.get(f"{_BASE}/users").mock(side_effect=niquests.ConnectionError("reset"))
+
+        with pytest.raises(niquests.ConnectionError):
+            await client.execute("GET", "/users", parser="json", retry=False)
+
+        assert len(niquests_mock.calls) == 1
+
+    @pytest.mark.asyncio
+    async def test_backpressure_still_records_failure_for_unretried_write(
+        self, niquests_mock: MockRouter
+    ) -> None:
+        """Not replaying the request must not blind the adaptive rate limiter."""
+        client = AlmaClient("test-api-key", retry_attempts=3)
+        client._controller = MagicMock()
+        client._controller.acquire = AsyncMock()
+        niquests_mock.post(f"{_BASE}/users").respond(
+            status_code=500,
+            json={"errorList": {"error": [{"errorCode": "500", "errorMessage": "boom"}]}},
+        )
+
+        with pytest.raises(exceptions.APIServerError):
+            await client.execute("POST", "/users", parser="json")
+
+        assert client._controller.record_failure.call_count == 1

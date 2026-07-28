@@ -1,4 +1,4 @@
-"""Alma API client — composed architecture, no gracy dependency."""
+"""Alma API client — niquests transport, token-bucket throttle, AIMD backpressure."""
 
 import asyncio
 import contextlib
@@ -27,6 +27,7 @@ from almapy._utils import (
     Dumpable,
     _ModelT,
     _parse_xml,
+    _retry_predicate,
     _should_retry,
     _validate_response,
 )
@@ -155,12 +156,18 @@ class AlmaClient:
         parser: Parser,
         model: Any = None,
         validate: Callable[[niquests.Response], None] = _validate_response,
+        retry: bool | None = None,
         **kwargs: Any,
     ) -> Any:
         """Stamina retry loop; semaphore + controller acquired per attempt.
 
         Semaphore is released between attempts so backoff sleeps do not pin
         concurrency slots. record_failure is only called for retryable exceptions.
+
+        Writes are not replayed on ambiguous failures — see
+        :func:`almapy._utils._retry_predicate`. Pass ``retry=True`` to opt a POST
+        back into full retries when the endpoint is known to be safe to repeat,
+        or ``retry=False`` to disable retries for a single call.
         """
         if isinstance(kwargs.get("json"), Dumpable):
             kwargs["json"] = kwargs["json"].dump(mode="json")
@@ -170,7 +177,7 @@ class AlmaClient:
             attempt_num: int = 0
             last_exc: Exception | None = None
             async for attempt in stamina.retry_context(
-                on=_should_retry,
+                on=_retry_predicate(method, retry=retry),
                 attempts=self._retry_attempts,
                 timeout=None,
                 wait_initial=0.5,

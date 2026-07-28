@@ -5,6 +5,7 @@ import re
 import traceback
 import xml
 from collections import OrderedDict
+from collections.abc import Callable
 from http import HTTPStatus
 from typing import (
     Any,
@@ -123,12 +124,51 @@ def _is_urllib3_http1_reuse_race(exc: BaseException) -> bool:
 
 
 def _should_retry(exc: BaseException) -> bool:
-    """Return True if the exception is one that stamina should retry."""
+    """Return True if the exception is a transient transport or server failure.
+
+    This is the *backpressure* predicate: it decides whether a failure should
+    depress the adaptive rate limit. It is deliberately method-agnostic — a 429
+    or 5xx is a signal about Alma's health regardless of which verb provoked it.
+    Use :func:`_retry_predicate` to decide whether to actually replay a request.
+    """
     return (
         isinstance(exc, _RETRYABLE)
         or _is_urllib3_transport_assertion(exc)
         or _is_urllib3_http1_reuse_race(exc)
     )
+
+
+# Repetition of these is safe by RFC 9110 semantics: replaying one cannot create
+# a second record, so the full transient set is retryable.
+_IDEMPOTENT_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "PUT", "DELETE"})
+
+# Failures that prove Alma never processed the request. A 429 is a gateway
+# rejection, and a connect timeout means no connection was ever established, so
+# neither can leave a half-applied write behind. These stay retryable for POST.
+_UNPROCESSED_RETRYABLE = (
+    exceptions.ThresholdError,
+    niquests.ConnectTimeout,
+)
+
+
+def _retry_predicate(method: str, *, retry: bool | None = None) -> Callable[[BaseException], bool]:
+    """Build the stamina retry predicate for a single request.
+
+    A read timeout or 5xx on a POST usually means Alma *did* process the write
+    and the response was lost, so replaying it creates a duplicate loan, request
+    or PO line. Non-idempotent verbs are therefore only retried on failures that
+    prove the request never landed.
+
+    Args:
+        method: HTTP verb for the request.
+        retry: ``True`` forces full retries even for a write, ``False`` disables
+            retries entirely, ``None`` (default) picks by method idempotency.
+    """
+    if retry is False:
+        return lambda _exc: False
+    if retry is True or method.upper() in _IDEMPOTENT_METHODS:
+        return _should_retry
+    return lambda exc: isinstance(exc, _UNPROCESSED_RETRYABLE)
 
 
 def _get_error_class(

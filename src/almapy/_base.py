@@ -36,6 +36,7 @@ class _AlmaExecutable(Protocol):
         parser: Parser,
         model: Any = None,
         validate: "Callable[[niquests.Response], None]" = ...,
+        retry: bool | None = None,
         **kwargs: Any,
     ) -> Any: ...
 
@@ -43,8 +44,9 @@ class _AlmaExecutable(Protocol):
 class BaseNamespace:  # noqa: B903
     """Base class for AlmaClient namespace objects.
 
-    Replaces GracyNamespace. Owns URL building via AlmaEndpoint.build() and
-    delegates HTTP execution to AlmaClient.execute().
+    Owns URL building via AlmaEndpoint.build() and delegates HTTP execution to
+    AlmaClient.execute(). Namespace methods pass ``retry=`` straight through to
+    control whether a write is replayed on an ambiguous transport failure.
     """
 
     def __init__(self, client: _AlmaExecutable) -> None:
