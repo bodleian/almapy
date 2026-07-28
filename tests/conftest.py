@@ -9,7 +9,12 @@ from environs import Env
 
 from almapy import AlmaClient
 
-_BARCODES_FILE = Path(__file__).parent / "barcodes.txt"
+# Integration credentials and patron data live OUTSIDE tests/ on purpose: tests/
+# is packaged into the sdist, so anything dropped in there rides along into a
+# published artifact. Both paths below are gitignored and never shipped.
+_ROOT = Path(__file__).parent.parent
+_ENV_FILE = _ROOT / ".env"
+_BARCODES_FILE = _ROOT / ".testdata" / "barcodes.txt"
 
 
 @pytest.fixture
@@ -18,10 +23,25 @@ def client() -> AlmaClient:
     return AlmaClient("test-api-key")
 
 
-def _load_api_key() -> str:
+def _load_env() -> Env:
+    """Load .env into an Env instance.
+
+    environs >= 15 loads into the Env's own store rather than os.environ, so the
+    values must be read back off this object — os.environ.get() returns nothing.
+    """
     env = Env()
-    env.read_env(str(Path(__file__).parent / ".env"), override=False)
-    return os.environ.get("API_KEY", "")
+    env.read_env(str(_ENV_FILE), override=False)
+    return env
+
+
+def _load_api_key() -> str:
+    return _load_env().str("API_KEY", "")
+
+
+@pytest.fixture(scope="session")
+def repeat_count() -> int:
+    """Barcodes to use per integration test — INTEGRATION_REPEAT_COUNT, default 50."""
+    return max(1, _load_env().int("INTEGRATION_REPEAT_COUNT", 50))
 
 
 def _require_integration() -> None:
@@ -33,7 +53,7 @@ def _require_integration() -> None:
 async def integration_client() -> AsyncGenerator[AlmaClient, None]:
     """Real AlmaClient at default rate (25 req/s). Function-scoped to avoid throttle state leakage."""
     _require_integration()
-    api_key = _load_api_key() or pytest.skip("API_KEY not set in tests/.env")
+    api_key = _load_api_key() or pytest.skip("API_KEY not set in .env (see .env.example)")
     async with AlmaClient(api_key) as client:
         yield client
 
@@ -42,18 +62,18 @@ async def integration_client() -> AsyncGenerator[AlmaClient, None]:
 async def fast_integration_client() -> AsyncGenerator[AlmaClient, None]:
     """Real AlmaClient at 200 req/s to provoke 429s. Session-scoped so backoff state carries into recovery test."""
     _require_integration()
-    api_key = _load_api_key() or pytest.skip("API_KEY not set in tests/.env")
+    api_key = _load_api_key() or pytest.skip("API_KEY not set in .env (see .env.example)")
     async with AlmaClient(api_key, rate_limit=200.0) as client:
         yield client
 
 
 @pytest.fixture(scope="session")
 def barcodes() -> list[str]:
-    """Item barcodes loaded from tests/barcodes.txt (one per line, # lines ignored)."""
+    """Item barcodes loaded from .testdata/barcodes.txt (one per line, # lines ignored)."""
     if not _BARCODES_FILE.exists():
-        pytest.skip("tests/barcodes.txt not found; add one barcode per line")
+        pytest.skip(f"{_BARCODES_FILE} not found; add one item barcode per line")
     lines = _BARCODES_FILE.read_text().splitlines()
     result = [ln.strip() for ln in lines if ln.strip() and not ln.startswith("#")]
     if not result:
-        pytest.skip("tests/barcodes.txt is empty")
+        pytest.skip(f"{_BARCODES_FILE} is empty")
     return result

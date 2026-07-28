@@ -24,6 +24,16 @@ include = [
   "CHANGELOG.md",
   "pyproject.toml",
 ]
+# An explicit `include` bypasses hatchling's VCS-ignore handling, so anything
+# untracked but sitting in the working tree gets packed. Integration credentials
+# and patron data therefore live outside tests/ (see .env.example); these
+# patterns are a tripwire in case they are ever recreated here out of habit.
+# `just publish` re-scans the built artifacts as a final backstop.
+exclude = [
+  "tests/.env",
+  "tests/*.env",
+  "tests/barcodes.txt",
+]
 
 [tool.uv]
 publish-url = "https://gitlab.bodleian.ox.ac.uk/api/v4/projects/779/packages/pypi"

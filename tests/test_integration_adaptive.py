@@ -1,7 +1,7 @@
 """Integration tests: validate adaptive rate-limiting against the real Alma API.
 
 Tests are skipped unless ALMA_INTEGRATION=1 is set (enforced by the fixtures).
-Barcodes are loaded from tests/barcodes.txt (one per line).
+Barcodes are loaded from .testdata/barcodes.txt (one per line).
 
 Test ordering matters: test_backoff_triggered_by_api must run before
 test_recovery_after_backoff because they share the session-scoped
@@ -11,7 +11,6 @@ so the order here is intentional.
 """
 
 import asyncio
-import os
 import time
 from collections.abc import Callable
 
@@ -21,34 +20,25 @@ from almapy import AlmaClient
 from almapy.exceptions import BarcodeNotFoundError
 
 
-def _repeat_count() -> int:
-    """Number of barcodes to use per test. Reads INTEGRATION_REPEAT_COUNT from env (default 50)."""
-    val = os.environ.get("INTEGRATION_REPEAT_COUNT", "50")
-    try:
-        return max(1, int(val))
-    except ValueError:
-        return 50
-
-
 @pytest.mark.integration
 class TestAdaptiveRateLimit:
     async def test_volume_all_succeed(
-        self, integration_client: AlmaClient, barcodes: list[str]
+        self, integration_client: AlmaClient, barcodes: list[str], repeat_count: int
     ) -> None:
         """All barcodes return item_data at the default rate limit with no errors."""
-        targets = barcodes[: _repeat_count()]
+        targets = barcodes[:repeat_count]
 
         async def fetch(barcode: str) -> None:
             try:
                 result = await integration_client.bibs.get_item(barcode)
             except BarcodeNotFoundError as exc:
-                pytest.fail(f"Barcode {barcode!r} not found — check tests/barcodes.txt: {exc}")
+                pytest.fail(f"Barcode {barcode!r} not found — check .testdata/barcodes.txt: {exc}")
             assert "item_data" in result, f"item_data missing from response for barcode {barcode!r}"
 
         await asyncio.gather(*(fetch(b) for b in targets))
 
     async def test_throughput_within_cap(
-        self, integration_client: AlmaClient, barcodes: list[str]
+        self, integration_client: AlmaClient, barcodes: list[str], repeat_count: int
     ) -> None:
         """Elapsed time proves TokenBucket is enforcing the configured rate cap.
 
@@ -56,7 +46,7 @@ class TestAdaptiveRateLimit:
         `rate` requests fire immediately. The remaining (n - rate) requests are
         throttled. Minimum elapsed = (n - rate) / rate seconds.
         """
-        targets = barcodes[: _repeat_count()]
+        targets = barcodes[:repeat_count]
         n = len(targets)
         rate: float = integration_client._controller._max_rate
 
@@ -74,14 +64,14 @@ class TestAdaptiveRateLimit:
             )
 
     async def test_backoff_triggered_by_api(
-        self, fast_integration_client: AlmaClient, barcodes: list[str]
+        self, fast_integration_client: AlmaClient, barcodes: list[str], repeat_count: int
     ) -> None:
         """Burst at rate_limit=200 should trigger real 429s and depress current_rate.
 
         Uses an observation-only spy on record_failure (no behaviour change) and
         a background sampler to capture current_rate mid-burst.
         """
-        count = max(_repeat_count() * 4, 200)
+        count = max(repeat_count * 4, 200)
         targets = [barcodes[i % len(barcodes)] for i in range(count)]
 
         failure_count = 0

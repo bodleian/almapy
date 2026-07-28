@@ -162,10 +162,14 @@ cython_debug/
 *.ipynb
 .gut
 reports/
-tests/barcodes.txt
+
+# Local integration-test data (real patron barcodes). Deliberately outside
+# tests/, which is packaged into the sdist.
+.testdata/
 
 # Dev / session artifacts
 .beads/
 .remember/
 .claude/
 openspec/
+CLAUDE.md
