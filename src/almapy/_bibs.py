@@ -919,10 +919,25 @@ class AlmaClientBibNS(BaseNamespace):
         from_cz_mms_id: str | None = None,
         normalization: str | None = None,
         validate: bool = False,
-        override_warning: bool = True,
+        override_warning: bool = False,
         check_match: bool = False,
         import_profile: str | None = None,
     ) -> str:
+        """Create a bib record from the supplied MARC XML.
+
+        Args:
+            record: Full MARC XML record to create.
+            from_nz_mms_id: Link the new bib to this Network Zone record.
+            from_cz_mms_id: Link the new bib to this Community Zone record.
+            normalization: Normalisation process ID to run on the record.
+            validate: Run MARC validation before saving.
+            override_warning: Save despite Alma's validation warnings — which
+                include the duplicate-match warning raised by ``check_match``.
+                Defaults to ``False``.
+            check_match: Run match detection against existing records. Only has
+                an effect while ``override_warning`` is ``False``.
+            import_profile: Import profile ID governing the create.
+        """
         params: dict[str, str | bool] = {
             "validate": validate,
             "override_warning": override_warning,
@@ -931,7 +946,7 @@ class AlmaClientBibNS(BaseNamespace):
         if from_nz_mms_id:
             params["from_nz_mms_id"] = from_nz_mms_id
         if from_cz_mms_id:
-            params["to_cz_mms_id"] = from_cz_mms_id
+            params["from_cz_mms_id"] = from_cz_mms_id
         if normalization:
             params["normalization"] = normalization
         if import_profile:
@@ -982,12 +997,28 @@ class AlmaClientBibNS(BaseNamespace):
         *,
         normalization: str | None = None,
         validate: bool = False,
-        override_warning: bool = True,
-        override_lock: bool = True,
+        override_warning: bool = False,
+        override_lock: bool = False,
         stale_version_check: bool = False,
         cataloguer_level: str | None = None,
         check_match: bool = False,
     ) -> str:
+        """Update a bib record with the supplied MARC XML.
+
+        Args:
+            mms_id: MMS ID of the bib to update.
+            record: Full MARC XML record to write.
+            normalization: Normalisation process ID to run on the record.
+            validate: Run MARC validation before saving.
+            override_warning: Save despite Alma's validation warnings. Defaults
+                to ``False``.
+            override_lock: Save despite another cataloguer holding the record
+                lock, discarding their in-progress edit. Defaults to ``False``.
+            stale_version_check: Reject the update if the record changed since
+                it was read.
+            cataloguer_level: Cataloguer level to apply to the operation.
+            check_match: Run match detection against existing records.
+        """
         params: dict[str, str | bool] = {
             "validate": validate,
             "override_warning": override_warning,
@@ -1013,9 +1044,18 @@ class AlmaClientBibNS(BaseNamespace):
         self,
         mms_id: str,
         *,
-        override: bool = True,
+        override: bool = False,
         cataloguer_level: str | None = None,
     ) -> None:
+        """Delete a bib record.
+
+        Args:
+            mms_id: MMS ID of the bib to delete.
+            override: Delete even when Alma objects — e.g. the bib still has
+                holdings, items or orders attached. Defaults to ``False`` so the
+                shortest call cannot silently discard inventory.
+            cataloguer_level: Cataloguer level to apply to the operation.
+        """
         params: dict[str, str | bool] = {"override": override}
         if cataloguer_level:
             params["cataloguer_level"] = cataloguer_level

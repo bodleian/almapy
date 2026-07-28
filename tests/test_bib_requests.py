@@ -63,3 +63,62 @@ class TestBibRequests:
         )
         query = _query(niquests_mock)
         assert query["release_item"] == ["True"]
+
+
+class TestBibWriteParameters:
+    """Outgoing query strings for bib writes.
+
+    These assert the wire format, not the Python signature: a parameter that is
+    spelled correctly in the kwarg but sent under the wrong name is accepted by
+    Alma with a 200 and silently ignored, so only the request URL catches it.
+    """
+
+    _RECORD = "<bib><record>data</record></bib>"
+
+    async def test_create_bib_sends_from_cz_mms_id(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        """Regression: this was sent as to_cz_mms_id, which Alma ignores."""
+        niquests_mock.post(path="/almaws/v1/bibs").respond(
+            content=self._RECORD, headers={"Content-Type": "application/xml"}
+        )
+
+        await client.bibs.create_bib(self._RECORD, from_cz_mms_id="991234")
+
+        query = _query(niquests_mock)
+        assert query["from_cz_mms_id"] == ["991234"]
+        assert "to_cz_mms_id" not in query
+
+    async def test_create_bib_does_not_override_warning_by_default(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        niquests_mock.post(path="/almaws/v1/bibs").respond(
+            content=self._RECORD, headers={"Content-Type": "application/xml"}
+        )
+
+        await client.bibs.create_bib(self._RECORD)
+
+        assert _query(niquests_mock)["override_warning"] == ["False"]
+
+    async def test_delete_bib_does_not_override_by_default(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        niquests_mock.delete(path="/almaws/v1/bibs/991234").respond(status_code=204)
+
+        await client.bibs.delete_bib("991234")
+
+        assert _query(niquests_mock)["override"] == ["False"]
+
+    async def test_update_bib_does_not_override_warning_or_lock_by_default(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        niquests_mock.put(path="/almaws/v1/bibs/991234").respond(
+            content=self._RECORD, headers={"Content-Type": "application/xml"}
+        )
+
+        await client.bibs.update_bib("991234", self._RECORD)
+
+        query = _query(niquests_mock)
+        assert query["override_warning"] == ["False"]
+        # override_lock is only sent when explicitly enabled
+        assert "override_lock" not in query
