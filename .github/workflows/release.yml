@@ -48,6 +48,9 @@ jobs:
       - name: Build and scan artifacts
         run: just build-check
 
+      - name: Import the built wheel from a clean environment
+        run: just smoke
+
       - name: Check metadata renders on PyPI
         run: uvx twine check dist/*
 
