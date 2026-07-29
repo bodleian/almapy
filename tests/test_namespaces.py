@@ -1,5 +1,6 @@
 """Tests for namespace error re-raise paths and input validation guards."""
 
+import re
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -7,6 +8,7 @@ import pytest
 from box import Box
 
 from almapy import AlmaClient, exceptions
+from almapy._analytics import headers_to_dict
 
 # ---------------------------------------------------------------------------
 # Shared XML fixtures for analytics tests
@@ -26,7 +28,8 @@ _PAGE1_XML = f"""<report><QueryResult>
   </rowset></ResultXml>
 </QueryResult></report>"""
 
-# Page 2 must have multiple rows so xmltodict returns a list (not dict)
+# Page 2 has multiple rows, so xmltodict returns a list. The one- and
+# zero-row continuation pages are covered separately below.
 _PAGE2_XML = f"""<report><QueryResult>
   <IsFinished>true</IsFinished>
   <ResumptionToken>TOKEN123</ResumptionToken>
@@ -169,6 +172,45 @@ class TestAnalyticsPagination:
         assert isinstance(result, list)
         assert len(result) == 1
         assert result[0] == {"Title": "Only Book"}
+
+    @pytest.mark.asyncio
+    async def test_continuation_page_with_one_row(self, client: AlmaClient) -> None:
+        """Regression: the loop indexed ["Row"] without the dict coercion the
+        first page had, so a final page holding a single row raised
+        AttributeError. Any report whose total is one over a multiple of `limit`
+        hits this."""
+        page2 = _PAGE2_XML.replace(
+            "<Row><Column0>1</Column0><Column1>Book B</Column1></Row>\n"
+            "    <Row><Column0>2</Column0><Column1>Book C</Column1></Row>",
+            "<Row><Column0>1</Column0><Column1>Book B</Column1></Row>",
+        )
+        assert page2.count("<Row>") == 1, "fixture edit did not apply"
+        with patch.object(
+            client.analytics,
+            "get_raw_report",
+            new=AsyncMock(side_effect=[_PAGE1_XML, page2]),
+        ):
+            result = await client.analytics.get_full_report("/some/path")
+        assert result == [{"Title": "Book A"}, {"Title": "Book B"}]
+
+    @pytest.mark.asyncio
+    async def test_continuation_page_with_no_rows(self, client: AlmaClient) -> None:
+        """Regression: a final page with no rows raised KeyError('Row')."""
+        page2 = re.sub(r"<Row>.*?</Row>", "", _PAGE2_XML, flags=re.S)
+        assert "<Row>" not in page2, "fixture edit did not apply"
+        with patch.object(
+            client.analytics,
+            "get_raw_report",
+            new=AsyncMock(side_effect=[_PAGE1_XML, page2]),
+        ):
+            result = await client.analytics.get_full_report("/some/path")
+        assert result == [{"Title": "Book A"}]
+
+    def test_headers_to_dict_accepts_a_single_column(self) -> None:
+        """xmltodict gives a bare dict for one <xsd:element>; iterating it
+        yielded strings and raised TypeError."""
+        single = {"@name": "Column1", "@saw-sql:columnHeading": "Title"}
+        assert headers_to_dict(single) == {"Column1": "Title"}
 
 
 class TestBaseNamespaceModelParam:

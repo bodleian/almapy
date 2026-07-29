@@ -6,8 +6,27 @@ from almapy._base import BaseNamespace
 from almapy._endpoints import AlmaEndpoint
 
 
-def headers_to_dict(headers: list[dict[str, Any]]) -> dict[str, Any]:
-    return {header["@name"]: header["@saw-sql:columnHeading"] for header in headers}
+def _as_list(value: Any) -> list[Any]:
+    """Normalise xmltodict's repeated-element handling.
+
+    xmltodict returns a list for repeated elements, a bare dict when exactly one
+    is present, and nothing at all when there are none. Every site that iterates
+    rows or columns has to go through here: iterating the dict form yields its
+    keys as strings, which fails later with a confusing AttributeError rather
+    than at the point of the mistake.
+    """
+    if value is None:
+        return []
+    return value if isinstance(value, list) else [value]
+
+
+def headers_to_dict(headers: list[dict[str, Any]] | dict[str, Any]) -> dict[str, Any]:
+    """Map Alma's internal column names to their report headings.
+
+    Accepts the single-column dict form as well as a list — a report with one
+    non-Column0 column previously raised TypeError here.
+    """
+    return {header["@name"]: header["@saw-sql:columnHeading"] for header in _as_list(headers)}
 
 
 class AlmaClientAnalyticsNS(BaseNamespace):
@@ -43,13 +62,10 @@ class AlmaClientAnalyticsNS(BaseNamespace):
         parsed_resp = xmltodict.parse(initial_response)
         finished = parsed_resp["report"]["QueryResult"]["IsFinished"]
         rowset = parsed_resp["report"]["QueryResult"]["ResultXml"]["rowset"]
-        result = rowset.get("Row", [])
-        if isinstance(result, dict):
-            result = [result]
-        headers = parsed_resp["report"]["QueryResult"]["ResultXml"]["rowset"]["xsd:schema"][
-            "xsd:complexType"
-        ]["xsd:sequence"]["xsd:element"]
-        headers = headers_to_dict(headers)
+        result = _as_list(rowset.get("Row"))
+        headers = headers_to_dict(
+            rowset["xsd:schema"]["xsd:complexType"]["xsd:sequence"]["xsd:element"]
+        )
         if header_override:
             headers.update(header_override)
         token = parsed_resp["report"]["QueryResult"]["ResumptionToken"]
@@ -58,7 +74,12 @@ class AlmaClientAnalyticsNS(BaseNamespace):
             resp = await self.get_raw_report(path, limit, token=token, report_filter=report_filter)
             parsed_resp = xmltodict.parse(resp)
             finished = parsed_resp["report"]["QueryResult"]["IsFinished"]
-            result.extend(parsed_resp["report"]["QueryResult"]["ResultXml"]["rowset"]["Row"])
+            # Same coercion as the first page. Indexing ["Row"] directly meant a
+            # final page with one row raised AttributeError and one with no rows
+            # raised KeyError — reachable by any report whose total is just over
+            # a multiple of `limit`.
+            page = parsed_resp["report"]["QueryResult"]["ResultXml"]["rowset"]
+            result.extend(_as_list(page.get("Row")))
 
         data = [{headers[k]: v for k, v in row.items() if k != "Column0"} for row in result]
         return data
