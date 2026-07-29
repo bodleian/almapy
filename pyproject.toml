@@ -73,9 +73,6 @@ exclude = [
   "tests/barcodes.txt",
 ]
 
-[tool.uv]
-publish-url = "https://gitlab.bodleian.ox.ac.uk/api/v4/projects/779/packages/pypi"
-
 [dependency-groups]
 dev = [
   "commitizen>=3.29.0",
