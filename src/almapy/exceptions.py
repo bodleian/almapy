@@ -179,8 +179,12 @@ class UserMissingFieldError(APIClientError):
 class CannotRenewError(APIClientError):
     """Unable to renew a loan for whatever reason.
 
+    Raised in place of the generic client error when Alma returns code 401822 —
+    the item is requested by someone else, the renewal limit is reached, or a
+    block applies. Alma's own reason is in ``error``.
+
     Attributes:
-        loan_id (str)
+        loan_id: The loan that could not be renewed.
     """
 
     def __init__(self, msg: str, loan_id: str) -> None:
