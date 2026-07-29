@@ -233,23 +233,52 @@ _ERROR_MAPPING: dict[str, type[exceptions.APIServerError | exceptions.APIClientE
 }
 
 
+def _error_class_for(
+    status_code: int,
+) -> type[exceptions.APIServerError | exceptions.APIClientError]:
+    """Status-appropriate exception class, never None.
+
+    _raise_for_error_body only runs for >= 400, so _get_error_class always
+    matches; the fallback keeps mypy happy and fails safe.
+    """
+    return _get_error_class(status_code) or exceptions.APIServerError
+
+
+def _body_excerpt(text: str, limit: int = 500) -> str:
+    """A short, loggable stand-in for an unparseable body."""
+    return text.strip()[:limit] or "<empty body>"
+
+
 def _raise_for_error_body(response: niquests.Response) -> None:
     """Parse an error response body and raise the appropriate exception. Always raises."""
     assert response.status_code is not None
     assert response.text is not None
-    ct = response.headers.get("Content-Type")
-    if ct and "xml" in ct:
+    status = response.status_code
+    ct = response.headers.get("Content-Type") or ""
+
+    body: Any
+    if "xml" in ct:
         body = _parse_xml(response.text)
-    elif ct == "text/plain":
-        _error_log.warning(
-            "API error %s: %s",
-            response.status_code,
-            response.text,
-            extra={"req_id": request_id.get(), "status_code": response.status_code},
-        )
-        raise exceptions.APIServerError(str(response.status_code), response.text)
     else:
-        body = json.loads(response.text)
+        try:
+            body = json.loads(response.text)
+        except ValueError as e:
+            # Not every error body is Alma's JSON: a proxy returns an HTML 502,
+            # an overloaded gateway an empty 503, and Alma itself sends
+            # "text/plain;charset=UTF-8" — which an exact-equality check on the
+            # Content-Type never matched. Letting json.loads raise here escaped
+            # as a bare JSONDecodeError rather than an AlmapyError, so the
+            # status code was lost, _should_retry returned False and
+            # record_failure never fired: precisely the transient failures
+            # retries and backpressure exist for.
+            detail = _body_excerpt(response.text)
+            _error_log.warning(
+                "API error %s: unparseable body: %s",
+                status,
+                detail,
+                extra={"req_id": request_id.get(), "status_code": status},
+            )
+            raise _error_class_for(status)(str(status), detail) from e
 
     try:
         code, message = glom(
@@ -259,17 +288,25 @@ def _raise_for_error_body(response: niquests.Response) -> None:
                     "web_service_result.errorList.error.0",
                     "errorList.error.0",
                     "web_service_result.errorList.error",
+                    # Alma sometimes sends a bare object rather than a list.
+                    "errorList.error",
                 ),
                 operator.itemgetter("errorCode", "errorMessage"),
             ),
         )
     except GlomError as e:
+        # Status-appropriate, not hardcoded APIServerError: a 404 whose body
+        # does not match the Coalesce chain is still a client error, and
+        # APIServerError is retryable — so it cost three round-trips and
+        # needlessly depressed the adaptive rate limit.
+        detail = _body_excerpt(response.text)
         _error_log.warning(
-            "API error %s: Unknown error (unparseable body)",
-            response.status_code,
-            extra={"req_id": request_id.get(), "status_code": response.status_code},
+            "API error %s: unrecognised error body: %s",
+            status,
+            detail,
+            extra={"req_id": request_id.get(), "status_code": status},
         )
-        raise exceptions.APIServerError(str(response.status_code), "Unknown error") from e
+        raise _error_class_for(status)(str(status), detail) from e
 
     message = code if not message else message.strip()
 

@@ -21,10 +21,21 @@ class _AlmaError(AlmapyError):
     """
 
     def __init__(self, code: str, msg: str) -> None:
-        super().__init__(f"{msg} [{code}]")
+        # args must mirror this signature: Exception.__reduce__ pickles as
+        # cls(*self.args). Passing the formatted string gave args a single
+        # element, so unpickling every almapy exception raised TypeError —
+        # behind a ProcessPoolExecutor or Celery worker the real Alma error was
+        # replaced by that TypeError at the deserialisation boundary.
+        super().__init__(code, msg)
         self.code = code
         self.error = msg
         self.message = f"{msg} [{code}]"
+
+    def __str__(self) -> str:
+        # Defined once here rather than per subclass: with two-element args the
+        # default would render the tuple, and subclasses that set self.message
+        # would otherwise disagree with str(self).
+        return self.message
 
 
 class APIClientError(_AlmaError):
@@ -52,8 +63,16 @@ class BarcodeNotFoundError(APIClientError):
 
     def __init__(self, code: str, msg: str) -> None:
         super().__init__(code, msg)
-        self.barcode = msg.split(" ")[-1][1:-1]
-        self.message = f"Barcode not found: {self.barcode}"
+        # Alma ends the message with the bare barcode and a full stop:
+        # "No items found for barcode 1234567890." The old [-1][1:-1] slice took
+        # a character off each end, so it dropped the barcode's first character
+        # as well as the full stop. Other endpoints bracket or quote the value,
+        # hence stripping punctuation rather than a fixed number of characters.
+        # msg == code means errorMessage was empty and _raise_for_error_body
+        # substituted the code.
+        tokens = msg.split()
+        self.barcode = tokens[-1].strip("[]()'\".,;:") if tokens and msg != code else ""
+        self.message = f"Barcode not found: {self.barcode}" if self.barcode else msg
 
 
 class MMSIdNotFoundError(APIClientError):
@@ -65,8 +84,12 @@ class MMSIdNotFoundError(APIClientError):
 
     def __init__(self, code: str, msg: str) -> None:
         super().__init__(code, msg)
-        self.mms = msg.split(" ")[3]
-        self.message = f"MMS ID not found: {self.mms}"
+        # The old msg.split(" ")[3] raised IndexError on any shorter message —
+        # from inside the error handler, destroying the API error it described.
+        # Matching the ID is independent of the surrounding wording.
+        m = re.search(r"\b(?P<mms>\d{8,})\b", msg)
+        self.mms = m.group("mms") if m else ""
+        self.message = f"MMS ID not found: {self.mms}" if self.mms else msg
 
 
 class LoanLimitError(APIClientError):
@@ -148,6 +171,7 @@ class UserMissingFieldError(APIClientError):
 
     def __init__(self, msg: str, user_id: str) -> None:
         super().__init__("401664", msg)
+        self.args = (msg, user_id)  # mirror this signature so pickling round-trips
         self.user_id = user_id
         self.message = msg
 
@@ -161,11 +185,9 @@ class CannotRenewError(APIClientError):
 
     def __init__(self, msg: str, loan_id: str) -> None:
         super().__init__("401822", msg)
+        self.args = (msg, loan_id)  # mirror this signature so pickling round-trips
         self.loan_id = loan_id
         self.message = msg
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class UserNotFoundError(APIClientError):
@@ -196,10 +218,8 @@ class InvalidCodeError(APIClientError):
 
     def __init__(self, msg: str) -> None:
         super().__init__("401873", msg)
+        self.args = (msg,)  # mirror this signature so pickling round-trips
         self.message = msg
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class ScanItemRetrievalError(APIClientError):

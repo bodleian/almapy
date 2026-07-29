@@ -3,6 +3,7 @@
 import importlib.util
 import json
 import logging
+import pickle  # noqa: S403 — round-tripping our own exceptions in tests
 from pathlib import Path
 
 import niquests
@@ -86,15 +87,21 @@ class TestValidateResponse:
         with pytest.raises(exceptions.UserNotFoundError):
             _validate_response(response)
 
-    def test_unrecognised_json_body_raises_api_server_error(self) -> None:
+    def test_unrecognised_json_body_raises_client_error_for_4xx(self) -> None:
+        """Was APIServerError regardless of status, which is retryable — so an
+        unrecognised 400 body cost three round-trips before failing."""
         response = _make_response(400, '{"something": "unexpected"}')
-        with pytest.raises(exceptions.APIServerError, match="Unknown error"):
+        with pytest.raises(exceptions.APIClientError) as exc_info:
             _validate_response(response)
+        assert not isinstance(exc_info.value, exceptions.APIServerError)
+        assert "unexpected" in str(exc_info.value)
 
-    def test_malformed_json_body_on_4xx_propagates_decode_error(self) -> None:
-        """json.JSONDecodeError propagates raw — callers must handle this if catching only APIClientError."""
+    def test_malformed_json_body_raises_an_almapy_error(self) -> None:
+        """Regression: a bare json.JSONDecodeError used to escape, which is not
+        an AlmapyError — so the status was lost and the failure was neither
+        retried nor recorded by the adaptive controller."""
         response = _make_response(400, "{not valid json}")
-        with pytest.raises(json.JSONDecodeError):
+        with pytest.raises(exceptions.APIClientError):
             _validate_response(response)
 
     def test_missing_content_type_treated_as_json(self) -> None:
@@ -131,8 +138,10 @@ class TestValidateResponse:
         with pytest.raises(exceptions.UserNotFoundError):
             _validate_response(response)
 
-    def test_single_error_dict_raises_api_server_error(self) -> None:
-        """Alma sometimes returns errorList.error as a dict (not list). Glom path mismatch → Unknown error."""
+    def test_single_error_dict_maps_to_the_specific_exception(self) -> None:
+        """Alma sometimes returns errorList.error as a dict rather than a list.
+        That form used to miss the glom chain and degrade to a retryable
+        APIServerError("Unknown error"), losing the real error code."""
         body = json.dumps({
             "errorList": {
                 "error": {
@@ -142,7 +151,7 @@ class TestValidateResponse:
             }
         })
         response = _make_response(404, body)
-        with pytest.raises(exceptions.APIServerError, match="Unknown error"):
+        with pytest.raises(exceptions.UserNotFoundError):
             _validate_response(response)
 
     def test_empty_error_message_falls_back_to_code(self) -> None:
@@ -203,15 +212,17 @@ class TestErrorLogging:
         assert "500" in records[0].message
 
     def test_unparseable_body_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+        """A 400 raises APIClientError, not APIServerError — the latter is
+        retryable, so an unrecognised client error used to be retried."""
         response = _make_response(400, '{"something": "unexpected"}')
         with (
             caplog.at_level(logging.WARNING, logger="almapy.error"),
-            pytest.raises(exceptions.APIServerError),
+            pytest.raises(exceptions.APIClientError),
         ):
             _validate_response(response)
         records = [r for r in caplog.records if r.name == "almapy.error"]
         assert len(records) == 1
-        assert "unparseable" in records[0].message
+        assert "unrecognised error body" in records[0].message
 
     def test_error_log_records_have_req_id(self, caplog: pytest.LogCaptureFixture) -> None:
         body = _error_body("401861", "User with identifier jsmith was not found.")
@@ -410,3 +421,116 @@ class TestDumpBody:
 
     def test_dump_takes_precedence_over_model_dump(self) -> None:
         assert _dump_body(_FakeBothDump()) == {"via": "dump"}
+
+
+class TestUnparseableErrorBodies:
+    """Not every error body is Alma's JSON.
+
+    A bare JSONDecodeError escaping _raise_for_error_body is not an AlmapyError,
+    so the status code was lost, _should_retry returned False and
+    record_failure never fired — defeating retry and backpressure on exactly
+    the transient gateway failures they exist for.
+    """
+
+    @staticmethod
+    def _response(status: int, body: str, content_type: str | None) -> niquests.Response:
+        r = niquests.Response()
+        r.status_code = status
+        r.headers = CaseInsensitiveDict({"Content-Type": content_type} if content_type else {})
+        r._content = body.encode()
+        r._content_consumed = True
+        return r
+
+    @pytest.mark.parametrize(
+        ("label", "status", "body", "content_type"),
+        [
+            ("html proxy page", 502, "<html>Bad Gateway</html>", "text/html"),
+            ("empty body, no content-type", 503, "", None),
+            # An exact-equality check on Content-Type never matched this.
+            ("text/plain with charset", 500, "boom", "text/plain;charset=UTF-8"),
+        ],
+    )
+    def test_non_json_5xx_is_retryable_almapy_error(
+        self, label: str, status: int, body: str, content_type: str | None
+    ) -> None:
+        with pytest.raises(exceptions.APIServerError) as exc_info:
+            _validate_response(self._response(status, body, content_type))
+        assert _should_retry(exc_info.value) is True, label
+
+    def test_empty_body_gets_a_placeholder_message(self) -> None:
+        with pytest.raises(exceptions.APIServerError, match="<empty body>"):
+            _validate_response(self._response(503, "   ", None))
+
+    def test_unrecognised_4xx_body_is_a_client_error_not_retried(self) -> None:
+        """Was hardcoded to APIServerError, which is retryable — so an
+        unparseable 404 cost three round-trips and depressed the rate limit."""
+        with pytest.raises(exceptions.APIClientError) as exc_info:
+            _validate_response(self._response(404, '{"nope": true}', "application/json"))
+        assert not isinstance(exc_info.value, exceptions.APIServerError)
+        assert _should_retry(exc_info.value) is False
+
+    def test_error_list_as_dict_still_maps_to_the_specific_exception(self) -> None:
+        """Alma sometimes sends errorList.error as an object rather than a list."""
+        body = '{"errorList": {"error": {"errorCode": "401861", "errorMessage": "no user"}}}'
+        with pytest.raises(exceptions.UserNotFoundError):
+            _validate_response(self._response(404, body, "application/json"))
+
+
+class TestExceptionRobustness:
+    """Constructors must not raise, and instances must survive a process boundary."""
+
+    @pytest.mark.parametrize(
+        ("cls", "args"),
+        [
+            (exceptions.APIClientError, ("401861", "User not found.")),
+            (exceptions.APIServerError, ("500", "boom")),
+            (exceptions.ThresholdError, ("429", "too many")),
+            (
+                exceptions.UserNotFoundError,
+                ("401861", "User with identifier jsmith was not found."),
+            ),
+            (exceptions.BarcodeNotFoundError, ("401689", "Input barcode [ABC]")),
+            (exceptions.MMSIdNotFoundError, ("402203", "Input parameters mmsId 99123456789 bad.")),
+            (exceptions.UserMissingFieldError, ("missing primary_id", "jdoe")),
+            (exceptions.CannotRenewError, ("cannot renew", "L123")),
+            (exceptions.InvalidCodeError, ("Invalid item_policy 'LOAN14'",)),
+        ],
+    )
+    def test_round_trips_through_pickle(self, cls: type[Exception], args: tuple[str, ...]) -> None:
+        """Exception.__reduce__ pickles as cls(*args), so args must mirror the
+        constructor. It did not, so unpickling any almapy exception raised
+        TypeError — replacing the real error behind a process pool or Celery."""
+        original = cls(*args)
+        restored = pickle.loads(pickle.dumps(original))  # noqa: S301
+        assert type(restored) is cls
+        assert str(restored) == str(original)
+
+    def test_str_agrees_with_message(self) -> None:
+        exc = exceptions.BarcodeNotFoundError("401689", "Input barcode [ABC]")
+        assert str(exc) == exc.message
+
+    @pytest.mark.parametrize("msg", ["Not found.", "", "402203", "short", "no digits here at all"])
+    def test_mms_parser_never_raises(self, msg: str) -> None:
+        """msg.split(' ')[3] raised IndexError from inside the error handler,
+        which is not an AlmapyError — destroying the real API error."""
+        assert exceptions.MMSIdNotFoundError("402203", msg).mms == ""
+
+    @pytest.mark.parametrize(
+        ("msg", "expected"),
+        [
+            # The real production format, reverse-engineered from a live 401689:
+            # the barcode ends the message followed by a full stop, no delimiters.
+            # The old slice stripped one char from each end, silently truncating
+            # the barcode's first character.
+            ("No items found for barcode 98279242.", "98279242"),
+            ("Input barcode [ABC]", "ABC"),
+            ("Input barcode [ITEM-42]", "ITEM-42"),
+            ("No items found for barcode '98279242'.", "98279242"),
+            ("401689", ""),  # empty errorMessage is replaced by the code upstream
+            ("", ""),
+        ],
+    )
+    def test_barcode_parser_handles_real_and_degenerate_messages(
+        self, msg: str, expected: str
+    ) -> None:
+        assert exceptions.BarcodeNotFoundError("401689", msg).barcode == expected
