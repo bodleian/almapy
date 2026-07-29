@@ -276,3 +276,51 @@ class TestThrottleLogging:
         for record in caplog.records:
             assert hasattr(record, "req_id"), f"Missing req_id on {record.name}"
             assert isinstance(getattr(record, "req_id", None), str)
+
+
+class TestRecoveryIsIndependentOfMachineUptime:
+    """Recovery gating must not depend on time.monotonic()'s epoch.
+
+    monotonic() counts from an arbitrary reference — boot time on Linux — so
+    initialising _last_recovery to 0.0 meant "the first recovery is allowed once
+    the machine has been up longer than recovery_window". That passed on any
+    developer machine with meaningful uptime and failed on freshly booted CI
+    runners, appearing as a Python-version flake because the matrix jobs landed
+    on runners with different uptimes.
+    """
+
+    @pytest.mark.parametrize("uptime", [0.0, 0.5, 12.0, 99.0, 100.0, 500_000.0])
+    def test_first_recovery_happens_at_any_uptime(self, uptime: float) -> None:
+        with patch("almapy._throttle.time.monotonic", return_value=uptime):
+            bucket = TokenBucket(20.0)
+            ctrl = AdaptiveController(
+                bucket,
+                max_rate=20.0,
+                recovery_increment=1.0,
+                recovery_window=100.0,
+                cooldown=0.0,
+            )
+            bucket.rate = 10.0
+            ctrl.record_success()
+
+        assert bucket.rate == pytest.approx(11.0), (
+            f"first recovery refused at uptime {uptime}s — gating depends on the "
+            f"monotonic epoch rather than on elapsed time"
+        )
+
+    def test_second_recovery_within_the_window_is_still_refused(self) -> None:
+        """The gate must still work; -inf only unblocks the *first* recovery."""
+        with patch("almapy._throttle.time.monotonic", return_value=5.0):
+            bucket = TokenBucket(20.0)
+            ctrl = AdaptiveController(
+                bucket,
+                max_rate=20.0,
+                recovery_increment=1.0,
+                recovery_window=100.0,
+                cooldown=0.0,
+            )
+            bucket.rate = 10.0
+            ctrl.record_success()
+            assert bucket.rate == pytest.approx(11.0)
+            ctrl.record_success()
+            assert bucket.rate == pytest.approx(11.0), "recovered twice inside the window"

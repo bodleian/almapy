@@ -97,7 +97,12 @@ class AdaptiveController:
         self._max_wait = max_wait
         self._min_rate = min_rate
         self._cooling_until: float = 0.0
-        self._last_recovery: float = 0.0
+        # "never recovered", not "recovered at monotonic zero". time.monotonic()
+        # counts from an arbitrary epoch — process or boot time depending on the
+        # platform — so 0.0 made the first recovery wait until the epoch was
+        # older than recovery_window. On a freshly booted host that delayed it
+        # for no reason, and it made the recovery tests depend on machine uptime.
+        self._last_recovery: float = float("-inf")
 
     @property
     def current_rate(self) -> float:
