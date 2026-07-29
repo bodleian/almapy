@@ -1,8 +1,40 @@
 [project]
 name = "almapy"
 version = "9.0.0"
+description = "Async Python wrapper for the Ex Libris Alma API"
+readme = "README.md"
 requires-python = ">=3.11.0, <4.0.0"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Ben Gable", email = "ben.gable@bodleian.ox.ac.uk" }]
+keywords = [
+  "alma",
+  "ex-libris",
+  "exlibris",
+  "library",
+  "libraries",
+  "ils",
+  "lsp",
+  "marc",
+  "api-client",
+  "async",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Framework :: AsyncIO",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Education",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
 dependencies = [
   "niquests>=3.18.4",
   "xmltodict>=0.13.0",
@@ -11,6 +43,12 @@ dependencies = [
   "stamina>=25.2.0",
   "urllib3-future[rtls]>=2.19.902",
 ]
+
+[project.urls]
+Homepage = "https://github.com/bodleian/almapy"
+Repository = "https://github.com/bodleian/almapy"
+Issues = "https://github.com/bodleian/almapy/issues"
+Changelog = "https://github.com/bodleian/almapy/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["hatchling"]
