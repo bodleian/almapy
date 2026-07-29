@@ -6,8 +6,16 @@ from pathlib import Path
 
 import pytest
 from environs import Env
+from typeguard import install_import_hook
 
-from almapy import AlmaClient
+# Must run before almapy is imported anywhere. --typeguard-packages relies on
+# the plugin's hook being installed before the first import, but conftest is
+# imported earlier than that, so the flag silently did nothing and every run
+# printed InstrumentationWarning: "cannot check these packages because they are
+# already imported: almapy". Installing the hook here is order-independent.
+install_import_hook("almapy")
+
+from almapy import AlmaClient  # noqa: E402 — must follow install_import_hook
 
 # Integration credentials and patron data live OUTSIDE tests/ on purpose: tests/
 # is packaged into the sdist, so anything dropped in there rides along into a

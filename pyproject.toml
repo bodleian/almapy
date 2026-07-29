@@ -89,6 +89,7 @@ dev = [
   "typeguard>=4.3.0",
   "environs>=11.0.0",
   "deptry>=0.25.1",
+  "pytest-cov>=7.1.0",
 ]
 
 [tool.commitizen]
@@ -97,7 +98,10 @@ version_provider = "uv"
 tag_format = "$version"
 
 [tool.coverage.report] # https://coverage.readthedocs.io/en/latest/config.html#report
-fail_under = 50
+# Enforced by `just test-cov` and CI. Ratchet upward; never lower it to make a
+# run pass. The namespace modules are the weak spot — most of _config and _acq
+# is untested endpoint templates and query-param spellings.
+fail_under = 65
 precision = 1
 show_missing = true
 skip_covered = true
@@ -124,7 +128,7 @@ show_error_context = true
 warn_unreachable = true
 
 [tool.pytest.ini_options] # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
-addopts = "--import-mode=importlib --color=yes --doctest-modules --exitfirst --failed-first --strict-config --strict-markers --typeguard-packages=almapy --verbosity=2 --junitxml=reports/pytest.xml"
+addopts = "--import-mode=importlib --color=yes --doctest-modules --exitfirst --failed-first --strict-config --strict-markers --verbosity=2 --junitxml=reports/pytest.xml"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"

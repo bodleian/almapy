@@ -11,6 +11,7 @@ import pytest
 from box import Box
 from niquests.structures import CaseInsensitiveDict
 from niquests_mock import MockRouter, build_response
+from typeguard import suppress_type_checks
 
 from almapy import AlmaClient, exceptions
 
@@ -151,7 +152,9 @@ class TestAlmaClientInternals:
             AlmaClient("")
 
     def test_invalid_location_raises(self) -> None:
-        with pytest.raises(ValueError, match="Invalid location"):
+        """The runtime check protects callers who are not running typeguard, so
+        type checking is suppressed here to reach it."""
+        with suppress_type_checks(), pytest.raises(ValueError, match="Invalid location"):
             AlmaClient("test-api-key", location="Antarctica")  # type: ignore[arg-type]
 
     def test_owned_session_pool_matches_concurrency(self) -> None:

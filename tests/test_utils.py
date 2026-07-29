@@ -534,3 +534,82 @@ class TestExceptionRobustness:
         self, msg: str, expected: str
     ) -> None:
         assert exceptions.BarcodeNotFoundError("401689", msg).barcode == expected
+
+
+class TestMessageParsers:
+    """Every attribute below is scraped from Alma's prose error message.
+
+    These parsers degrade silently — a wording change yields an empty attribute
+    rather than an error — so both the match and the no-match path need pinning.
+    The formats here are assumptions unless marked otherwise; the integration
+    tests in test_integration_errors.py check them against the live API.
+    """
+
+    def test_loan_not_found_extracts_id(self) -> None:
+        exc = exceptions.LoanNotFoundError("401823", "Loan ID 12345 does not exist.")
+        assert exc.loan_id == "12345"
+
+    @pytest.mark.parametrize(
+        "msg", ["", "Loan not found.", "401823", "Loan ID abc does not exist."]
+    )
+    def test_loan_not_found_falls_back_to_empty(self, msg: str) -> None:
+        assert exceptions.LoanNotFoundError("401823", msg).loan_id == ""
+
+    def test_invalid_field_extracts_name_and_value(self) -> None:
+        exc = exceptions.InvalidFieldError(
+            "40166404", "Given field user_group has invalid value STAFF, blah."
+        )
+        assert (exc.field_name, exc.field_value) == ("user_group", "STAFF")
+        assert exc.message == "Invalid field value 'STAFF' for field 'user_group' [40166404]"
+
+    @pytest.mark.parametrize("msg", ["", "Invalid field.", "40166404"])
+    def test_invalid_field_falls_back_and_keeps_the_original_message(self, msg: str) -> None:
+        exc = exceptions.InvalidFieldError("40166404", msg)
+        assert (exc.field_name, exc.field_value) == ("", "")
+        assert exc.error == msg  # the raw message must survive an unparsed format
+
+    def test_loan_blocked_extracts_all_four_fields(self) -> None:
+        exc = exceptions.LoanBlockedError(
+            "401201", "OVERDUE  -   Too many overdue items. See desk. Scope: LIBRARY"
+        )
+        assert exc.type == "OVERDUE"
+        assert exc.description == "Too many overdue items"
+        assert exc.scope == "LIBRARY"
+
+    @pytest.mark.parametrize("msg", ["", "Blocked.", "401201"])
+    def test_loan_blocked_falls_back_to_empty_fields(self, msg: str) -> None:
+        exc = exceptions.LoanBlockedError("401201", msg)
+        assert (exc.type, exc.description, exc.note, exc.scope) == ("", "", "", "")
+
+    def test_user_not_found_extracts_identifier(self) -> None:
+        exc = exceptions.UserNotFoundError("401861", "User with identifier jsmith was not found.")
+        assert exc.user_id == "jsmith"
+
+    @pytest.mark.parametrize("msg", ["", "No such user.", "401861"])
+    def test_user_not_found_falls_back_to_empty(self, msg: str) -> None:
+        assert exceptions.UserNotFoundError("401861", msg).user_id == ""
+
+    def test_po_update_failed_strips_the_alma_prefix(self) -> None:
+        exc = exceptions.POUpdateFailedError(
+            "401876", "Failed to update the PO Line. Error: vendor is closed"
+        )
+        assert exc.message == "vendor is closed"
+
+    @pytest.mark.parametrize(
+        ("cls", "args"),
+        [
+            (exceptions.BarcodeNotFoundError, ("401689", "")),
+            (exceptions.MMSIdNotFoundError, ("402203", "")),
+            (exceptions.LoanBlockedError, ("401201", "")),
+            (exceptions.InvalidFieldError, ("40166404", "")),
+            (exceptions.UserNotFoundError, ("401861", "")),
+            (exceptions.LoanNotFoundError, ("401823", "")),
+            (exceptions.POUpdateFailedError, ("401876", "")),
+        ],
+    )
+    def test_no_parser_raises_on_a_degenerate_message(
+        self, cls: type[Exception], args: tuple[str, ...]
+    ) -> None:
+        """A constructor that raises destroys the API error it was describing,
+        because it runs inside _raise_for_error_body."""
+        assert isinstance(cls(*args), exceptions.APIClientError)

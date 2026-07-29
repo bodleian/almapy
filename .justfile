@@ -19,6 +19,10 @@ lint-ci:
 test *args:
     uv run --no-sync pytest {{ args }}
 
+# Run the tests with coverage, failing under the configured floor
+test-cov *args:
+    uv run --no-sync pytest --cov=almapy --cov-report=term-missing {{ args }}
+
 # Run the test suite on every supported Python version
 test-all *args:
     #!/usr/bin/env bash

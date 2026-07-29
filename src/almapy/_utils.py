@@ -4,7 +4,6 @@ import operator
 import re
 import traceback
 import xml
-from collections import OrderedDict
 from collections.abc import Callable
 from http import HTTPStatus
 from typing import (
@@ -98,13 +97,13 @@ class Request(TypedDict, total=False):
     copyrights_declaration_signed_by_patron: bool
 
 
-def _parse_xml(text: str) -> "OrderedDict[str, Any]":
+def _parse_xml(text: str) -> dict[str, Any]:
     try:
         body = xmltodict.parse(text)
     except xml.parsers.expat.ExpatError:  # type: ignore  # noqa: PGH003
         text = re.sub(r"https://(.*)&(.*)", r"\g<1>&#38;\g<2>", text)
         body = xmltodict.parse(text)
-    return cast("OrderedDict[str, Any]", body)
+    return cast(dict[str, Any], body)
 
 
 def _validate_response(response: niquests.Response) -> None:

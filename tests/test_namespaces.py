@@ -132,15 +132,19 @@ class TestCreateRequestGuard:
 class TestUpdateItemErrors:
     @pytest.mark.asyncio
     async def test_invalid_code_raises(self, client: AlmaClient) -> None:
-        """RequestFailedError with 'Invalid X code: Y' message → InvalidCodeError."""
-        # e.message is "{msg} [{code}]" from _AlmaError, so regex captures "ABC [400]"
+        """RequestFailedError with 'Invalid X code: Y' message → InvalidCodeError.
+
+        Asserts the whole message, not a substring: the handler used to parse
+        e.message, which carries the " [400]" suffix, so the greedy code group
+        captured "ABC [400]". A containment check could not see that.
+        """
         rf_err = exceptions.RequestFailedError("400", "Request failed: Invalid Library code: ABC")
         with (
             patch.object(client, "execute", new=AsyncMock(side_effect=rf_err)),
             pytest.raises(exceptions.InvalidCodeError) as exc_info,
         ):
             await client.bibs.update_item("MMS1", "HOLD1", "ITEM1", {})
-        assert "Invalid Library" in exc_info.value.message
+        assert exc_info.value.message == "Invalid Library 'ABC'"
 
 
 class TestAnalyticsPagination:

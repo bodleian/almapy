@@ -68,7 +68,7 @@ jobs:
           fi
           echo "running on Python $actual"
 
-      - run: just test
+      - run: just test-cov
 
   build:
     # Catches packaging regressions on every push rather than at release time:

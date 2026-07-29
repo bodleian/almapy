@@ -720,7 +720,9 @@ class AlmaClientBibNS(BaseNamespace):
                 json=item,
             )
         except RequestFailedError as e:
-            m = re.match(r"Request failed: Invalid (?P<type>\w+) code: (?P<code>.+)", e.message)
+            # e.error is Alma's raw message; e.message has " [401873]" appended,
+            # which the greedy (?P<code>.+) would capture into the item code.
+            m = re.match(r"Request failed: Invalid (?P<type>\w+) code: (?P<code>.+)", e.error)
             if m:
                 msg = f"Invalid {m.group('type')} '{m.group('code')}'"
                 raise InvalidCodeError(msg) from e
