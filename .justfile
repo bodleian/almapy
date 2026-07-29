@@ -10,6 +10,15 @@ upgrade:
     uv lock --upgrade
     uv sync
 
+# Serve the docs at localhost:8000 with live reload
+docs:
+    uv run zensical serve
+
+# Build the docs into site/, as CI does. --strict turns griffe's warnings about
+# malformed docstrings, and unresolvable ::: identifiers, into build failures.
+docs-build:
+    uv run zensical build --clean --strict
+
 lint-ci:
     uv run ruff format --check
     uv run ruff check --no-fix

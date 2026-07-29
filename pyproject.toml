@@ -46,6 +46,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/bodleian/almapy"
+Documentation = "https://bodleian.github.io/almapy/"
 Repository = "https://github.com/bodleian/almapy"
 Issues = "https://github.com/bodleian/almapy/issues"
 Changelog = "https://github.com/bodleian/almapy/blob/main/CHANGELOG.md"
@@ -90,6 +91,13 @@ dev = [
   "environs>=11.0.0",
   "deptry>=0.25.1",
   "pytest-cov>=7.1.0",
+]
+# Zensical is pre-1.0 and iterating rapidly, so the exact version is pinned:
+# a 0.0.x release that changes the config schema would otherwise break the docs
+# build on an unrelated PR. Bump it deliberately, with `just docs-build` run.
+docs = [
+  "zensical==0.0.52",
+  "mkdocstrings-python>=2.0.5",
 ]
 
 [tool.commitizen]
