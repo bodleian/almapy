@@ -36,6 +36,15 @@ class TokenBucket:
 
     @property
     def rate(self) -> float:
+        """Current refill rate in tokens (requests) per second.
+
+        Setting it clamps the outstanding token count to the new rate, so lowering
+        the rate takes effect immediately rather than after an accumulated burst is
+        spent.
+
+        Raises:
+            ValueError: If set to zero or a negative value.
+        """
         return self._rate
 
     @rate.setter
@@ -47,6 +56,12 @@ class TokenBucket:
         self._tokens = min(self._tokens, value)
 
     async def acquire(self) -> None:
+        """Consume one token, waiting for the bucket to refill if it is empty.
+
+        Never times out — it waits as long as necessary. Use
+        [`AdaptiveController.acquire`][almapy._throttle.AdaptiveController.acquire]
+        for a bounded wait.
+        """
         while True:
             async with self._lock:
                 self._refill()
@@ -106,9 +121,21 @@ class AdaptiveController:
 
     @property
     def current_rate(self) -> float:
+        """The rate the underlying bucket is currently running at, in requests/second.
+
+        Read-only, and lower than the configured maximum whenever backpressure has
+        cut it. Useful for monitoring — logging it, or exporting it as a metric.
+        """
         return self._bucket.rate
 
     async def acquire(self) -> None:
+        """Wait for cooldown to elapse, then consume one token from the bucket.
+
+        Raises:
+            ThrottleTimeoutError: If ``max_wait`` was configured and elapsed before a
+                token became available. Subclasses ``TimeoutError``, so
+                ``except TimeoutError`` catches it too.
+        """
         try:
             async with asyncio.timeout(self._max_wait):
                 cool = self._cooling_until - time.monotonic()
@@ -119,6 +146,17 @@ class AdaptiveController:
             raise ThrottleTimeoutError from exc
 
     def record_failure(self) -> None:
+        """Report a transient failure, cutting the rate multiplicatively.
+
+        Multiplies the rate by ``backoff_factor`` (never below ``min_rate``) and
+        starts a cooldown, during which further failures are ignored — a burst of
+        concurrent failures from one incident cuts the rate once, not once per
+        request.
+
+        Called for any failure ``_should_retry`` recognises, deliberately including
+        those on POST and PATCH requests that will not themselves be replayed: a 5xx
+        says something about Alma's health whichever verb provoked it.
+        """
         now = time.monotonic()
         if now < self._cooling_until:
             return  # suppressed — no log
@@ -134,6 +172,13 @@ class AdaptiveController:
         )
 
     def record_success(self) -> None:
+        """Report a successful request, recovering the rate additively.
+
+        Adds ``recovery_increment`` to the rate, up to ``max_rate``. Recovery is
+        time-gated to at most once per ``recovery_window`` and suppressed entirely
+        during cooldown, so the rate climbs back gradually rather than jumping
+        straight to the maximum after one success.
+        """
         now = time.monotonic()
         if now < self._cooling_until:
             return  # suppressed — no log

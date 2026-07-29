@@ -1,3 +1,15 @@
+"""Shared helpers: error mapping, retry predicates and request-body protocols.
+
+Internal to the library, but two pieces of it shape the public API:
+
+- ``Body`` — the type accepted by every write method. A plain ``dict``, or any
+  object satisfying the ``Dumpable`` or ``ModelDumpable`` protocols, which is how a
+  Pydantic model can be passed as a request body without a conversion shim.
+- ``_raise_for_error_body`` — maps Alma's numeric error codes onto the specific
+  exception classes in ``almapy.exceptions``. Adding support for a new Alma error
+  code means adding a class there and an entry in ``_ERROR_MAPPING`` here.
+"""
+
 import json
 import logging
 import operator
