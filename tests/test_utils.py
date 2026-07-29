@@ -3,7 +3,7 @@
 import importlib.util
 import json
 import logging
-import pickle  # noqa: S403 — round-tripping our own exceptions in tests
+import pickle  # ruff: ignore[suspicious-pickle-import] — round-tripping our own exceptions in tests
 from pathlib import Path
 
 import niquests
@@ -501,7 +501,7 @@ class TestExceptionRobustness:
         constructor. It did not, so unpickling any almapy exception raised
         TypeError — replacing the real error behind a process pool or Celery."""
         original = cls(*args)
-        restored = pickle.loads(pickle.dumps(original))  # noqa: S301
+        restored = pickle.loads(pickle.dumps(original))  # ruff: ignore[suspicious-pickle-usage]
         assert type(restored) is cls
         assert str(restored) == str(original)
 

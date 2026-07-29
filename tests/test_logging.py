@@ -2,7 +2,7 @@
 
 import contextlib
 import logging
-import subprocess  # noqa: S404 — import-time behaviour needs a fresh interpreter
+import subprocess  # ruff: ignore[suspicious-subprocess-import] — import-time behaviour needs a fresh interpreter
 import sys
 import textwrap
 
@@ -106,7 +106,7 @@ class TestTransportLoggerDefaults:
                 print(name, logging.getLevelName(logging.getLogger(name).level))
             print("stamina_hooks_disabled", si.get_on_retry_hooks() == ())
         """)
-        out = subprocess.run(  # noqa: S603
+        out = subprocess.run(  # ruff: ignore[subprocess-without-shell-equals-true]
             [sys.executable, "-c", code], capture_output=True, text=True, check=True
         ).stdout.split()
         return dict(zip(out[::2], out[1::2], strict=True))

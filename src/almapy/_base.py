@@ -41,7 +41,7 @@ class _AlmaExecutable(Protocol):
     ) -> Any: ...
 
 
-class BaseNamespace:  # noqa: B903
+class BaseNamespace:  # ruff: ignore[class-as-data-structure]
     """Base class for AlmaClient namespace objects.
 
     Owns URL building via AlmaEndpoint.build() and delegates HTTP execution to

@@ -100,7 +100,7 @@ class Request(TypedDict, total=False):
 def _parse_xml(text: str) -> dict[str, Any]:
     try:
         body = xmltodict.parse(text)
-    except xml.parsers.expat.ExpatError:  # type: ignore  # noqa: PGH003
+    except xml.parsers.expat.ExpatError:  # type: ignore  # ruff: ignore[blanket-type-ignore]
         text = re.sub(r"https://(.*)&(.*)", r"\g<1>&#38;\g<2>", text)
         body = xmltodict.parse(text)
     return cast(dict[str, Any], body)

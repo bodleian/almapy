@@ -183,9 +183,9 @@ select = [
 ]
 
 
-ignore = ["E501", "S307", "RET504", "S101", "PERF203", "D107", "ISC001"]
+ignore = ["line-too-long", "suspicious-eval-usage", "unnecessary-assign", "assert", "try-except-in-loop", "undocumented-public-init", "single-line-implicit-string-concatenation"]
 
-unfixable = ["ERA001", "F401", "F841", "T201", "T203"]
+unfixable = ["commented-out-code", "unused-import", "unused-variable", "print", "p-print"]
 
 [tool.deptry]
 known_first_party = ["almapy"]

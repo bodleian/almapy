@@ -15,7 +15,8 @@ from typeguard import install_import_hook
 # already imported: almapy". Installing the hook here is order-independent.
 install_import_hook("almapy")
 
-from almapy import AlmaClient  # noqa: E402 — must follow install_import_hook
+# ruff: ignore[module-import-not-at-top-of-file] — must follow install_import_hook
+from almapy import AlmaClient
 
 # Integration credentials and patron data live OUTSIDE tests/ on purpose: tests/
 # is packaged into the sdist, so anything dropped in there rides along into a

@@ -88,11 +88,11 @@ class TestErrorMessageFormats:
     ) -> None:
         """Real exceptions, not just synthesised ones, must pickle — callers run
         almapy behind process pools and task queues."""
-        import pickle  # noqa: S403 — local to keep the module import clean
+        import pickle  # ruff: ignore[suspicious-pickle-import] — local to keep the module import clean
 
         with pytest.raises(exceptions.BarcodeNotFoundError) as exc_info:
             await integration_client.bibs.get_item(_MISSING_BARCODE)
 
-        restored = pickle.loads(pickle.dumps(exc_info.value))  # noqa: S301
+        restored = pickle.loads(pickle.dumps(exc_info.value))  # ruff: ignore[suspicious-pickle-usage]
         assert type(restored) is exceptions.BarcodeNotFoundError
         assert str(restored) == str(exc_info.value)
