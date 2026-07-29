@@ -1,0 +1,90 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Nothing here needs write access to anything.
+permissions:
+  contents: read
+
+concurrency:
+  # A new push to a PR cancels the previous run; pushes to main are never
+  # cancelled, so every commit on the default branch keeps a result.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  lint:
+    # Formatting, ruff, mypy and deptry are interpreter-independent, so running
+    # them once is enough — the matrix below only needs to run the tests.
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v9
+        with:
+          enable-cache: true
+
+      - uses: extractions/setup-just@v4
+
+      - run: just lint-ci
+
+  test:
+    name: test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      # Report every failing version, not just the first one to fall over.
+      fail-fast: false
+      matrix:
+        # Must track requires-python in pyproject.toml and the
+        # "Programming Language :: Python" classifiers.
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v9
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+
+      - uses: extractions/setup-just@v4
+
+      # Build the environment explicitly for this interpreter. `just test` runs
+      # `uv run --no-sync`, which reuses whatever environment it finds rather
+      # than creating one for the requested version — so without this the whole
+      # matrix can silently run a single Python and still report green.
+      - run: uv sync --all-groups --python ${{ matrix.python-version }}
+
+      - name: Confirm the interpreter is the one under test
+        run: |
+          actual="$(uv run --no-sync python -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
+          if [ "$actual" != "${{ matrix.python-version }}" ]; then
+            echo "::error::Matrix asked for ${{ matrix.python-version }} but got $actual" >&2
+            exit 1
+          fi
+          echo "running on Python $actual"
+
+      - run: just test
+
+  build:
+    # Catches packaging regressions on every push rather than at release time:
+    # build-check also fails if credentials or patron data reach the artifacts.
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v9
+        with:
+          enable-cache: true
+
+      - uses: extractions/setup-just@v4
+
+      - run: just build-check
+
+      - name: Check metadata renders on PyPI
+        run: uvx twine check dist/*
