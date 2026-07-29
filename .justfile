@@ -13,8 +13,8 @@ upgrade:
 lint-ci:
     uv run ruff format --check
     uv run ruff check --no-fix
-    uv run djlint .
     uv run mypy .
+    uv run deptry .
 
 test *args:
     uv run --no-sync pytest {{ args }}

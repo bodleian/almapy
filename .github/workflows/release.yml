@@ -1,0 +1,88 @@
+name: release
+
+# Publishes to PyPI via Trusted Publishing (OIDC) — no API token is stored
+# anywhere. PyPI must have a publisher configured for this repo pointing at
+# this filename (release.yml) and the "pypi" environment.
+#
+# Triggered by publishing a GitHub Release, not by pushing a tag, so that
+# cutting a release is a deliberate act with a human behind it.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  build:
+    name: build and verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v9
+        with:
+          enable-cache: true
+
+      - uses: extractions/setup-just@v4
+
+      - name: Check the tag matches the packaged version
+        if: github.event_name == 'release'
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          version="$(uv version --short)"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::Release tag '$tag' does not match pyproject version '$version'" >&2
+            exit 1
+          fi
+          echo "tag and version agree: $version"
+
+      - name: Lint
+        run: just lint-ci
+
+      - name: Test
+        run: just test
+
+      # Builds the artifacts and fails if credentials or patron data are in
+      # them. This is the same guard `just publish` uses locally.
+      - name: Build and scan artifacts
+        run: just build-check
+
+      - name: Check metadata renders on PyPI
+        run: uvx twine check dist/*
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # Gate releases behind an environment so a maintainer has to approve, and
+    # so the OIDC identity is scoped to it. Must match the PyPI publisher config.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/almapy
+    permissions:
+      # Mandatory for Trusted Publishing. Scoped to this job only — a
+      # workflow-level grant would hand it to the build job too.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      # Not uv publish: uv has no PEP 740 attestation support, and it would
+      # read publish-url from [tool.uv] and push to the internal GitLab
+      # registry instead of PyPI.
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # On by default; pinned explicitly so a future change of default
+          # cannot silently drop provenance. Needs Trusted Publishing and the
+          # id-token: write above — no separate attestations: permission.
+          attestations: true
