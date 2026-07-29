@@ -171,11 +171,14 @@ class TestAlmaClientInternals:
 
     @pytest.mark.asyncio
     async def test_aclose_does_not_close_external_client(self) -> None:
-        mock_session = AsyncMock(spec=niquests.AsyncSession)
-        client = AlmaClient("test-api-key", client=mock_session)
+        """Uses a real session: AsyncMock(spec=...) accepts any attribute and so
+        hid the fact that an injected session was never configured at all."""
+        session = niquests.AsyncSession()
+        session.close = AsyncMock()  # type: ignore[method-assign]
+        client = AlmaClient("test-api-key", client=session)
         assert client._owns_client is False
         await client.aclose()
-        mock_session.close.assert_not_called()
+        session.close.assert_not_called()
         assert client._closed is False
 
     @pytest.mark.asyncio
@@ -677,3 +680,42 @@ class TestModelDumpBodies:
         sent = niquests_mock.calls[0].request.body
         assert isinstance(sent, bytes)
         assert json.loads(sent) == {"name": "a set"}
+
+
+class TestInjectedSession:
+    """A session passed via client= must be usable, not just stored.
+
+    Endpoints are relative paths, so an unconfigured injected session made every
+    call fail with MissingSchema. The original test used AsyncMock(spec=...),
+    which accepts any URL and so never exercised this.
+    """
+
+    @pytest.mark.asyncio
+    async def test_bare_session_is_configured_and_works(self, niquests_mock: MockRouter) -> None:
+        client = AlmaClient("my-key", client=niquests.AsyncSession())
+
+        assert client._http.base_url == _BASE
+        assert client._http.headers["Authorization"] == "apikey my-key"
+
+        niquests_mock.get(path="/almaws/v1/users/jsmith").respond(json={"primary_id": "jsmith"})
+        resp = await client.users.get_user("jsmith")
+
+        assert resp.primary_id == "jsmith"
+        url = niquests_mock.calls[-1].request.url
+        assert url is not None and url.startswith(_BASE)
+
+    @pytest.mark.asyncio
+    async def test_preconfigured_session_keeps_its_own_values(self) -> None:
+        """Overriding these would defeat the purpose of injecting a session."""
+        session = niquests.AsyncSession(base_url="https://example.test/v1")
+        session.headers["Authorization"] = "apikey caller-supplied"
+
+        client = AlmaClient("my-key", client=session)
+
+        assert client._http.base_url == "https://example.test/v1"
+        assert client._http.headers["Authorization"] == "apikey caller-supplied"
+
+    @pytest.mark.asyncio
+    async def test_injected_session_location_is_respected(self) -> None:
+        client = AlmaClient("my-key", location="America", client=niquests.AsyncSession())
+        assert client._http.base_url == "https://api-na.hosted.exlibrisgroup.com/almaws/v1"

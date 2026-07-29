@@ -115,6 +115,15 @@ class AlmaClient:
             )
             self._owns_client = True
         else:
+            # An injected session arrives unconfigured: applying base_url and the
+            # auth header here is what makes it usable. Without this every call
+            # fails with MissingSchema, because endpoints are relative paths.
+            # setdefault semantics — an explicitly configured session keeps its
+            # own values, which is the point of injecting one.
+            if not getattr(client, "base_url", None):
+                client.base_url = _LOCATIONS[location] + "/almaws/v1"
+            client.headers.setdefault("Accept", "application/json")
+            client.headers.setdefault("Authorization", f"apikey {apikey}")
             self._http = client
             self._owns_client = False
         self._closed = False
