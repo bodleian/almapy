@@ -34,7 +34,7 @@ Seven methods return the raw response body as a `str`, because they deal in MARC
 
 Everything else, letters included, returns a `Box`.
 
-`Box` is a pragmatic default, not the only option: pass `model=` to any Box-returning method and you get a validated instance of that type back instead — see [Pydantic model validation](#pydantic-model-validation). The models can be your own, or the ready-made ones from the companion package [alma_models](#alma_models).
+`Box` is a pragmatic default, not the only option: pass `model=` to any Box-returning method and you get a validated instance of that type back instead — see [Typed requests and responses](#typed-requests-and-responses).
 
 ## Getting started
 
@@ -114,12 +114,16 @@ async def main() -> None:
                 print(resp.bib_data.title)
 ```
 
-## Pydantic model validation
+## Typed requests and responses
+
+almapy adds no modelling dependency of its own. Both directions are duck-typed, so any
+class exposing the right method works — pydantic, attrs, msgspec or hand-rolled.
+
+### Responses
 
 All Box-returning methods accept an optional `model=` keyword argument. When supplied,
 the raw `Box` response is passed to `model.model_validate()` and the validated instance
-is returned. No pydantic dependency is added to almapy — validation is duck-typed, so
-any class with a `model_validate` classmethod works.
+is returned. Any class with a `model_validate` classmethod works.
 
 The seven [raw-`str` methods](#response-types) are the exception: they hand back a MARC
 XML document rather than a `Box`, so there is nothing to validate and they take no
@@ -146,43 +150,30 @@ async def main():
         print(raw.bib_data.title)
 ```
 
-### alma_models
+### Request bodies
 
-[alma_models](https://pypi.org/project/alma_models/) is a companion package of pydantic
-models for Alma API JSON. It is an optional dependency — almapy neither requires nor
-imports it.
-
-```bash
-pip install alma_models
-```
-
-It buys two things over `Box`, whose attributes are all `Any`:
-
-- **Types.** Real static checking and autocomplete on responses. The models use
-  `extra="forbid"` and `validate_assignment=True`, so a wrong field name or type on a
-  write raises locally rather than coming back as an Alma error code.
-- **Ergonomics.** Alma's `{"value": "1", "desc": "Item in place"}` wrappers are unwrapped
-  to `"1"` coming in and restored going out.
-
-almapy's write methods accept any object with a `dump(mode="json")` method, which
-alma_models' base class provides — so read, mutate and write round-trips with no
-marshalling in between:
+Write methods take a plain `dict`, or any object exposing either
+`model_dump(mode="json")` or `dump(mode="json")`. `model_dump` is pydantic v2's own API,
+so a `BaseModel` works directly — no shim needed, and still no pydantic dependency on
+almapy's side. Both checks are `runtime_checkable` Protocols, so they are purely
+structural — nothing needs to import from almapy or inherit from it:
 
 ```python
-from alma_models import PhysicalItem, User
+class UserUpdate(BaseModel):
+    first_name: str
 
-async with AlmaClient(apikey="KEY") as client:
-    item = await client.bibs.get_item("98279242", model=PhysicalItem)
-    print(item.item_data.base_status)  # "1", not {"value": "1", "desc": ...}
 
-    user = await client.users.get_user("jsmith", model=User)
-    user.contact_info.email[0].email_address = "new@example.ac.uk"
-    await client.users.update_user(user.primary_id, user)
+async def main():
+    async with AlmaClient(apikey="KEY") as client:
+        await client.users.update_user("jsmith", {"first_name": "Jane"})
+        await client.users.update_user("jsmith", UserUpdate(first_name="Jane"))
 ```
 
-Current coverage is `User`, `PhysicalItem`, `ItemLoan` and `UserRequest`, plus webhook
-payload types — the user, item and fulfillment areas. Bibs, acquisitions, configuration
-and analytics responses still come back as `Box`.
+almapy serialises once, before the retry loop, and sends the result as the JSON body.
+If an object exposes both methods `dump` wins, on the grounds that a model carrying a
+custom `dump` is expressing a deliberate wire shape that should not be bypassed.
+
+This applies to JSON writes only. The MARC XML methods take a `str`.
 
 ## Logging
 
