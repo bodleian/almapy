@@ -1,0 +1,56 @@
+name: docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never cancel a deploy midway — a half-published site is worse than a stale
+  # one. Queue instead, so the last push to main wins.
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: build and deploy
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    # Scoped to this job rather than the workflow: only the deploy needs to
+    # write to Pages or mint an OIDC token.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/configure-pages@v6
+
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+
+      - uses: extractions/setup-just@v4
+
+      # `just docs-build` runs `zensical build --clean`. Zensical is pinned in
+      # the docs dependency group; it is pre-1.0 and a schema change in a 0.0.x
+      # release would otherwise break this build without warning.
+      - run: uv sync --group docs
+
+      - run: just docs-build
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+      - uses: actions/deploy-pages@v5
+        id: deployment

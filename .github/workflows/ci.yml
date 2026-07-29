@@ -70,6 +70,25 @@ jobs:
 
       - run: just test-cov
 
+  docs:
+    # The API reference is generated from the docstrings in src/, so a renamed
+    # namespace class or a malformed docstring breaks the site. Building here
+    # fails the PR instead of the deploy on main.
+    name: docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+
+      - uses: extractions/setup-just@v4
+
+      - run: uv sync --group docs
+
+      - run: just docs-build
+
   build:
     # Catches packaging regressions on every push rather than at release time:
     # build-check also fails if credentials or patron data reach the artifacts.
