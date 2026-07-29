@@ -2,6 +2,9 @@
 
 import contextlib
 import logging
+import subprocess  # noqa: S404 — import-time behaviour needs a fresh interpreter
+import sys
+import textwrap
 
 import pytest
 import stamina
@@ -81,3 +84,45 @@ def test_request_id_contextvar_resets_correctly() -> None:
         assert request_id.get() == "outer"
     finally:
         request_id.reset(outer_token)
+
+
+class TestTransportLoggerDefaults:
+    """almapy quietens urllib3/niquests without overriding the host application.
+
+    Both emit a record per request at DEBUG, which is unusable noise at almapy's
+    default rate — but a library silently undoing an application's explicit
+    logging configuration is worse. Only NOTSET loggers are defaulted.
+    """
+
+    @staticmethod
+    def _levels_after_import(preamble: str) -> dict[str, str]:
+        """Import almapy in a fresh interpreter, after running `preamble`."""
+        code = textwrap.dedent(f"""
+            import logging
+            {preamble}
+            import almapy  # noqa: F401
+            import stamina.instrumentation as si
+            for name in ("urllib3", "niquests"):
+                print(name, logging.getLevelName(logging.getLogger(name).level))
+            print("stamina_hooks_disabled", si.get_on_retry_hooks() == ())
+        """)
+        out = subprocess.run(  # noqa: S603
+            [sys.executable, "-c", code], capture_output=True, text=True, check=True
+        ).stdout.split()
+        return dict(zip(out[::2], out[1::2], strict=True))
+
+    def test_unconfigured_loggers_default_to_warning(self) -> None:
+        levels = self._levels_after_import("")
+        assert levels["urllib3"] == "WARNING"
+        assert levels["niquests"] == "WARNING"
+
+    def test_explicit_application_level_is_not_overridden(self) -> None:
+        """Regression: almapy used to clobber this unconditionally."""
+        levels = self._levels_after_import('logging.getLogger("urllib3").setLevel(logging.DEBUG)')
+        assert levels["urllib3"] == "DEBUG"
+        assert levels["niquests"] == "WARNING"
+
+    def test_import_does_not_disable_stamina_instrumentation(self) -> None:
+        """set_on_retry_hooks is process-global; disabling it broke every other user."""
+        levels = self._levels_after_import("")
+        assert levels["stamina_hooks_disabled"] == "False"

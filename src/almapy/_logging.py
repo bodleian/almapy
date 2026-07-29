@@ -8,18 +8,9 @@ import contextvars
 import logging
 import uuid
 
-import stamina
-
 # Library best practice: register NullHandler so no output is forced on callers.
 # Multiple NullHandlers from module reload are harmless (both discard all records).
 logging.getLogger("almapy").addHandler(logging.NullHandler())
-
-# Disable stamina's process-global retry instrumentation; almapy emits retry logs itself
-# (see AlmaClient.execute). set_on_retry_hooks is last-writer-wins and process-global, so
-# any code importing/configuring stamina AFTER almapy can clobber this and re-enable the
-# default hook. The filter below is the order-independent backstop: it drops the
-# "stamina.retry_scheduled" record at the logging layer regardless of hook state.
-stamina.instrumentation.set_on_retry_hooks(())
 
 
 class _DropStaminaRetryLog(logging.Filter):
@@ -30,15 +21,41 @@ class _DropStaminaRetryLog(logging.Filter):
 
 
 # Attached to the "stamina" logger directly, where LoggingOnRetryHook emits the record, so the
-# filter always runs even when default hooks are re-enabled after import. Idempotent enough:
-# duplicate filters from module reload all drop the same record harmlessly.
+# filter always runs regardless of hook state. This is deliberately a filter rather than
+# stamina.instrumentation.set_on_retry_hooks(()): that call is process-global and
+# last-writer-wins, so it would disable retry instrumentation for every other stamina user
+# in the application. Idempotent enough: duplicate filters from module reload all drop the
+# same record harmlessly.
 logging.getLogger("stamina").addFilter(_DropStaminaRetryLog())
 
-# Suppress debug output from transitive HTTP dependencies to prevent credential leaks.
-# niquests and urllib3 log full request URLs at DEBUG level, which can expose apikeys.
-# WARNING+ is still propagated (connection errors, SSL warnings remain visible).
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("niquests").setLevel(logging.WARNING)
+_NOISY_TRANSPORT_LOGGERS = ("urllib3", "niquests")
+
+
+def _quieten_transport_loggers() -> None:
+    """Default the transport loggers to WARNING without overriding the application.
+
+    urllib3 and niquests emit a record per connection and per request at DEBUG.
+    At almapy's default of 25 req/s that buries an application's own output, so
+    WARNING is the level nearly everyone wants.
+
+    A library must not silently undo a deliberate choice, though, so only
+    loggers still at NOTSET — meaning nothing has called setLevel on them — are
+    touched. An application that configures either logger, before or after
+    importing almapy, keeps its own setting.
+
+    Note this does still win over a bare ``logging.basicConfig(level=DEBUG)``,
+    which sets the level on the root logger rather than on these. To see
+    transport debug output, set it on the logger itself:
+
+        logging.getLogger("urllib3").setLevel(logging.DEBUG)
+    """
+    for name in _NOISY_TRANSPORT_LOGGERS:
+        logger = logging.getLogger(name)
+        if logger.level == logging.NOTSET:
+            logger.setLevel(logging.WARNING)
+
+
+_quieten_transport_loggers()
 
 # Per-request correlation ID. Set at the start of AlmaClient._execute(),
 # reset in finally. Unique across process restarts (full UUID128 as 32 hex chars).
