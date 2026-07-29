@@ -7,10 +7,11 @@ from pathlib import Path
 
 import niquests
 import pytest
+from box import Box
 from niquests.structures import CaseInsensitiveDict
 
 from almapy import exceptions
-from almapy._utils import Dumpable, _should_retry, _validate_response
+from almapy._utils import Dumpable, ModelDumpable, _dump_body, _should_retry, _validate_response
 
 
 def _error_body(code: str, message: str) -> str:
@@ -349,6 +350,26 @@ class _FakeModel:
         return self._payload
 
 
+class _FakeModelDump:
+    """Pydantic-shaped: exposes model_dump() but no dump()."""
+
+    def __init__(self, payload: dict[str, object] | None = None) -> None:
+        self._payload = payload or {"primary_id": "jdoe"}
+
+    def model_dump(self, mode: str = "json") -> dict[str, object]:
+        return self._payload
+
+
+class _FakeBothDump:
+    """Exposes both; dump() must win so a deliberate wire shape is not bypassed."""
+
+    def dump(self, mode: str = "json") -> dict[str, object]:
+        return {"via": "dump"}
+
+    def model_dump(self, mode: str = "json") -> dict[str, object]:
+        return {"via": "model_dump"}
+
+
 class TestDumpableProtocol:
     def test_object_with_compatible_dump_satisfies_protocol(self) -> None:
         """An object exposing dump(mode) -> dict is a Dumpable at runtime."""
@@ -357,3 +378,35 @@ class TestDumpableProtocol:
     def test_plain_dict_does_not_satisfy_protocol(self) -> None:
         """A plain dict has no dump() method, so it is not Dumpable."""
         assert isinstance({"primary_id": "jdoe"}, Dumpable) is False
+
+    def test_model_dump_object_satisfies_model_dumpable_only(self) -> None:
+        """A pydantic-shaped object is ModelDumpable but not Dumpable."""
+        obj = _FakeModelDump()
+        assert isinstance(obj, ModelDumpable) is True
+        assert isinstance(obj, Dumpable) is False
+
+    def test_box_satisfies_neither(self) -> None:
+        """Guards config.sets.create, which takes a Box body that must pass through."""
+        box = Box({"name": "a set"})
+        assert isinstance(box, Dumpable) is False
+        assert isinstance(box, ModelDumpable) is False
+
+
+class TestDumpBody:
+    def test_dict_passes_through_unchanged(self) -> None:
+        body = {"primary_id": "jdoe"}
+        assert _dump_body(body) is body
+
+    def test_box_passes_through_unchanged(self) -> None:
+        body = Box({"name": "a set"})
+        assert _dump_body(body) is body
+
+    def test_dump_object_is_converted(self) -> None:
+        assert _dump_body(_FakeModel({"a": 1})) == {"a": 1}
+
+    def test_model_dump_object_is_converted(self) -> None:
+        """Regression: a plain pydantic BaseModel used to need a dump() shim."""
+        assert _dump_body(_FakeModelDump({"b": 2})) == {"b": 2}
+
+    def test_dump_takes_precedence_over_model_dump(self) -> None:
+        assert _dump_body(_FakeBothDump()) == {"via": "dump"}

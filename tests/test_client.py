@@ -616,3 +616,64 @@ class TestWriteRetryPolicy:
             await client.execute("POST", "/users", parser="json")
 
         assert client._controller.record_failure.call_count == 1
+
+
+class TestModelDumpBodies:
+    """A plain pydantic-shaped model works as a request body with no dump() shim.
+
+    Reads call model_validate(), which pydantic provides natively; writes call
+    dump(), which it does not. Accepting model_dump() removes that asymmetry.
+    """
+
+    class _PydanticShaped:
+        """Exposes only model_dump(), exactly as pydantic v2 does."""
+
+        def __init__(self, payload: dict[str, Any]) -> None:
+            self._payload = payload
+            self.modes: list[str] = []
+
+        def model_dump(self, mode: str = "python") -> dict[str, Any]:
+            self.modes.append(mode)
+            return self._payload
+
+    @pytest.mark.asyncio
+    async def test_model_dump_body_is_sent_as_json(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        niquests_mock.post(f"{_BASE}/users").respond(json={"ok": True})
+        payload = {"primary_id": "jdoe", "first_name": "Jane"}
+        model = self._PydanticShaped(payload)
+
+        await client.execute("POST", "/users", parser="json", json=model)
+
+        sent = niquests_mock.calls[0].request.body
+        assert isinstance(sent, bytes)
+        assert json.loads(sent) == payload
+        assert model.modes == ["json"]
+
+    @pytest.mark.asyncio
+    async def test_dict_body_is_untouched(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        """_dump_body is now called for every json= body, so dicts must pass through."""
+        niquests_mock.post(f"{_BASE}/users").respond(json={"ok": True})
+        payload = {"primary_id": "jdoe"}
+
+        await client.execute("POST", "/users", parser="json", json=payload)
+
+        sent = niquests_mock.calls[0].request.body
+        assert isinstance(sent, bytes)
+        assert json.loads(sent) == payload
+
+    @pytest.mark.asyncio
+    async def test_box_body_is_untouched(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        """config.sets.create takes a Box; it satisfies neither protocol."""
+        niquests_mock.post(f"{_BASE}/conf/sets").respond(json={"ok": True})
+
+        await client.config.sets.create(Box({"name": "a set"}))
+
+        sent = niquests_mock.calls[0].request.body
+        assert isinstance(sent, bytes)
+        assert json.loads(sent) == {"name": "a set"}

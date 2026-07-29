@@ -43,7 +43,34 @@ class Dumpable(Protocol):
     def dump(self, mode: str = ...) -> dict[str, Any]: ...
 
 
-Body = dict[str, Any] | Dumpable
+@runtime_checkable
+class ModelDumpable(Protocol):
+    """Structural type for pydantic-style models.
+
+    ``model_dump`` is pydantic v2's own API, so a plain ``BaseModel`` can be
+    passed as a request body without a ``dump`` shim. Kept separate from
+    :class:`Dumpable` because a Protocol cannot express "either method".
+    """
+
+    def model_dump(self, mode: str = ...) -> dict[str, Any]: ...
+
+
+Body = dict[str, Any] | Dumpable | ModelDumpable
+
+
+def _dump_body(body: Any) -> Any:
+    """Convert a model-like request body to a JSON-safe dict.
+
+    ``dump`` wins over ``model_dump`` when an object has both — a pydantic model
+    carrying a custom ``dump`` is expressing a deliberate wire shape, and that
+    should not be silently bypassed. Anything else (a plain dict, a Box) is
+    returned untouched.
+    """
+    if isinstance(body, Dumpable):
+        return body.dump(mode="json")
+    if isinstance(body, ModelDumpable):
+        return body.model_dump(mode="json")
+    return body
 
 
 class Request(TypedDict, total=False):

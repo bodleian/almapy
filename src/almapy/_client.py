@@ -24,7 +24,7 @@ from almapy._throttle import AdaptiveController, TokenBucket
 from almapy._users import AlmaClientUserNS
 from almapy._utils import (
     RESP_TYPE,
-    Dumpable,
+    _dump_body,
     _ModelT,
     _parse_xml,
     _retry_predicate,
@@ -169,8 +169,8 @@ class AlmaClient:
         back into full retries when the endpoint is known to be safe to repeat,
         or ``retry=False`` to disable retries for a single call.
         """
-        if isinstance(kwargs.get("json"), Dumpable):
-            kwargs["json"] = kwargs["json"].dump(mode="json")
+        if "json" in kwargs:
+            kwargs["json"] = _dump_body(kwargs["json"])
         token = request_id.set(new_request_id())
         try:
             result: Any = None

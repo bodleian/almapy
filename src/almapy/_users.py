@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Literal, overload
 
 from almapy._base import BaseNamespace
 from almapy._endpoints import AlmaEndpoint
-from almapy._utils import RESP_TYPE, Body, Dumpable, Request, _ModelT
+from almapy._utils import RESP_TYPE, Body, Request, _dump_body, _ModelT
 from almapy.exceptions import (
     APIClientError,
     CannotRenewError,
@@ -678,8 +678,8 @@ class AlmaClientUserNS(BaseNamespace):
             resp: Any = await self._post(AlmaEndpoint.USERS, model=model, json=user)
         except APIClientError as e:
             if e.code == "401664":
-                body = user.dump(mode="json") if isinstance(user, Dumpable) else user
-                raise UserMissingFieldError(e.error, body["primary_id"]) from e
+                body = _dump_body(user)
+                raise UserMissingFieldError(e.error, body.get("primary_id", "")) from e
             raise
         return resp
 
