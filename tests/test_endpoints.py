@@ -55,3 +55,36 @@ class TestBuild:
     def test_bib_request_single(self) -> None:
         result = AlmaEndpoint.BIB_REQUEST.build({"MMS_ID": "111", "REQUEST_ID": "222"})
         assert result == "/bibs/111/requests/222"
+
+
+class TestPathParameterEncoding:
+    """Path parameters are percent-encoded so they cannot act as URL syntax.
+
+    Alma "other IDs", card numbers and barcodes are free text arriving from
+    upstream systems, so the silently-wrong-record case is realistic rather
+    than adversarial.
+    """
+
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        [
+            ("jsmith", "/users/jsmith"),
+            # The fragment never reaches the server: this fetched user "smith".
+            ("smith#1", "/users/smith%231"),
+            # Hit a different route entirely.
+            ("a/b", "/users/a%2Fb"),
+            # Became a query string.
+            ("x?apikey=other", "/users/x%3Fapikey%3Dother"),
+            ("a b", "/users/a%20b"),
+            ("100%pure", "/users/100%25pure"),
+        ],
+    )
+    def test_reserved_characters_are_encoded(self, raw: str, expected: str) -> None:
+        assert AlmaEndpoint.USER.build({"USER_ID": raw}) == expected
+
+    def test_ordinary_identifiers_are_unchanged(self) -> None:
+        """Encoding must not disturb the overwhelmingly common case."""
+        assert (
+            AlmaEndpoint.ITEM.build({"MMS_ID": "991234567", "HOLDING_ID": "22", "ITEM_PID": "23"})
+            == "/bibs/991234567/holdings/22/items/23"
+        )

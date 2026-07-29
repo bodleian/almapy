@@ -3,6 +3,7 @@
 import re
 from collections.abc import Mapping
 from enum import StrEnum
+from urllib.parse import quote
 
 
 class AlmaEndpoint(StrEnum):
@@ -71,4 +72,9 @@ class AlmaEndpoint(StrEnum):
         if extra := provided - expected:
             msg = f"{self.name}: unexpected path params {extra}"
             raise ValueError(msg)
-        return self.value.format_map(path)
+        # Percent-encode with safe="" so nothing survives as a URL delimiter.
+        # Alma "other IDs", card numbers and barcodes are free text arriving from
+        # upstream systems: unencoded, "smith#1" fetched user "smith" because the
+        # fragment never left the client, "a/b" hit a different route, and
+        # "x?apikey=y" became a query string.
+        return self.value.format_map({k: quote(str(v), safe="") for k, v in path.items()})
