@@ -1,3 +1,39 @@
+## [Unreleased]
+
+## [9.1.0] - 2026-07-29
+
+### Style
+- use ruff rule names instead of codes
+
+### Other
+- **deps**: refresh the lockfile
+- pin setup-uv to an existing ref
+- add lint, test matrix and build workflow
+- untrack the openspec working directory
+- **release**: publish to PyPI via Trusted Publishing
+
+### Tests
+- close the gaps that let the barcode parser ship broken
+- add local version matrix and a wheel smoke test
+
+### Fixed
+- **endpoints**: percent-encode path parameters
+- **analytics**: coerce single-element results from xmltodict
+- **errors**: survive non-JSON bodies and make exceptions robust
+- **client**: configure a session passed via client=
+- **logging**: stop mutating global logging and stamina state on import
+
+### Build
+- drop the internal GitLab publish-url
+
+### Documentation
+- document typed request bodies, drop the alma_models section
+
+### Added
+- **client**: accept pydantic models as request bodies
+- **packaging**: add MIT licence and complete the PyPI metadata
+
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
