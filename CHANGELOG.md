@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+
+## [9.1.1] - 2026-07-29
+
+### Fixed
+- **throttle**: make recovery gating independent of the monotonic epoch
+
 ## [9.1.0] - 2026-07-29
 
 ### Style
