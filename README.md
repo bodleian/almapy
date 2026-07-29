@@ -3,6 +3,10 @@
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 [![Linting: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
+📖 **[Documentation](https://bodleian.github.io/almapy/)** — including a full
+[API reference](https://bodleian.github.io/almapy/api/client/) covering every
+namespace and method.
+
 ## Introduction
 This is a wrapper library for the Alma API. The design goal is to smooth off some of the rough edges of the APIs to make them easier to use.
 
@@ -134,20 +138,24 @@ from pydantic import BaseModel
 from almapy import AlmaClient
 
 
-class BibData(BaseModel):
-    mms_id: str
-    title: str | None = None
+class User(BaseModel):
+    """A partial model — Alma returns far more than this. Pydantic ignores
+    unknown fields by default, so declare only what you use."""
+
+    primary_id: str
+    first_name: str | None = None
+    last_name: str | None = None
 
 
 async def main():
     async with AlmaClient(apikey="KEY") as client:
-        # Returns BibData instead of Box
-        bib: BibData = await client.bibs.get_item("98279242", model=BibData)
-        print(bib.title)
+        # Returns User instead of Box
+        user = await client.users.get_user("jsmith", model=User)
+        print(user.last_name)
 
         # Default behaviour unchanged — still returns Box
-        raw = await client.bibs.get_item("98279242")
-        print(raw.bib_data.title)
+        raw = await client.users.get_user("jsmith")
+        print(raw.last_name)
 ```
 
 ### Request bodies
