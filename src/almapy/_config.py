@@ -147,7 +147,7 @@ class AlmaClientConfigSetsNS(BaseNamespace):
     @overload
     async def create(
         self,
-        data: RESP_TYPE,
+        data: Body,
         population: str | None = ...,
         job_instance_id: str | None = ...,
         from_logical_set: str | None = ...,
@@ -163,7 +163,7 @@ class AlmaClientConfigSetsNS(BaseNamespace):
     @overload
     async def create(
         self,
-        data: RESP_TYPE,
+        data: Body,
         population: str | None = ...,
         job_instance_id: str | None = ...,
         from_logical_set: str | None = ...,
@@ -178,7 +178,7 @@ class AlmaClientConfigSetsNS(BaseNamespace):
 
     async def create(
         self,
-        data: RESP_TYPE,
+        data: Body,
         population: str | None = None,
         job_instance_id: str | None = None,
         from_logical_set: str | None = None,
@@ -199,7 +199,8 @@ class AlmaClientConfigSetsNS(BaseNamespace):
 
         Args:
             data: The set record to create — at minimum ``name``, ``type`` and
-                ``content`` must be present.
+                ``content`` must be present. Accepts a mapping or any object
+                implementing ``dump``/``model_dump``.
             population: Which subset of a job's output to build the set from, e.g.
                 ``"MULTI_MATCHES"``. Requires ``job_instance_id``.
             job_instance_id: Build the set from the results of this job instance.
@@ -846,7 +847,7 @@ class AlmaClientConfigJobsNS(BaseNamespace):
     async def submit_job(
         self,
         job_id: str,
-        job: dict[str, str | dict[str, str | dict[str, str]]],
+        job: Body,
         *,
         model: type[_ModelT],
     ) -> _ModelT: ...
@@ -855,7 +856,7 @@ class AlmaClientConfigJobsNS(BaseNamespace):
     async def submit_job(
         self,
         job_id: str,
-        job: dict[str, str | dict[str, str | dict[str, str]]],
+        job: Body,
         *,
         model: None = ...,
     ) -> RESP_TYPE: ...
@@ -863,7 +864,7 @@ class AlmaClientConfigJobsNS(BaseNamespace):
     async def submit_job(
         self,
         job_id: str,
-        job: dict[str, str | dict[str, str | dict[str, str]]],
+        job: Body,
         *,
         model: Any = None,
     ) -> Any:
@@ -880,9 +881,12 @@ class AlmaClientConfigJobsNS(BaseNamespace):
 
         Args:
             job_id: The job identifier to run.
-            job: The job's parameters. The shape depends entirely on the job; read it
-                off [`get_job`][almapy._config.AlmaClientConfigJobsNS.get_job] for the
-                job in question. Manual jobs normally take at least a set ID.
+            job: The job's parameters, normally a ``parameter`` list of
+                ``{"name": {"value": ...}, "value": ...}`` entries. The shape depends
+                entirely on the job; read it off
+                [`get_job`][almapy._config.AlmaClientConfigJobsNS.get_job] for the job
+                in question. Manual jobs normally take at least a set ID. Accepts a
+                mapping or any object implementing ``dump``/``model_dump``.
             model: Optional Pydantic model class to validate the response into.
 
         Returns:
