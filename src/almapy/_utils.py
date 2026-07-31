@@ -46,12 +46,16 @@ _ModelT = TypeVar("_ModelT")
 class Dumpable(Protocol):
     """Structural type for objects that serialize to a JSON-safe dict.
 
-    Satisfied by any object exposing ``dump(mode: str) -> dict[str, Any]`` —
+    Satisfied by any object exposing ``dump(*, mode: str) -> dict[str, Any]`` —
     notably alma_models' base model class — without requiring an import or
     inheritance relationship in either direction.
+
+    ``mode`` is keyword-only to match how :func:`_dump_body` calls it. A method
+    taking it positionally-or-by-keyword still satisfies this, so the
+    keyword-only form accepts strictly more implementations.
     """
 
-    def dump(self, mode: str = ...) -> dict[str, Any]: ...
+    def dump(self, *, mode: str = ...) -> dict[str, Any]: ...
 
 
 @runtime_checkable
@@ -61,9 +65,14 @@ class ModelDumpable(Protocol):
     ``model_dump`` is pydantic v2's own API, so a plain ``BaseModel`` can be
     passed as a request body without a ``dump`` shim. Kept separate from
     :class:`Dumpable` because a Protocol cannot express "either method".
+
+    ``mode`` must be keyword-only: pydantic declares it after ``*``, and a
+    protocol asking for it positionally is not satisfied by a keyword-only
+    implementation — which silently made every ``BaseModel`` fail to match here
+    under a type checker, despite working at runtime.
     """
 
-    def model_dump(self, mode: str = ...) -> dict[str, Any]: ...
+    def model_dump(self, *, mode: str = ...) -> dict[str, Any]: ...
 
 
 Body = dict[str, Any] | Dumpable | ModelDumpable
@@ -192,10 +201,10 @@ _UNPROCESSED_RETRYABLE = (
 def _retry_predicate(method: str, *, retry: bool | None = None) -> Callable[[BaseException], bool]:
     """Build the stamina retry predicate for a single request.
 
-    A read timeout or 5xx on a POST usually means Alma *did* process the write
-    and the response was lost, so replaying it creates a duplicate loan, request
-    or PO line. Non-idempotent verbs are therefore only retried on failures that
-    prove the request never landed.
+    When a POST fails on a read timeout or a 5xx, the client cannot tell whether
+    Alma applied the write before the response was lost, so replaying it risks a
+    duplicate loan, request or PO line. Non-idempotent verbs are therefore only
+    retried on failures that prove the request never landed.
 
     Args:
         method: HTTP verb for the request.
