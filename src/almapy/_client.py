@@ -143,6 +143,8 @@ class AlmaClient:
         *,
         parser: Parser,
         model: type[_ModelT],
+        validate: Callable[[niquests.Response], None] = ...,
+        retry: bool | None = ...,
         **kwargs: Any,
     ) -> _ModelT: ...
 
@@ -154,6 +156,8 @@ class AlmaClient:
         *,
         parser: Parser,
         model: None = ...,
+        validate: Callable[[niquests.Response], None] = ...,
+        retry: bool | None = ...,
         **kwargs: Any,
     ) -> RESP_TYPE: ...
 
@@ -168,15 +172,68 @@ class AlmaClient:
         retry: bool | None = None,
         **kwargs: Any,
     ) -> Any:
-        """Stamina retry loop; semaphore + controller acquired per attempt.
+        """Send one request through the rate limiter, retry loop and error mapping.
 
-        Semaphore is released between attempts so backoff sleeps do not pin
-        concurrency slots. record_failure is only called for retryable exceptions.
+        **You are not normally expected to call this.** Every namespace method —
+        ``client.users.get_user()``, ``client.bibs.get_item()`` and the rest — is a
+        thin wrapper around it that supplies the URL, the parser and the response
+        type. Prefer those: they are typed, and they name the thing you are asking
+        for. This is the shared chokepoint they all funnel through, and it is public
+        so that the two cases below remain possible.
 
-        Writes are not replayed on ambiguous failures — see
-        :func:`almapy._utils._retry_predicate`. Pass ``retry=True`` to opt a POST
-        back into full retries when the endpoint is known to be safe to repeat,
-        or ``retry=False`` to disable retries for a single call.
+        Call it directly when:
+
+        - **Alma exposes an endpoint almapy does not wrap yet.** Going through
+          ``execute`` keeps the throttling, retries, backpressure and error mapping
+          that raw HTTP would lose.
+        - **You need to override the retry policy for a single request**, with
+          ``retry=``. The namespace methods do not accept that argument.
+
+        Args:
+            method: HTTP verb, e.g. ``"GET"`` or ``"POST"``.
+            url: Path relative to the regional gateway's ``/almaws/v1`` root, e.g.
+                ``"/users/12345678"``. ``AlmaEndpoint.build()`` produces these and
+                percent-encodes the path parameters.
+            parser: How to decode the response body — ``"json"`` for a ``Box``,
+                ``"xml"`` for parsed XML, ``"text"`` for a raw ``str`` (MARC XML),
+                ``"none"`` for an empty body.
+            model: Optional Pydantic model class to validate the response into,
+                exactly as on the namespace methods.
+            validate: Response validator, run on every response. Defaults to the one
+                mapping Alma's error codes onto ``almapy.exceptions``; override only
+                to opt out of that mapping.
+            retry: ``True`` forces full retries even for a write — only where a
+                duplicate would be harmless. ``False`` disables retries for this
+                request. ``None`` (the default) decides by method idempotency, so
+                POST and PATCH are not replayed on ambiguous failures. See
+                [Rate limiting](../guide/rate-limiting.md).
+            **kwargs: Passed to the underlying ``niquests`` call — ``params``,
+                ``json``, ``data``, ``headers``. A ``json`` body is serialised once,
+                before the retry loop, so ``dump``/``model_dump`` objects work here
+                as they do on the namespace methods.
+
+        Returns:
+            The parsed body: a ``Box`` for ``parser="json"``, a ``str`` for
+            ``parser="text"``, or an instance of ``model`` when one is given.
+
+        Raises:
+            APIClientError: For 4xx responses, or a more specific subclass where
+                Alma's error code maps to one.
+            APIServerError: For 5xx responses that survived the retries.
+            ThrottleTimeoutError: If ``max_wait`` is configured and elapsed while
+                waiting for a rate-limit token.
+
+        Examples:
+            Reaching an endpoint almapy does not wrap:
+
+            ```python
+            resp = await client.execute(
+                "GET",
+                "/task-lists/requested-resources",
+                parser="json",
+                params={"library": "MAIN", "circ_desk": "DEFAULT"},
+            )
+            ```
         """
         if "json" in kwargs:
             kwargs["json"] = _dump_body(kwargs["json"])

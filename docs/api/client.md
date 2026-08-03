@@ -12,4 +12,8 @@ async with AlmaClient("your-api-key") as client:
     ...
 ```
 
+Most of what you will use it for is the namespaces it exposes — `client.users`,
+`client.bibs`, `client.acq`, `client.config`, `client.analytics`, `client.primo`
+— each documented on its own page.
+
 ::: almapy._client.AlmaClient
