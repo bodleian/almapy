@@ -17,13 +17,20 @@ _throttle_log = logging.getLogger("almapy.throttle")
 
 
 class TokenBucket:
-    """Async token-bucket rate limiter with mutable rate.
+    """Paces requests to a fixed rate, holding one second of burst capacity.
 
-    Invariants:
-        0 < rate
-        0 <= _tokens <= rate  (burst capacity == rate, i.e. 1 second of tokens)
-        _lock serialises refill + consume so concurrent callers cannot overdraw
+    ``AlmaClient`` builds one from its ``rate_limit`` argument, so there is rarely
+    a reason to construct this yourself. What it means in practice: an idle client
+    can fire off up to ``rate`` requests at once, and is then paced at ``rate`` per
+    second. Callers wait their turn in
+    [`acquire`][almapy._throttle.TokenBucket.acquire] rather than being rejected,
+    which is why a large ``asyncio.gather`` is safe.
     """
+
+    # Invariants, for anyone changing this:
+    #   0 < _rate
+    #   0 <= _tokens <= _rate  (burst capacity == rate, i.e. one second of tokens)
+    #   _lock serialises refill + consume so concurrent callers cannot overdraw
 
     def __init__(self, rate: float) -> None:
         if rate <= 0:
@@ -80,13 +87,34 @@ class TokenBucket:
 
 
 class AdaptiveController:
-    """AIMD-style controller: halve rate on failure, +recovery_increment per recovery_window on success.
+    """Adjusts a bucket's rate to match how Alma is currently behaving.
 
-    Invariants:
-        0 < min_rate <= max_rate
-        During cooldown: neither record_failure nor record_success adjusts the rate
-        Recovery is time-gated: at most one +recovery_increment per recovery_window
+    Cuts the rate sharply the moment requests start failing and restores it
+    gradually as they succeed, so a struggling Alma is not hammered and a healthy
+    one is not left throttled. ``AlmaClient`` builds and drives one of these for
+    you; the tuning arguments below are exposed on its constructor as
+    ``backoff_factor``, ``recovery_increment``, ``recovery_window``, ``cooldown``
+    and ``max_wait``.
+
+    Args:
+        bucket: The bucket whose rate is adjusted.
+        max_rate: Ceiling for recovery, normally the configured ``rate_limit``.
+        backoff_factor: What the rate is multiplied by on failure.
+        recovery_increment: How much is added back per successful recovery step.
+        recovery_window: Minimum interval between recovery steps, in seconds.
+        cooldown: How long after a cut further failures are ignored, in seconds.
+        max_wait: Bound on how long a caller will wait for a token before
+            ``ThrottleTimeoutError`` is raised. ``None`` waits indefinitely.
+        min_rate: Floor the rate is never cut below.
+
+    See [Rate limiting](../guide/rate-limiting.md) for how this behaves in
+    practice, and how it interacts with retries.
     """
+
+    # Invariants, for anyone changing this:
+    #   0 < min_rate <= max_rate
+    #   During cooldown, neither record_failure nor record_success adjusts the rate
+    #   Recovery is time-gated: at most one +recovery_increment per recovery_window
 
     def __init__(
         self,
