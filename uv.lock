@@ -38,6 +38,7 @@ dev = [
     { name = "typeguard" },
 ]
 docs = [
+    { name = "griffelib" },
     { name = "mkdocstrings-python" },
     { name = "zensical" },
 ]
@@ -71,6 +72,7 @@ dev = [
     { name = "typeguard", specifier = ">=4.3.0" },
 ]
 docs = [
+    { name = "griffelib", specifier = ">=2.1.0" },
     { name = "mkdocstrings-python", specifier = ">=2.0.5" },
     { name = "zensical", specifier = "==0.0.52" },
 ]

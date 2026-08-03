@@ -98,6 +98,10 @@ dev = [
 docs = [
   "zensical==0.0.52",
   "mkdocstrings-python>=2.0.5",
+  # Imported directly by tools/alma_links/extension.py. It arrives anyway as a
+  # dependency of mkdocstrings-python, but relying on that would leave the
+  # extension broken by a change we do not control.
+  "griffelib>=2.1.0",
 ]
 
 [tool.commitizen]
@@ -202,3 +206,7 @@ known_first_party = ["almapy"]
 # urllib3-future[rtls] is niquests' runtime urllib3 backend (pinned here for the
 # [rtls] TLS extra); almapy never imports it directly, so DEP002 is a false positive.
 DEP002 = ["urllib3-future"]
+# tools/ is dev-only tooling that never ships — the build's explicit `include`
+# list keeps it out of the artifacts — so the docs extension importing griffe,
+# a docs-group dependency, is correct rather than a leak into runtime code.
+DEP004 = ["griffe"]
