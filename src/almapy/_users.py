@@ -8,13 +8,6 @@ user-record methods:
 | ``client.users.loans`` | Loans held by a user — listing, creating, renewing |
 | ``client.users.fines`` (alias ``client.users.fees``) | Fines and fees, and paying them |
 | ``client.users.requests`` | Holds, digitisation and booking requests |
-
-**A note on user identifiers.** Almost every method here takes a ``user_id``
-together with a ``user_id_type`` that defaults to ``"all_unique"``, meaning Alma
-will match the value against any of the user's unique identifiers — primary ID,
-barcode, institution ID, and so on. That is convenient but ambiguous when the same
-string is in use as two different kinds of ID; pass an explicit type such as
-``"BARCODE"`` or ``"01"`` when precision matters.
 """
 
 import base64
