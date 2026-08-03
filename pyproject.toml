@@ -207,6 +207,14 @@ unfixable = ["commented-out-code", "unused-import", "unused-variable", "print", 
 [tool.deptry]
 known_first_party = ["almapy"]
 
+# The distribution is `griffelib` but the module it installs is `griffe`. deptry
+# normally learns that from the installed package's metadata, so this only shows
+# up where the docs group is not synced – notably the CI lint job, which installs
+# the default groups only. Stating it here resolves the name without requiring
+# the package to be present.
+[tool.deptry.package_module_name_map]
+griffelib = ["griffe"]
+
 [tool.deptry.per_rule_ignores]
 # urllib3-future[rtls] is niquests' runtime urllib3 backend (pinned here for the
 # [rtls] TLS extra); almapy never imports it directly, so DEP002 is a false positive.
