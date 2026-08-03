@@ -3,7 +3,7 @@
 ## Box by default
 
 Most methods return JSON wrapped in a [Box](https://github.com/cdgriffith/Box),
-which makes Ex Libris' rather XMLish JSON less verbose to work with —
+which makes Ex Libris' rather XMLish JSON less verbose to work with –
 `resp.bib_data.title` rather than `resp["bib_data"]["title"]`.
 
 ```python
@@ -23,7 +23,7 @@ if "item_data" in item:
     ...
 ```
 
-Alma's `{value, desc}` pairs come through as you would expect —
+Alma's `{value, desc}` pairs come through as you would expect –
 `item.item_data.base_status.value` and `.desc`.
 
 ## The seven raw XML methods
@@ -37,7 +37,7 @@ XML records that would be mangled by a round-trip through JSON:
 | `bibs.get_holding`, `bibs.create_holding`, `bibs.update_holding` | MARC XML holding |
 | `analytics.get_raw_report` | Analytics report XML |
 
-These take no `model=` argument — there is no `Box` to validate. Parse them with
+These take no `model=` argument – there is no `Box` to validate. Parse them with
 your own MARC or XML library.
 
 Everything else, letters included, returns a `Box`.
@@ -56,7 +56,7 @@ from almapy import AlmaClient
 
 
 class User(BaseModel):
-    """A partial model — Alma returns far more than this.
+    """A partial model – Alma returns far more than this.
 
     Pydantic ignores unknown fields by default, so you only need to declare the
     ones you actually use.
@@ -73,13 +73,13 @@ async def main() -> None:
         user = await client.users.get_user("jsmith", model=User)
         print(user.last_name)
 
-        # Default behaviour unchanged — still returns Box
+        # Default behaviour unchanged – still returns Box
         raw = await client.users.get_user("jsmith")
         print(raw.last_name)
 ```
 
 almapy adds no modelling dependency of its own. Any class with a
-`model_validate` classmethod works — pydantic, or something hand-rolled.
+`model_validate` classmethod works – pydantic, or something hand-rolled.
 
 The overloads are written so the return type follows the argument: pass `model=`
 and mypy sees your model type, omit it and mypy sees `Box`. You do not need to
@@ -89,9 +89,9 @@ annotate or cast.
 
 Write methods take a plain `dict`, or any object exposing either
 `model_dump(mode="json")` or `dump(mode="json")`. `model_dump` is pydantic v2's
-own API, so a `BaseModel` works directly — no shim needed, and still no pydantic
+own API, so a `BaseModel` works directly – no shim needed, and still no pydantic
 dependency on almapy's side. Both checks are `runtime_checkable` Protocols, so
-they are purely structural — nothing needs to import from almapy or inherit from
+they are purely structural – nothing needs to import from almapy or inherit from
 it:
 
 ```python
@@ -116,7 +116,7 @@ This applies to JSON writes only. The MARC XML methods take a `str`.
 
     Alma's update endpoints are not patches. `update_user`, `update_item`,
     `update_po_line` and friends replace the entire object with the body you
-    send, so a partial body silently drops every field it omits — including
+    send, so a partial body silently drops every field it omits – including
     roles, addresses and notes.
 
     Fetch, modify, send back:
@@ -145,7 +145,7 @@ while True:
         break
 ```
 
-Defaults for `limit` are not uniform — most methods default to 100, but
+Defaults for `limit` are not uniform – most methods default to 100, but
 `get_users`, `get_requests`, `get_items` and `get_portfolios` default to 10.
 Check the [API reference](../api/client.md) for the method you are calling.
 

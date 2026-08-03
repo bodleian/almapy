@@ -15,7 +15,7 @@ from typeguard import install_import_hook
 # already imported: almapy". Installing the hook here is order-independent.
 install_import_hook("almapy")
 
-# ruff: ignore[module-import-not-at-top-of-file] — must follow install_import_hook
+# ruff: ignore[module-import-not-at-top-of-file] – must follow install_import_hook
 from almapy import AlmaClient
 
 # Integration credentials and patron data live OUTSIDE tests/ on purpose: tests/
@@ -36,7 +36,7 @@ def _load_env() -> Env:
     """Load .env into an Env instance.
 
     environs >= 15 loads into the Env's own store rather than os.environ, so the
-    values must be read back off this object — os.environ.get() returns nothing.
+    values must be read back off this object – os.environ.get() returns nothing.
     """
     env = Env()
     env.read_env(str(_ENV_FILE), override=False)
@@ -49,7 +49,7 @@ def _load_api_key() -> str:
 
 @pytest.fixture(scope="session")
 def repeat_count() -> int:
-    """Barcodes to use per integration test — INTEGRATION_REPEAT_COUNT, default 50."""
+    """Barcodes to use per integration test – INTEGRATION_REPEAT_COUNT, default 50."""
     return max(1, _load_env().int("INTEGRATION_REPEAT_COUNT", 50))
 
 

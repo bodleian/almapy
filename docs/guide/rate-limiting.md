@@ -9,7 +9,7 @@ mechanisms that work together, so in most cases you can fire off a large
 | Layer | Default | What it does |
 |---|---|---|
 | `TokenBucket` | 25 req/s | Paces requests, allowing a one-second burst |
-| `AdaptiveController` | — | Cuts the rate when Alma pushes back, recovers it gradually |
+| `AdaptiveController` | – | Cuts the rate when Alma pushes back, recovers it gradually |
 | `asyncio.Semaphore` | 150 | Caps requests in flight at any moment |
 
 ```python
@@ -21,7 +21,7 @@ client = AlmaClient(
 ```
 
 Lower `rate_limit` if you share the institution's quota with other
-applications — Alma's limit is institution-wide, not per-key, so a well-behaved
+applications – Alma's limit is institution-wide, not per-key, so a well-behaved
 almapy client can still be starved by something else.
 
 ## Adaptive backpressure
@@ -31,7 +31,7 @@ success:
 
 - **On failure**, the rate is multiplied by `backoff_factor` (default `0.5`),
   never below `min_rate`. A `cooldown` (default 5s) then starts, during which
-  further failures are ignored — a burst of concurrent failures from one
+  further failures are ignored – a burst of concurrent failures from one
   incident cuts the rate once, not once per request.
 - **On success**, `recovery_increment` (default `1.0`) is added, at most once per
   `recovery_window` (default 10s), up to the configured maximum. The rate climbs
@@ -50,7 +50,7 @@ client = AlmaClient(
 ```
 
 Set `max_wait` to bound how long a call will sit waiting for a token. When it
-elapses, `ThrottleTimeoutError` is raised locally — no request is sent. It
+elapses, `ThrottleTimeoutError` is raised locally – no request is sent. It
 subclasses `TimeoutError` as well as `AlmapyError`.
 
 !!! note "Backpressure is deliberately method-agnostic"
@@ -78,8 +78,8 @@ almapy gates retries on the HTTP method:
 
 | Verb | Retried on |
 |---|---|
-| GET, HEAD, OPTIONS, PUT, DELETE | The full transient set — 5xx, 429, connect and read timeouts, dropped connections |
-| POST, PATCH | Only `ThresholdError` (429 — the gateway rejected it outright) and `ConnectTimeout` (no connection was ever established) |
+| GET, HEAD, OPTIONS, PUT, DELETE | The full transient set – 5xx, 429, connect and read timeouts, dropped connections |
+| POST, PATCH | Only `ThresholdError` (429 – the gateway rejected it outright) and `ConnectTimeout` (no connection was ever established) |
 
 Both of the POST cases prove the request never landed, so replaying is safe.
 Everything else is left to fail rather than risk a duplicate.
@@ -93,7 +93,7 @@ default means dropping down to it:
 ```python
 from almapy._endpoints import AlmaEndpoint
 
-# retry=True opts a write back into the full transient set — only do this where
+# retry=True opts a write back into the full transient set – only do this where
 # a duplicate would be harmless.
 await client.execute(
     "POST",
@@ -107,7 +107,7 @@ await client.execute(
 
 The other arguments are just what any raw call needs and have nothing to do with
 retries: the HTTP verb, the URL, and `parser`, which selects how the response
-body is decoded — `"json"`, `"xml"`, `"text"`, or `"none"` for an empty body.
+body is decoded – `"json"`, `"xml"`, `"text"`, or `"none"` for an empty body.
 
 ## Watching it work
 

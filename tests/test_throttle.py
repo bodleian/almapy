@@ -82,7 +82,7 @@ class TestTokenBucket:
     async def test_concurrent_acquire_no_overdraw(self) -> None:
         """Multiple concurrent acquires should not consume more tokens than available."""
         bucket = TokenBucket(5.0)  # 5 tokens available
-        # Launch 10 concurrent acquires — 5 should be immediate, 5 should wait
+        # Launch 10 concurrent acquires – 5 should be immediate, 5 should wait
         start = time.monotonic()
         await asyncio.gather(*[bucket.acquire() for _ in range(10)])
         elapsed = time.monotonic() - start
@@ -134,7 +134,7 @@ class TestAdaptiveController:
             bucket,
             max_rate=20.0,
             recovery_increment=1.0,
-            recovery_window=100.0,  # very long window — second call won't recover
+            recovery_window=100.0,  # very long window – second call won't recover
             cooldown=0.0,  # no cooldown so we can test recovery directly
         )
         bucket.rate = 10.0
@@ -191,7 +191,7 @@ class TestAdaptiveController:
 
     @pytest.mark.asyncio
     async def test_max_wait_none_unlimited(self) -> None:
-        """max_wait=None should not raise — asyncio.timeout(None) is a no-op."""
+        """max_wait=None should not raise – asyncio.timeout(None) is a no-op."""
         bucket = TokenBucket(100.0)
         ctrl = AdaptiveController(bucket, max_rate=100.0, cooldown=0.05, max_wait=None)
         ctrl.record_failure()
@@ -199,7 +199,7 @@ class TestAdaptiveController:
         await ctrl.acquire()
 
     def test_concurrent_failures_dont_compound(self) -> None:
-        """Multiple failures during cooldown should not compound — rate halves once."""
+        """Multiple failures during cooldown should not compound – rate halves once."""
         bucket = TokenBucket(20.0)
         ctrl = AdaptiveController(bucket, max_rate=20.0, cooldown=10.0)
         # Simulate 10 concurrent failures
@@ -219,7 +219,7 @@ class TestAdaptiveController:
 class TestThrottleLogging:
     @pytest.mark.asyncio
     async def test_token_bucket_wait_emits_no_logs(self, caplog: pytest.LogCaptureFixture) -> None:
-        """TokenBucket wait path is silent — no DEBUG noise on every throttled request."""
+        """TokenBucket wait path is silent – no DEBUG noise on every throttled request."""
         bucket = TokenBucket(1.0)
         bucket._tokens = 0.0  # force wait path
         with (
@@ -257,13 +257,13 @@ class TestThrottleLogging:
     def test_record_failure_suppressed_during_cooldown_does_not_log(
         self, caplog: pytest.LogCaptureFixture
     ) -> None:
-        """When in cooldown, record_failure returns early — no log emitted."""
+        """When in cooldown, record_failure returns early – no log emitted."""
         bucket = TokenBucket(20.0)
         ctrl = AdaptiveController(bucket, max_rate=20.0)
         ctrl.record_failure()  # starts cooldown
         caplog.clear()  # discard the first failure log; only check the suppressed call
         with caplog.at_level(logging.WARNING, logger="almapy.throttle"):
-            ctrl.record_failure()  # suppressed by cooldown — no log
+            ctrl.record_failure()  # suppressed by cooldown – no log
         records = [r for r in caplog.records if r.name == "almapy.throttle"]
         assert len(records) == 0
 
@@ -281,7 +281,7 @@ class TestThrottleLogging:
 class TestRecoveryIsIndependentOfMachineUptime:
     """Recovery gating must not depend on time.monotonic()'s epoch.
 
-    monotonic() counts from an arbitrary reference — boot time on Linux — so
+    monotonic() counts from an arbitrary reference – boot time on Linux – so
     initialising _last_recovery to 0.0 meant "the first recovery is allowed once
     the machine has been up longer than recovery_window". That passed on any
     developer machine with meaningful uptime and failed on freshly booted CI
@@ -304,7 +304,7 @@ class TestRecoveryIsIndependentOfMachineUptime:
             ctrl.record_success()
 
         assert bucket.rate == pytest.approx(11.0), (
-            f"first recovery refused at uptime {uptime}s — gating depends on the "
+            f"first recovery refused at uptime {uptime}s – gating depends on the "
             f"monotonic epoch rather than on elapsed time"
         )
 

@@ -23,7 +23,7 @@ class _AlmaError(AlmapyError):
     def __init__(self, code: str, msg: str) -> None:
         # args must mirror this signature: Exception.__reduce__ pickles as
         # cls(*self.args). Passing the formatted string gave args a single
-        # element, so unpickling every almapy exception raised TypeError —
+        # element, so unpickling every almapy exception raised TypeError –
         # behind a ProcessPoolExecutor or Celery worker the real Alma error was
         # replaced by that TypeError at the deserialisation boundary.
         super().__init__(code, msg)
@@ -84,7 +84,7 @@ class MMSIdNotFoundError(APIClientError):
 
     def __init__(self, code: str, msg: str) -> None:
         super().__init__(code, msg)
-        # The old msg.split(" ")[3] raised IndexError on any shorter message —
+        # The old msg.split(" ")[3] raised IndexError on any shorter message –
         # from inside the error handler, destroying the API error it described.
         # Matching the ID is independent of the surrounding wording.
         m = re.search(r"\b(?P<mms>\d{8,})\b", msg)
@@ -179,7 +179,7 @@ class UserMissingFieldError(APIClientError):
 class CannotRenewError(APIClientError):
     """Unable to renew a loan for whatever reason.
 
-    Raised in place of the generic client error when Alma returns code 401822 —
+    Raised in place of the generic client error when Alma returns code 401822 –
     the item is requested by someone else, the renewal limit is reached, or a
     block applies. Alma's own reason is in ``error``.
 

@@ -3,20 +3,20 @@
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 [![Linting: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-📖 **[Documentation](https://bodleian.github.io/almapy/)** — including a full
+📖 **[Documentation](https://bodleian.github.io/almapy/)** – including a full
 [API reference](https://bodleian.github.io/almapy/api/client/) covering every
 namespace and method.
 
 ## Introduction
 This is a wrapper library for the Alma API. The design goal is to smooth off some of the rough edges of the APIs to make them easier to use.
 
-The library is async, using [niquests](https://niquests.readthedocs.io/) under the hood (HTTP/2 and HTTP/3 are disabled — Alma's gateway does not benefit from them and they complicate connection reuse under load).
+The library is async, using [niquests](https://niquests.readthedocs.io/) under the hood (HTTP/2 and HTTP/3 are disabled – Alma's gateway does not benefit from them and they complicate connection reuse under load).
 
 Notable QoL:
 - Takes care of rate-limiting.
 - Retries server errors (including rate limit errors) automatically, for reads.
   Writes are only replayed on failures that prove Alma never processed the
-  request — a 429 rejection or a connect timeout — so a lost response cannot
+  request – a 429 rejection or a connect timeout – so a lost response cannot
   turn into a duplicate loan, request or PO line. Pass `retry=True` to a write
   to opt back into full retries.
 - Handles some weird edge cases like incorrect response types.
@@ -26,7 +26,7 @@ Convenient methods, namespaced by functional area, are available for a lot of co
 
 ### Response types
 
-Most methods return JSON wrapped in a [Box](https://github.com/cdgriffith/Box), which makes Ex Libris' rather XMLish JSON less verbose to work with — `resp.bib_data.title` rather than `resp["bib_data"]["title"]`.
+Most methods return JSON wrapped in a [Box](https://github.com/cdgriffith/Box), which makes Ex Libris' rather XMLish JSON less verbose to work with – `resp.bib_data.title` rather than `resp["bib_data"]["title"]`.
 
 Seven methods return the raw response body as a `str`, because they deal in MARC XML records that would be mangled by a round-trip through JSON:
 
@@ -38,13 +38,13 @@ Seven methods return the raw response body as a `str`, because they deal in MARC
 
 Everything else, letters included, returns a `Box`.
 
-`Box` is a pragmatic default, not the only option: pass `model=` to any Box-returning method and you get a validated instance of that type back instead — see [Typed requests and responses](#typed-requests-and-responses).
+`Box` is a pragmatic default, not the only option: pass `model=` to any Box-returning method and you get a validated instance of that type back instead – see [Typed requests and responses](#typed-requests-and-responses).
 
 ## Getting started
 
 ### An API key
 
-Alma API keys come from the [Ex Libris Developer Network](https://developers.exlibrisgroup.com/), not from Alma itself. Sign in with your institutional account, create an application, then add the API areas you need (Bibs, Users, Acquisitions, Configuration, Analytics) to it. Each area is granted **Read-only** or **Read/write** separately — grant read-only unless you specifically need writes.
+Alma API keys come from the [Ex Libris Developer Network](https://developers.exlibrisgroup.com/), not from Alma itself. Sign in with your institutional account, create an application, then add the API areas you need (Bibs, Users, Acquisitions, Configuration, Analytics) to it. Each area is granted **Read-only** or **Read/write** separately – grant read-only unless you specifically need writes.
 
 Keys are bound to one environment. A sandbox key will not work against production and vice versa.
 
@@ -121,7 +121,7 @@ async def main() -> None:
 ## Typed requests and responses
 
 almapy adds no modelling dependency of its own. Both directions are duck-typed, so any
-class exposing the right method works — pydantic, attrs, msgspec or hand-rolled.
+class exposing the right method works – pydantic, attrs, msgspec or hand-rolled.
 
 ### Responses
 
@@ -139,7 +139,7 @@ from almapy import AlmaClient
 
 
 class User(BaseModel):
-    """A partial model — Alma returns far more than this. Pydantic ignores
+    """A partial model – Alma returns far more than this. Pydantic ignores
     unknown fields by default, so declare only what you use."""
 
     primary_id: str
@@ -153,7 +153,7 @@ async def main():
         user = await client.users.get_user("jsmith", model=User)
         print(user.last_name)
 
-        # Default behaviour unchanged — still returns Box
+        # Default behaviour unchanged – still returns Box
         raw = await client.users.get_user("jsmith")
         print(raw.last_name)
 ```
@@ -162,9 +162,9 @@ async def main():
 
 Write methods take a plain `dict`, or any object exposing either
 `model_dump(mode="json")` or `dump(mode="json")`. `model_dump` is pydantic v2's own API,
-so a `BaseModel` works directly — no shim needed, and still no pydantic dependency on
+so a `BaseModel` works directly – no shim needed, and still no pydantic dependency on
 almapy's side. Both checks are `runtime_checkable` Protocols, so they are purely
-structural — nothing needs to import from almapy or inherit from it:
+structural – nothing needs to import from almapy or inherit from it:
 
 ```python
 class UserUpdate(BaseModel):
@@ -199,7 +199,7 @@ Four semantic loggers are available:
 | `almapy.throttle` | INFO | Rate recovery | `old_rate`, `new_rate` |
 | `almapy.error` | WARNING | Alma error before raising | `status_code`, `alma_code` (where applicable) |
 
-Every log record also carries a `req_id` field — a `uuid4().hex` correlation ID set at the start of each `execute()` call and reset in `finally`. Use it to correlate retries, throttle events, and errors for a single request.
+Every log record also carries a `req_id` field – a `uuid4().hex` correlation ID set at the start of each `execute()` call and reset in `finally`. Use it to correlate retries, throttle events, and errors for a single request.
 
 To enable logging in your application:
 
@@ -210,7 +210,7 @@ import logging
 logging.getLogger("almapy").setLevel(logging.DEBUG)
 logging.getLogger("almapy").addHandler(logging.StreamHandler())
 
-# Or filter to a specific area — e.g. only retry warnings
+# Or filter to a specific area – e.g. only retry warnings
 logging.getLogger("almapy.retry").setLevel(logging.WARNING)
 logging.getLogger("almapy.retry").addHandler(logging.StreamHandler())
 ```

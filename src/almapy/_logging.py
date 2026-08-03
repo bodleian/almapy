@@ -39,7 +39,7 @@ def _quieten_transport_loggers() -> None:
     WARNING is the level nearly everyone wants.
 
     A library must not silently undo a deliberate choice, though, so only
-    loggers still at NOTSET — meaning nothing has called setLevel on them — are
+    loggers still at NOTSET – meaning nothing has called setLevel on them – are
     touched. An application that configures either logger, before or after
     importing almapy, keeps its own setting.
 
@@ -59,7 +59,7 @@ _quieten_transport_loggers()
 
 # Per-request correlation ID. Set at the start of AlmaClient._execute(),
 # reset in finally. Unique across process restarts (full UUID128 as 32 hex chars).
-# Default is "" (empty string) — callers using %(req_id)s in formatters will see
+# Default is "" (empty string) – callers using %(req_id)s in formatters will see
 # a blank field when called outside _execute() context. Do NOT change to None
 # as that would break %(req_id)s string formatting.
 request_id: contextvars.ContextVar[str] = contextvars.ContextVar("almapy_req_id", default="")
@@ -68,7 +68,7 @@ request_id: contextvars.ContextVar[str] = contextvars.ContextVar("almapy_req_id"
 def new_request_id() -> str:
     """Generate a unique request correlation ID (UUID4 hex, 32 chars).
 
-    Uses the full UUID128 as a hex string — unique across process restarts,
+    Uses the full UUID128 as a hex string – unique across process restarts,
     no external dependency. 32 chars = 128 bits of randomness, no truncation.
     """
     return uuid.uuid4().hex

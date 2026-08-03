@@ -1,4 +1,4 @@
-"""Acquisitions namespace — purchase order lines and receiving.
+"""Acquisitions namespace – purchase order lines and receiving.
 
 Reached as ``client.acq``. Covers the Alma ``/acq/po-lines`` endpoints: retrieving
 and updating a PO line, receiving an item against one, and cancelling it.
@@ -157,7 +157,7 @@ class AlmaClientAcqNS(BaseNamespace):
     ) -> Any:
         """Receive an item that already exists against a purchase order line.
 
-        This is the ``op=receive`` operation on a PO line item — it marks physical
+        This is the ``op=receive`` operation on a PO line item – it marks physical
         material as arrived. The item must already exist in Alma; this method does
         not create one.
 
@@ -225,13 +225,13 @@ class AlmaClientAcqNS(BaseNamespace):
         Args:
             po_line_id: The PO line identifier, e.g. ``POL-12345``.
             reason_code: Cancellation reason. Must be a code from the
-                ``POLineCancellationReasons`` code table — fetch the valid values
+                ``POLineCancellationReasons`` code table – fetch the valid values
                 with ``client.config.code_tables.get_code_table()``.
             comment: Free-text note recorded against the cancellation.
             inform_vendor: Whether Alma should notify the vendor.
             override: Whether to override Alma's cancellation warnings, for example
                 when the line has already been partly received.
-            bib_handling: What to do with the associated bibliographic record —
+            bib_handling: What to do with the associated bibliographic record –
                 ``"retain"`` leaves it, ``"delete"`` removes it, ``"suppress"``
                 hides it from discovery.
 

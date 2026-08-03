@@ -48,7 +48,7 @@ class TestBuild:
             AlmaEndpoint.USER.build({"USER_ID": "jsmith", "EXTRA": "nope"})
 
     def test_bib_loan_fixed(self) -> None:
-        """BIB_LOAN had a malformed bracket {LOAN_ID] — verify it's fixed."""
+        """BIB_LOAN had a malformed bracket {LOAN_ID] – verify it's fixed."""
         result = AlmaEndpoint.BIB_LOAN.build({"MMS_ID": "111", "LOAN_ID": "222"})
         assert result == "/bibs/111/loans/222"
 

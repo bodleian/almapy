@@ -14,7 +14,7 @@ editor see the full API without stubs.
 ## Your first request
 
 `AlmaClient` is an async context manager. `location` selects the regional
-gateway — `"Europe"` (the default), `"America"`, `"Asia Pacific"`, `"Canada"` or
+gateway – `"Europe"` (the default), `"America"`, `"Asia Pacific"`, `"Canada"` or
 `"China"`.
 
 ```python
@@ -37,7 +37,7 @@ asyncio.run(main())
 
     Use `async with`, or call `await client.aclose()` yourself. The client owns
     a connection pool; abandoning it without closing leaks connections. If you
-    need a client whose lifetime you manage — a FastAPI dependency, say — hold
+    need a client whose lifetime you manage – a FastAPI dependency, say – hold
     it open for the application's lifespan and close it on shutdown, rather than
     creating one per request.
 
@@ -55,7 +55,7 @@ async with AlmaClient(apikey=key) as client:
 ```
 
 Concurrency is capped at 150 in-flight requests and throttled to 25 requests per
-second by default, so `asyncio.gather` over a large list is safe — almapy paces
+second by default, so `asyncio.gather` over a large list is safe – almapy paces
 it for you. See [Rate limiting](rate-limiting.md).
 
 ## Configuring the client
@@ -71,14 +71,14 @@ client = AlmaClient(
 ```
 
 Lower `rate_limit` if you share the institution's API quota with other
-applications — Alma's limit is institution-wide, not per-key. The remaining
+applications – Alma's limit is institution-wide, not per-key. The remaining
 keyword arguments (`backoff_factor`, `recovery_increment`, `recovery_window`,
 `cooldown`, `max_wait`) tune the adaptive backpressure and are covered in
 [Rate limiting](rate-limiting.md).
 
 ### Supplying your own session
 
-Pass `client=` to reuse an existing `niquests.AsyncSession` — useful for
+Pass `client=` to reuse an existing `niquests.AsyncSession` – useful for
 injecting a mock in tests, or sharing a pool. almapy applies its `base_url` and
 auth header with `setdefault` semantics, so a session you have configured
 yourself keeps its own values, and it will not close a session it does not own.
@@ -93,6 +93,6 @@ async with AlmaClient(apikey=key, client=session) as client:
 
 ## Next steps
 
-- [Responses](responses.md) — how to read what comes back.
-- [Errors](errors.md) — what to catch.
-- [API reference](../api/client.md) — every namespace and method.
+- [Responses](responses.md) – how to read what comes back.
+- [Errors](errors.md) – what to catch.
+- [API reference](../api/client.md) – every namespace and method.

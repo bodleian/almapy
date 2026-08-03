@@ -1,4 +1,4 @@
-# Zensical configuration — https://zensical.org/docs/setup/basics/
+# Zensical configuration – https://zensical.org/docs/setup/basics/
 #
 # Zensical is pre-1.0 and its config schema may still move; the version is
 # pinned in the `docs` dependency group in pyproject.toml so a 0.0.x release
@@ -15,7 +15,7 @@ repo_name = "bodleian/almapy"
 edit_uri = "edit/main/docs/"
 
 copyright = """
-Copyright &copy; 2026 University of Oxford — MIT licensed
+Copyright &copy; 2026 University of Oxford – MIT licensed
 """
 
 # Paths are relative to docs_dir.

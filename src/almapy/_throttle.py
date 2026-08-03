@@ -58,7 +58,7 @@ class TokenBucket:
     async def acquire(self) -> None:
         """Consume one token, waiting for the bucket to refill if it is empty.
 
-        Never times out — it waits as long as necessary. Use
+        Never times out – it waits as long as necessary. Use
         [`AdaptiveController.acquire`][almapy._throttle.AdaptiveController.acquire]
         for a bounded wait.
         """
@@ -113,8 +113,8 @@ class AdaptiveController:
         self._min_rate = min_rate
         self._cooling_until: float = 0.0
         # "never recovered", not "recovered at monotonic zero". time.monotonic()
-        # counts from an arbitrary epoch — process or boot time depending on the
-        # platform — so 0.0 made the first recovery wait until the epoch was
+        # counts from an arbitrary epoch – process or boot time depending on the
+        # platform – so 0.0 made the first recovery wait until the epoch was
         # older than recovery_window. On a freshly booted host that delayed it
         # for no reason, and it made the recovery tests depend on machine uptime.
         self._last_recovery: float = float("-inf")
@@ -124,7 +124,7 @@ class AdaptiveController:
         """The rate the underlying bucket is currently running at, in requests/second.
 
         Read-only, and lower than the configured maximum whenever backpressure has
-        cut it. Useful for monitoring — logging it, or exporting it as a metric.
+        cut it. Useful for monitoring – logging it, or exporting it as a metric.
         """
         return self._bucket.rate
 
@@ -149,7 +149,7 @@ class AdaptiveController:
         """Report a transient failure, cutting the rate multiplicatively.
 
         Multiplies the rate by ``backoff_factor`` (never below ``min_rate``) and
-        starts a cooldown, during which further failures are ignored — a burst of
+        starts a cooldown, during which further failures are ignored – a burst of
         concurrent failures from one incident cuts the rate once, not once per
         request.
 
@@ -159,7 +159,7 @@ class AdaptiveController:
         """
         now = time.monotonic()
         if now < self._cooling_until:
-            return  # suppressed — no log
+            return  # suppressed – no log
         old_rate = self._bucket.rate
         new_rate = max(self._min_rate, old_rate * self._backoff_factor)
         self._bucket.rate = new_rate
@@ -181,11 +181,11 @@ class AdaptiveController:
         """
         now = time.monotonic()
         if now < self._cooling_until:
-            return  # suppressed — no log
+            return  # suppressed – no log
         if self._bucket.rate >= self._max_rate:
-            return  # already at max — no log
+            return  # already at max – no log
         if now - self._last_recovery < self._recovery_window:
-            return  # too soon — no log
+            return  # too soon – no log
         old_rate = self._bucket.rate
         self._bucket.rate = min(self._max_rate, old_rate + self._recovery_increment)
         self._last_recovery = now

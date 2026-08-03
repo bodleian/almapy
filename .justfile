@@ -70,11 +70,11 @@ smoke:
     #!/usr/bin/env bash
     set -euo pipefail
     # The test suite imports almapy from src/ via the editable install, so a
-    # file missing from the wheel — py.typed, or a whole module — passes every
+    # file missing from the wheel – py.typed, or a whole module – passes every
     # test and only breaks for whoever pip installs it.
     wheel=$(ls dist/*.whl 2>/dev/null | head -1)
     if [ -z "$wheel" ]; then
-        echo "no wheel in dist/ — run 'just build-check' first" >&2
+        echo "no wheel in dist/ – run 'just build-check' first" >&2
         exit 1
     fi
     tmp=$(mktemp -d)
@@ -97,7 +97,7 @@ smoke:
         assert hasattr(client, ns), f"namespace missing from the wheel: {ns}"
 
     assert (location.parent / "py.typed").is_file(), (
-        "py.typed missing — downstream mypy would silently ignore all of almapy's types"
+        "py.typed missing – downstream mypy would silently ignore all of almapy's types"
     )
 
     print(f"smoke: imports clean from {location.parent}")
@@ -123,7 +123,7 @@ build-check:
         esac
     done | grep -Ei '(^|/)\.?env$|\.env\.|(^|/)barcodes\.txt$|\.pem$|\.p12$|(^|/)secrets?\.' || true)
     if [ -n "$leaked" ]; then
-        echo "REFUSING TO PUBLISH — secrets or patron data in build artifacts:" >&2
+        echo "REFUSING TO PUBLISH – secrets or patron data in build artifacts:" >&2
         echo "$leaked" >&2
         exit 1
     fi

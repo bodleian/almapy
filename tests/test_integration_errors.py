@@ -2,7 +2,7 @@
 
 Six exception classes scrape attributes out of Alma's prose error messages.
 Those formats are undocumented and can change without notice, and every parser
-degrades silently — a wording change yields an empty attribute rather than an
+degrades silently – a wording change yields an empty attribute rather than an
 error, so nothing else in the suite would notice.
 
 The unit tests use fixtures written from assumption. That is how
@@ -86,9 +86,9 @@ class TestErrorMessageFormats:
     async def test_exceptions_survive_a_process_boundary(
         self, integration_client: AlmaClient
     ) -> None:
-        """Real exceptions, not just synthesised ones, must pickle — callers run
+        """Real exceptions, not just synthesised ones, must pickle – callers run
         almapy behind process pools and task queues."""
-        import pickle  # ruff: ignore[suspicious-pickle-import] — local to keep the module import clean
+        import pickle  # ruff: ignore[suspicious-pickle-import] – local to keep the module import clean
 
         with pytest.raises(exceptions.BarcodeNotFoundError) as exc_info:
             await integration_client.bibs.get_item(_MISSING_BARCODE)

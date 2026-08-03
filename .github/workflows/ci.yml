@@ -19,7 +19,7 @@ concurrency:
 jobs:
   lint:
     # Formatting, ruff, mypy and deptry are interpreter-independent, so running
-    # them once is enough — the matrix below only needs to run the tests.
+    # them once is enough – the matrix below only needs to run the tests.
     name: lint
     runs-on: ubuntu-latest
     steps:
@@ -55,7 +55,7 @@ jobs:
 
       # Build the environment explicitly for this interpreter. `just test` runs
       # `uv run --no-sync`, which reuses whatever environment it finds rather
-      # than creating one for the requested version — so without this the whole
+      # than creating one for the requested version – so without this the whole
       # matrix can silently run a single Python and still report green.
       - run: uv sync --all-groups --python ${{ matrix.python-version }}
 

@@ -1,6 +1,6 @@
 name: release
 
-# Publishes to PyPI via Trusted Publishing (OIDC) — no API token is stored
+# Publishes to PyPI via Trusted Publishing (OIDC) – no API token is stored
 # anywhere. PyPI must have a publisher configured for this repo pointing at
 # this filename (release.yml) and the "pypi" environment.
 #
@@ -70,7 +70,7 @@ jobs:
       name: pypi
       url: https://pypi.org/p/almapy
     permissions:
-      # Mandatory for Trusted Publishing. Scoped to this job only — a
+      # Mandatory for Trusted Publishing. Scoped to this job only – a
       # workflow-level grant would hand it to the build job too.
       id-token: write
     steps:
@@ -87,5 +87,5 @@ jobs:
         with:
           # On by default; pinned explicitly so a future change of default
           # cannot silently drop provenance. Needs Trusted Publishing and the
-          # id-token: write above — no separate attestations: permission.
+          # id-token: write above – no separate attestations: permission.
           attestations: true

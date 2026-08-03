@@ -13,7 +13,7 @@ three sub-namespaces for loans, fines and requests.
 
 ## `client.users.fines`
 
-Also available as `client.users.fees` — Alma's own API calls these "fees", so
+Also available as `client.users.fees` – Alma's own API calls these "fees", so
 both spellings refer to the same object.
 
 ::: almapy._users.AlmaClientUserFinesNS

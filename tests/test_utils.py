@@ -3,7 +3,7 @@
 import importlib.util
 import json
 import logging
-import pickle  # ruff: ignore[suspicious-pickle-import] — round-tripping our own exceptions in tests
+import pickle  # ruff: ignore[suspicious-pickle-import] – round-tripping our own exceptions in tests
 from pathlib import Path
 
 import niquests
@@ -88,7 +88,7 @@ class TestValidateResponse:
             _validate_response(response)
 
     def test_unrecognised_json_body_raises_client_error_for_4xx(self) -> None:
-        """Was APIServerError regardless of status, which is retryable — so an
+        """Was APIServerError regardless of status, which is retryable – so an
         unrecognised 400 body cost three round-trips before failing."""
         response = _make_response(400, '{"something": "unexpected"}')
         with pytest.raises(exceptions.APIClientError) as exc_info:
@@ -98,7 +98,7 @@ class TestValidateResponse:
 
     def test_malformed_json_body_raises_an_almapy_error(self) -> None:
         """Regression: a bare json.JSONDecodeError used to escape, which is not
-        an AlmapyError — so the status was lost and the failure was neither
+        an AlmapyError – so the status was lost and the failure was neither
         retried nor recorded by the adaptive controller."""
         response = _make_response(400, "{not valid json}")
         with pytest.raises(exceptions.APIClientError):
@@ -212,7 +212,7 @@ class TestErrorLogging:
         assert "500" in records[0].message
 
     def test_unparseable_body_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
-        """A 400 raises APIClientError, not APIServerError — the latter is
+        """A 400 raises APIClientError, not APIServerError – the latter is
         retryable, so an unrecognised client error used to be retried."""
         response = _make_response(400, '{"something": "unexpected"}')
         with (
@@ -428,7 +428,7 @@ class TestUnparseableErrorBodies:
 
     A bare JSONDecodeError escaping _raise_for_error_body is not an AlmapyError,
     so the status code was lost, _should_retry returned False and
-    record_failure never fired — defeating retry and backpressure on exactly
+    record_failure never fired – defeating retry and backpressure on exactly
     the transient gateway failures they exist for.
     """
 
@@ -462,7 +462,7 @@ class TestUnparseableErrorBodies:
             _validate_response(self._response(503, "   ", None))
 
     def test_unrecognised_4xx_body_is_a_client_error_not_retried(self) -> None:
-        """Was hardcoded to APIServerError, which is retryable — so an
+        """Was hardcoded to APIServerError, which is retryable – so an
         unparseable 404 cost three round-trips and depressed the rate limit."""
         with pytest.raises(exceptions.APIClientError) as exc_info:
             _validate_response(self._response(404, '{"nope": true}', "application/json"))
@@ -499,7 +499,7 @@ class TestExceptionRobustness:
     def test_round_trips_through_pickle(self, cls: type[Exception], args: tuple[str, ...]) -> None:
         """Exception.__reduce__ pickles as cls(*args), so args must mirror the
         constructor. It did not, so unpickling any almapy exception raised
-        TypeError — replacing the real error behind a process pool or Celery."""
+        TypeError – replacing the real error behind a process pool or Celery."""
         original = cls(*args)
         restored = pickle.loads(pickle.dumps(original))  # ruff: ignore[suspicious-pickle-usage]
         assert type(restored) is cls
@@ -512,7 +512,7 @@ class TestExceptionRobustness:
     @pytest.mark.parametrize("msg", ["Not found.", "", "402203", "short", "no digits here at all"])
     def test_mms_parser_never_raises(self, msg: str) -> None:
         """msg.split(' ')[3] raised IndexError from inside the error handler,
-        which is not an AlmapyError — destroying the real API error."""
+        which is not an AlmapyError – destroying the real API error."""
         assert exceptions.MMSIdNotFoundError("402203", msg).mms == ""
 
     @pytest.mark.parametrize(
@@ -539,8 +539,8 @@ class TestExceptionRobustness:
 class TestMessageParsers:
     """Every attribute below is scraped from Alma's prose error message.
 
-    These parsers degrade silently — a wording change yields an empty attribute
-    rather than an error — so both the match and the no-match path need pinning.
+    These parsers degrade silently – a wording change yields an empty attribute
+    rather than an error – so both the match and the no-match path need pinning.
     The formats here are assumptions unless marked otherwise; the integration
     tests in test_integration_errors.py check them against the live API.
     """

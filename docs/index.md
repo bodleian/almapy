@@ -40,17 +40,17 @@ so mypy and your editor see the full API.
 
 <div class="grid cards" markdown>
 
-- **[Getting started](guide/getting-started.md)** — API keys, choosing a region,
+- **[Getting started](guide/getting-started.md)** – API keys, choosing a region,
   and your first request.
-- **[Responses](guide/responses.md)** — `Box` dot-notation access, the raw MARC
+- **[Responses](guide/responses.md)** – `Box` dot-notation access, the raw MARC
   XML methods, and typing responses with Pydantic models.
-- **[Errors](guide/errors.md)** — the exception hierarchy and how Alma's error
+- **[Errors](guide/errors.md)** – the exception hierarchy and how Alma's error
   codes map onto it.
-- **[Rate limiting](guide/rate-limiting.md)** — the token bucket, adaptive
+- **[Rate limiting](guide/rate-limiting.md)** – the token bucket, adaptive
   backpressure, and why writes are not retried.
-- **[Logging](guide/logging.md)** — the four loggers, correlation IDs, and
+- **[Logging](guide/logging.md)** – the four loggers, correlation IDs, and
   structlog.
-- **[API reference](api/client.md)** — every namespace and method.
+- **[API reference](api/client.md)** – every namespace and method.
 
 </div>
 

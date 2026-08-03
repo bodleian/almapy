@@ -9,7 +9,7 @@ over Alma's ``/conf`` endpoints:
 | ``client.config.libraries`` | Libraries, locations, circulation desks, departments |
 | ``client.config.letters`` | Notification letter templates and their components |
 | ``client.config.jobs`` | Jobs, job instances, and integration profiles |
-| ``client.config.code_tables`` | Code tables — the source of valid codes elsewhere |
+| ``client.config.code_tables`` | Code tables – the source of valid codes elsewhere |
 
 ``client.config.code_tables`` is the one to reach for when another method wants a
 code you do not have to hand.
@@ -122,7 +122,7 @@ class AlmaClientConfigSetsNS(BaseNamespace):
     async def get_set(self, set_id: str, *, model: Any = None) -> Any:
         """Retrieve a single set by its ID.
 
-        Returns the set's metadata — name, type, content type, member count — but not
+        Returns the set's metadata – name, type, content type, member count – but not
         its members. Use
         [`get_members`][almapy._config.AlmaClientConfigSetsNS.get_members] for those.
 
@@ -193,19 +193,19 @@ class AlmaClientConfigSetsNS(BaseNamespace):
         """Create a set.
 
         Alma builds the new set in one of several ways depending on which optional
-        argument is supplied — from a job's results, by combining two existing sets,
+        argument is supplied – from a job's results, by combining two existing sets,
         by copying a logical set, and so on. Supply at most one of them; the plain
         form with none creates an empty itemized set from ``data`` alone.
 
         Args:
-            data: The set record to create — at minimum ``name``, ``type`` and
+            data: The set record to create – at minimum ``name``, ``type`` and
                 ``content`` must be present. Accepts a mapping or any object
                 implementing ``dump``/``model_dump``.
             population: Which subset of a job's output to build the set from, e.g.
                 ``"MULTI_MATCHES"``. Requires ``job_instance_id``.
             job_instance_id: Build the set from the results of this job instance.
             from_logical_set: ID of a logical set to itemize into the new set.
-            combine: Set operation to apply to ``set1`` and ``set2`` — one of
+            combine: Set operation to apply to ``set1`` and ``set2`` – one of
                 ``"AND"``, ``"OR"``, ``"NOT"``.
             set1: ID of the first operand set for ``combine``.
             set2: ID of the second operand set for ``combine``.
@@ -357,14 +357,14 @@ class AlmaClientConfigSetsNS(BaseNamespace):
         """Add, remove or replace the members of an itemized set.
 
         Alma requires the whole set record on this call, so this method fetches the
-        set first and then posts it back with the member list attached — **it costs
+        set first and then posts it back with the member list attached – **it costs
         two API requests**, not one. Only itemized sets can be edited this way;
         logical sets derive their membership from a query.
 
         Args:
             set_id: The numeric set identifier.
             member_id_list: The record identifiers to act on. These must match the
-                set's content type — MMS IDs for a ``BIB_MMS`` set, item PIDs for an
+                set's content type – MMS IDs for a ``BIB_MMS`` set, item PIDs for an
                 ``ITEM`` set, and so on.
             id_type: The kind of identifier in ``member_id_list`` when it is not the
                 set's default, e.g. ``"BARCODE"`` for an item set.
@@ -406,7 +406,7 @@ class AlmaClientConfigLibrariesNS(BaseNamespace):
 
     Reads the institution's physical structure: its libraries, the locations and
     circulation desks within each, and its work departments. Everything here is
-    read-only — Alma does not expose library configuration for editing over the API.
+    read-only – Alma does not expose library configuration for editing over the API.
     """
 
     @overload
@@ -418,7 +418,7 @@ class AlmaClientConfigLibrariesNS(BaseNamespace):
     async def get_libraries(self, *, model: Any = None) -> Any:
         """List every library in the institution.
 
-        Unpaginated — Alma returns them all in one response.
+        Unpaginated – Alma returns them all in one response.
 
         Args:
             model: Optional Pydantic model class to validate the response into.
@@ -560,8 +560,8 @@ class AlmaClientConfigLibrariesNS(BaseNamespace):
     ) -> Any:
         """List the institution's work departments.
 
-        Departments are the work areas material passes through — acquisitions,
-        digitisation, binding — and their codes are what
+        Departments are the work areas material passes through – acquisitions,
+        digitisation, binding – and their codes are what
         [`receive_existing_item`][almapy._acq.AlmaClientAcqNS.receive_existing_item]
         and the request-processing endpoints expect.
 
@@ -595,7 +595,7 @@ class AlmaClientConfigLibrariesNS(BaseNamespace):
 class AlmaClientConfigLettersNS(BaseNamespace):
     """Namespace for letter functionality, exposed at ``client.config.letters``.
 
-    Letters are the XSL templates Alma renders notifications from — overdue notices,
+    Letters are the XSL templates Alma renders notifications from – overdue notices,
     hold shelf slips, and so on. Note that
     [`update_letter`][almapy._config.AlmaClientConfigLettersNS.update_letter] takes
     and returns XML rather than a mapping, since the template body is itself XSL.
@@ -639,7 +639,7 @@ class AlmaClientConfigLettersNS(BaseNamespace):
     async def get_components(self, *, model: Any = None) -> Any:
         """List the shared letter components.
 
-        Components are the fragments — headers, footers, style blocks — that
+        Components are the fragments – headers, footers, style blocks – that
         individual letters include. Same endpoint as
         [`get_letters`][almapy._config.AlmaClientConfigLettersNS.get_letters],
         filtered to ``type=COMPONENT``.
@@ -697,7 +697,7 @@ class AlmaClientConfigLettersNS(BaseNamespace):
         Unlike the rest of almapy this method sends **XML**: ``data`` is a string,
         posted with ``Content-Type: application/xml``, not a mapping. Fetch the
         current letter with
-        [`get_letter`][almapy._config.AlmaClientConfigLettersNS.get_letter] first —
+        [`get_letter`][almapy._config.AlmaClientConfigLettersNS.get_letter] first –
         Alma replaces the whole record, so a partial body drops the rest of it.
 
         Args:
@@ -732,12 +732,12 @@ class AlmaClientConfigJobsNS(BaseNamespace):
 
     Covers two related areas of Alma configuration:
 
-    - **Jobs** — the definitions Alma can run, the instances (individual runs) of
+    - **Jobs** – the definitions Alma can run, the instances (individual runs) of
       each, and the records a run matched. Submitting a job is asynchronous:
       [`submit_job`][almapy._config.AlmaClientConfigJobsNS.submit_job] returns
       immediately with an instance link, and progress is read back with
       [`get_job_instance`][almapy._config.AlmaClientConfigJobsNS.get_job_instance].
-    - **Integration profiles** — the configuration for Alma's external system
+    - **Integration profiles** – the configuration for Alma's external system
       integrations, which are the only objects here that can be created and edited.
     """
 
@@ -876,7 +876,7 @@ class AlmaClientConfigJobsNS(BaseNamespace):
         to follow its progress.
 
         Being a POST, this call is **not replayed** if the response is lost in
-        transit — a retry could queue the job twice. See the retry semantics in
+        transit – a retry could queue the job twice. See the retry semantics in
         [Rate limiting](../guide/rate-limiting.md).
 
         Args:
@@ -1243,7 +1243,7 @@ class AlmaClientConfigJobsNS(BaseNamespace):
         """Create an integration profile.
 
         Being a POST, this call is **not replayed** if the response is lost in
-        transit — a retry could create a second profile. See
+        transit – a retry could create a second profile. See
         [Rate limiting](../guide/rate-limiting.md).
 
         Args:
@@ -1286,7 +1286,7 @@ class AlmaClientConfigCodeTablesNS(BaseNamespace):
     async def get_code_tables(self, *, model: Any = None) -> Any:
         """List the names of every code table in the institution.
 
-        Returns table names only, not their rows — use
+        Returns table names only, not their rows – use
         [`get_code_table`][almapy._config.AlmaClientConfigCodeTablesNS.get_code_table]
         for the contents of one.
 
@@ -1361,7 +1361,7 @@ class AlmaClientConfigCodeTablesNS(BaseNamespace):
 
         Alma replaces the entire table, so fetch it with
         [`get_code_table`][almapy._config.AlmaClientConfigCodeTablesNS.get_code_table]
-        and modify that — sending only the rows you care about deletes every other
+        and modify that – sending only the rows you care about deletes every other
         row in the table.
 
         Args:
@@ -1398,7 +1398,7 @@ class AlmaClientConfigCodeTablesNS(BaseNamespace):
 class AlmaClientConfigNS(BaseNamespace):
     """Namespace for config/admin functionality, exposed at ``client.config``.
 
-    A container only — it has no methods of its own. The work is done by its five
+    A container only – it has no methods of its own. The work is done by its five
     sub-namespaces:
 
     | Attribute | Class |

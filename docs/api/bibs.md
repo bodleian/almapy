@@ -16,8 +16,8 @@ item_pid = item.item_data.pid
 
 !!! warning "Not everything returns a `Box`"
 
-    The holding and bib-record methods — `get_holding`, `update_holding`,
-    `create_holding`, `get_bib`, `create_bib`, `update_bib` — exchange raw MARC
+    The holding and bib-record methods – `get_holding`, `update_holding`,
+    `create_holding`, `get_bib`, `create_bib`, `update_bib` – exchange raw MARC
     XML as `str`, because Alma has no JSON representation of a MARC record.
     Those methods take no `model=` argument. See [Responses](../guide/responses.md).
 

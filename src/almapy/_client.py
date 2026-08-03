@@ -1,4 +1,4 @@
-"""Alma API client — niquests transport, token-bucket throttle, AIMD backpressure."""
+"""Alma API client – niquests transport, token-bucket throttle, AIMD backpressure."""
 
 import asyncio
 import contextlib
@@ -95,7 +95,7 @@ class AlmaClient:
             max_wait=max_wait,
         )
         self._semaphore = asyncio.Semaphore(concurrent_requests)
-        # Regional gateway root (before the /almaws/v1 suffix) — the Primo
+        # Regional gateway root (before the /almaws/v1 suffix) – the Primo
         # namespace targets /primo/v1 on this same host with the same key.
         self._gateway = _LOCATIONS[location]
 
@@ -118,7 +118,7 @@ class AlmaClient:
             # An injected session arrives unconfigured: applying base_url and the
             # auth header here is what makes it usable. Without this every call
             # fails with MissingSchema, because endpoints are relative paths.
-            # setdefault semantics — an explicitly configured session keeps its
+            # setdefault semantics – an explicitly configured session keeps its
             # own values, which is the point of injecting one.
             if not getattr(client, "base_url", None):
                 client.base_url = _LOCATIONS[location] + "/almaws/v1"
@@ -174,8 +174,8 @@ class AlmaClient:
     ) -> Any:
         """Send one request through the rate limiter, retry loop and error mapping.
 
-        **You are not normally expected to call this.** Every namespace method —
-        ``client.users.get_user()``, ``client.bibs.get_item()`` and the rest — is a
+        **You are not normally expected to call this.** Every namespace method –
+        ``client.users.get_user()``, ``client.bibs.get_item()`` and the rest – is a
         thin wrapper around it that supplies the URL, the parser and the response
         type. Prefer those: they are typed, and they name the thing you are asking
         for. This is the shared chokepoint they all funnel through, and it is public
@@ -194,7 +194,7 @@ class AlmaClient:
             url: Path relative to the regional gateway's ``/almaws/v1`` root, e.g.
                 ``"/users/12345678"``. ``AlmaEndpoint.build()`` produces these and
                 percent-encodes the path parameters.
-            parser: How to decode the response body — ``"json"`` for a ``Box``,
+            parser: How to decode the response body – ``"json"`` for a ``Box``,
                 ``"xml"`` for parsed XML, ``"text"`` for a raw ``str`` (MARC XML),
                 ``"none"`` for an empty body.
             model: Optional Pydantic model class to validate the response into,
@@ -202,12 +202,12 @@ class AlmaClient:
             validate: Response validator, run on every response. Defaults to the one
                 mapping Alma's error codes onto ``almapy.exceptions``; override only
                 to opt out of that mapping.
-            retry: ``True`` forces full retries even for a write — only where a
+            retry: ``True`` forces full retries even for a write – only where a
                 duplicate would be harmless. ``False`` disables retries for this
                 request. ``None`` (the default) decides by method idempotency, so
                 POST and PATCH are not replayed on ambiguous failures. See
                 [Rate limiting](../guide/rate-limiting.md).
-            **kwargs: Passed to the underlying ``niquests`` call — ``params``,
+            **kwargs: Passed to the underlying ``niquests`` call – ``params``,
                 ``json``, ``data``, ``headers``. A ``json`` body is serialised once,
                 before the retry loop, so ``dump``/``model_dump`` objects work here
                 as they do on the namespace methods.
@@ -283,7 +283,7 @@ class AlmaClient:
                             resp = await self._http.request(method, url, **kwargs)
                             validate(resp)
                             elapsed_ms = (time.monotonic() - start) * 1000
-                            # Response log only fires on success — almapy.error covers failures
+                            # Response log only fires on success – almapy.error covers failures
                             _http_log.debug(
                                 "%s %s -> %d (%.0fms)",
                                 method,

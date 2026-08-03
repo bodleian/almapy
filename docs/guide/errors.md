@@ -9,9 +9,9 @@ clause catches anything originating in the library:
 AlmapyError
 ├── ThrottleTimeoutError        (also a TimeoutError)
 └── _AlmaError
-    ├── APIServerError          5xx — Alma's fault, retried automatically
-    └── APIClientError          4xx — your request, not retried
-        ├── ThresholdError      429 — rate limit exceeded
+    ├── APIServerError          5xx – Alma's fault, retried automatically
+    └── APIClientError          4xx – your request, not retried
+        ├── ThresholdError      429 – rate limit exceeded
         ├── BarcodeNotFoundError
         ├── UserNotFoundError
         ├── LoanLimitError
@@ -55,8 +55,8 @@ except BarcodeNotFoundError:
     print("No such item")
 ```
 
-Unmapped codes still raise — as the status-appropriate `APIClientError` or
-`APIServerError` — so nothing is swallowed.
+Unmapped codes still raise – as the status-appropriate `APIClientError` or
+`APIServerError` – so nothing is swallowed.
 
 ## What is on an exception
 
@@ -64,14 +64,14 @@ Handler-raised exceptions carry Alma's own code and message:
 
 ```python
 except APIClientError as exc:
-    exc.code       # "401689" — Alma's numeric error code
+    exc.code       # "401689" – Alma's numeric error code
     exc.error      # Alma's raw message
     exc.message    # "<message> [<code>]"
     str(exc)       # same as .message
 ```
 
 Some exceptions are enriched by the namespace method that caught them, adding
-domain context — `UserMissingFieldError` carries the user ID it was raised for,
+domain context – `UserMissingFieldError` carries the user ID it was raised for,
 `CannotRenewError` the loan ID, `InvalidCodeError` the field and value Alma
 rejected.
 
@@ -105,7 +105,7 @@ rejected.
 `ThresholdError` (HTTP 429) means Alma's rate limit was hit. almapy retries it
 automatically and cuts its own request rate in response, so you should rarely
 see one escape. If you do, the institution's quota is being consumed faster than
-almapy alone can account for — most likely another application sharing the same
+almapy alone can account for – most likely another application sharing the same
 key or institution.
 
 `ThrottleTimeoutError` is different: it is raised locally, without a request

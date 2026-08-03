@@ -9,7 +9,7 @@ Reached as `client.analytics`.
     dictionaries, and its methods take no `model=` argument.
 
     Use [`get_full_report`][almapy._analytics.AlmaClientAnalyticsNS.get_full_report]
-    for parsed rows — it follows the resumption token for you — or
+    for parsed rows – it follows the resumption token for you – or
     [`get_raw_report`][almapy._analytics.AlmaClientAnalyticsNS.get_raw_report]
     for the untouched XML.
 

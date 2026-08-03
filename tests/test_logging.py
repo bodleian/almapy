@@ -1,8 +1,8 @@
-"""Tests for almapy._logging — shared logging infrastructure."""
+"""Tests for almapy._logging – shared logging infrastructure."""
 
 import contextlib
 import logging
-import subprocess  # ruff: ignore[suspicious-subprocess-import] — import-time behaviour needs a fresh interpreter
+import subprocess  # ruff: ignore[suspicious-subprocess-import] – import-time behaviour needs a fresh interpreter
 import sys
 import textwrap
 
@@ -13,7 +13,7 @@ from almapy._logging import new_request_id, request_id
 
 
 def test_null_handler_registered() -> None:
-    """almapy root logger must have NullHandler — library must not force output."""
+    """almapy root logger must have NullHandler – library must not force output."""
     handlers = logging.getLogger("almapy").handlers
     assert any(isinstance(h, logging.NullHandler) for h in handlers)
 
@@ -44,7 +44,7 @@ def test_stamina_retry_log_suppressed_even_when_hooks_reenabled(
 
 
 def test_new_request_id_is_unique() -> None:
-    """1000 IDs must all be distinct — full UUID4, no truncation or counter reset."""
+    """1000 IDs must all be distinct – full UUID4, no truncation or counter reset."""
     ids = {new_request_id() for _ in range(1000)}
     assert len(ids) == 1000
 
@@ -55,13 +55,13 @@ def test_new_request_id_length() -> None:
 
 
 def test_new_request_id_is_hex() -> None:
-    """ID must be valid hexadecimal — confirms uuid4().hex, not some other format."""
+    """ID must be valid hexadecimal – confirms uuid4().hex, not some other format."""
     rid = new_request_id()
     assert all(c in "0123456789abcdef" for c in rid)
 
 
 def test_request_id_contextvar_default_is_empty_string() -> None:
-    """Default must be empty string, not None — ensures %(req_id)s formatting works."""
+    """Default must be empty string, not None – ensures %(req_id)s formatting works."""
     assert request_id.get() == ""
 
 
@@ -90,7 +90,7 @@ class TestTransportLoggerDefaults:
     """almapy quietens urllib3/niquests without overriding the host application.
 
     Both emit a record per request at DEBUG, which is unusable noise at almapy's
-    default rate — but a library silently undoing an application's explicit
+    default rate – but a library silently undoing an application's explicit
     logging configuration is worse. Only NOTSET loggers are defaulted.
     """
 

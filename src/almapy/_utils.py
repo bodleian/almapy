@@ -2,10 +2,10 @@
 
 Internal to the library, but two pieces of it shape the public API:
 
-- ``Body`` — the type accepted by every write method. A plain ``dict``, or any
+- ``Body`` – the type accepted by every write method. A plain ``dict``, or any
   object satisfying the ``Dumpable`` or ``ModelDumpable`` protocols, which is how a
   Pydantic model can be passed as a request body without a conversion shim.
-- ``_raise_for_error_body`` — maps Alma's numeric error codes onto the specific
+- ``_raise_for_error_body`` – maps Alma's numeric error codes onto the specific
   exception classes in ``almapy.exceptions``. Adding support for a new Alma error
   code means adding a class there and an entry in ``_ERROR_MAPPING`` here.
 """
@@ -46,8 +46,8 @@ _ModelT = TypeVar("_ModelT")
 class Dumpable(Protocol):
     """Structural type for objects that serialize to a JSON-safe dict.
 
-    Satisfied by any object exposing ``dump(*, mode: str) -> dict[str, Any]`` —
-    notably alma_models' base model class — without requiring an import or
+    Satisfied by any object exposing ``dump(*, mode: str) -> dict[str, Any]`` –
+    notably alma_models' base model class – without requiring an import or
     inheritance relationship in either direction.
 
     ``mode`` is keyword-only to match how :func:`_dump_body` calls it. A method
@@ -68,7 +68,7 @@ class ModelDumpable(Protocol):
 
     ``mode`` must be keyword-only: pydantic declares it after ``*``, and a
     protocol asking for it positionally is not satisfied by a keyword-only
-    implementation — which silently made every ``BaseModel`` fail to match here
+    implementation – which silently made every ``BaseModel`` fail to match here
     under a type checker, despite working at runtime.
     """
 
@@ -81,7 +81,7 @@ Body = dict[str, Any] | Dumpable | ModelDumpable
 def _dump_body(body: Any) -> Any:
     """Convert a model-like request body to a JSON-safe dict.
 
-    ``dump`` wins over ``model_dump`` when an object has both — a pydantic model
+    ``dump`` wins over ``model_dump`` when an object has both – a pydantic model
     carrying a custom ``dump`` is expressing a deliberate wire shape, and that
     should not be silently bypassed. Anything else (a plain dict, a Box) is
     returned untouched.
@@ -174,7 +174,7 @@ def _should_retry(exc: BaseException) -> bool:
     """Return True if the exception is a transient transport or server failure.
 
     This is the *backpressure* predicate: it decides whether a failure should
-    depress the adaptive rate limit. It is deliberately method-agnostic — a 429
+    depress the adaptive rate limit. It is deliberately method-agnostic – a 429
     or 5xx is a signal about Alma's health regardless of which verb provoked it.
     Use :func:`_retry_predicate` to decide whether to actually replay a request.
     """
@@ -285,7 +285,7 @@ def _raise_for_error_body(response: niquests.Response) -> None:
         except ValueError as e:
             # Not every error body is Alma's JSON: a proxy returns an HTML 502,
             # an overloaded gateway an empty 503, and Alma itself sends
-            # "text/plain;charset=UTF-8" — which an exact-equality check on the
+            # "text/plain;charset=UTF-8" – which an exact-equality check on the
             # Content-Type never matched. Letting json.loads raise here escaped
             # as a bare JSONDecodeError rather than an AlmapyError, so the
             # status code was lost, _should_retry returned False and
@@ -317,7 +317,7 @@ def _raise_for_error_body(response: niquests.Response) -> None:
     except GlomError as e:
         # Status-appropriate, not hardcoded APIServerError: a 404 whose body
         # does not match the Coalesce chain is still a client error, and
-        # APIServerError is retryable — so it cost three round-trips and
+        # APIServerError is retryable – so it cost three round-trips and
         # needlessly depressed the adaptive rate limit.
         detail = _body_excerpt(response.text)
         _error_log.warning(

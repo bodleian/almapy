@@ -1,4 +1,4 @@
-"""Analytics namespace — running Alma Analytics (OBI) reports.
+"""Analytics namespace – running Alma Analytics (OBI) reports.
 
 Reached as ``client.analytics``. Alma returns analytics results as XML rather than
 JSON, and paginates them with a resumption token, so this namespace is the one
@@ -33,7 +33,7 @@ def _as_list(value: Any) -> list[Any]:
 def headers_to_dict(headers: list[dict[str, Any]] | dict[str, Any]) -> dict[str, Any]:
     """Map Alma's internal column names to their report headings.
 
-    Accepts the single-column dict form as well as a list — a report with one
+    Accepts the single-column dict form as well as a list – a report with one
     non-Column0 column previously raised TypeError here.
     """
     return {header["@name"]: header["@saw-sql:columnHeading"] for header in _as_list(headers)}
@@ -57,7 +57,7 @@ class AlmaClientAnalyticsNS(BaseNamespace):
     ) -> str:
         """Fetch one page of an Analytics report as raw XML.
 
-        This is a single request — it does not follow the resumption token. Use
+        This is a single request – it does not follow the resumption token. Use
         [`get_full_report`][almapy._analytics.AlmaClientAnalyticsNS.get_full_report]
         unless you need the untouched XML or want to drive pagination yourself.
 
@@ -124,7 +124,7 @@ class AlmaClientAnalyticsNS(BaseNamespace):
             report_filter: An OBI XML filter expression applied to the report.
 
         Returns:
-            One dictionary per row, keyed by column heading. Values are strings —
+            One dictionary per row, keyed by column heading. Values are strings –
             Analytics does not type its output, so numbers and dates arrive as text.
 
         Raises:
@@ -162,7 +162,7 @@ class AlmaClientAnalyticsNS(BaseNamespace):
             finished = parsed_resp["report"]["QueryResult"]["IsFinished"]
             # Same coercion as the first page. Indexing ["Row"] directly meant a
             # final page with one row raised AttributeError and one with no rows
-            # raised KeyError — reachable by any report whose total is just over
+            # raised KeyError – reachable by any report whose total is just over
             # a multiple of `limit`.
             page = parsed_resp["report"]["QueryResult"]["ResultXml"]["rowset"]
             result.extend(_as_list(page.get("Row")))

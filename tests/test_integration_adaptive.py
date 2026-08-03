@@ -32,7 +32,7 @@ class TestAdaptiveRateLimit:
             try:
                 result = await integration_client.bibs.get_item(barcode)
             except BarcodeNotFoundError as exc:
-                pytest.fail(f"Barcode {barcode!r} not found — check .testdata/barcodes.txt: {exc}")
+                pytest.fail(f"Barcode {barcode!r} not found – check .testdata/barcodes.txt: {exc}")
             assert "item_data" in result, f"item_data missing from response for barcode {barcode!r}"
 
         await asyncio.gather(*(fetch(b) for b in targets))
@@ -59,7 +59,7 @@ class TestAdaptiveRateLimit:
             min_expected = (n - rate) / rate * 0.9  # 10% tolerance for scheduling jitter
             assert elapsed >= min_expected, (
                 f"Completed {n} requests in {elapsed:.2f}s; "
-                f"expected >= {min_expected:.2f}s at {rate} req/s — "
+                f"expected >= {min_expected:.2f}s at {rate} req/s – "
                 "TokenBucket may not be enforcing the cap"
             )
 
@@ -103,7 +103,7 @@ class TestAdaptiveRateLimit:
 
         if failure_count == 0:
             pytest.xfail(
-                "API did not return any 429s during this run — cannot validate backoff behaviour"
+                "API did not return any 429s during this run – cannot validate backoff behaviour"
             )
 
         assert failure_count > 0, "Expected record_failure() to be called at least once"
@@ -128,7 +128,7 @@ class TestAdaptiveRateLimit:
 
         if depressed_rate >= max_rate:
             pytest.skip(
-                "Rate is at max — no prior backoff detected "
+                "Rate is at max – no prior backoff detected "
                 "(was test_backoff_triggered_by_api skipped or xfailed?)"
             )
 

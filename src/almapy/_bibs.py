@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 class AlmaClientBibLoansNS(BaseNamespace):
     """Namespace for bib loans, exposed at ``client.bibs.loans``.
 
-    Loans reached from the bibliographic side — by record or by item — which is the
+    Loans reached from the bibliographic side – by record or by item – which is the
     route to take when you know what was borrowed but not who has it. To act on a
     loan (renewing it, changing its due date) use ``client.users.loans``, which is
     where the write operations live.
@@ -373,10 +373,10 @@ class AlmaClientBibRequestsNS(BaseNamespace):
     Requests reached from the bibliographic side. Alma splits these across two levels
     and this namespace mirrors that split, which is the main thing to get right here:
 
-    - **Item level** — ``get_requests``, ``get_request``, ``create_request``,
+    - **Item level** – ``get_requests``, ``get_request``, ``create_request``,
       ``update_request``, ``cancel_request`` all take an MMS ID, holding ID and item
       PID, and act on requests against one physical copy.
-    - **Record level** — the ``*_for_bib`` methods take only an MMS ID and act on
+    - **Record level** – the ``*_for_bib`` methods take only an MMS ID and act on
       title level requests, where Alma has not yet picked a copy.
 
     ``client.users.requests`` covers the same requests from the borrower's side, and
@@ -643,7 +643,7 @@ class AlmaClientBibRequestsNS(BaseNamespace):
     ) -> Any:
         """Advance a title level request through its workflow.
 
-        Moves the request to the next step in Alma's fulfilment workflow — the API
+        Moves the request to the next step in Alma's fulfilment workflow – the API
         equivalent of processing it at a desk.
 
         Being a POST, this call is **not replayed** if the response is lost in
@@ -749,7 +749,7 @@ class AlmaClientBibRequestsNS(BaseNamespace):
             item_id: The item PID.
             request_id: The request identifier.
             reason: Cancellation reason. Must be a code from the
-                ``RequestCancellationReasons`` code table — fetch the valid values
+                ``RequestCancellationReasons`` code table – fetch the valid values
                 with ``client.config.code_tables.get_code_table()``.
             notify_user: Whether Alma should notify the requester.
             note: Free-text note included in the notification.
@@ -835,7 +835,7 @@ class AlmaClientBibRequestsNS(BaseNamespace):
         title level request with ``client.users.requests.create_request()`` instead.
 
         Being a POST, this call is **not replayed** if the response is lost in
-        transit — a retry could place a duplicate request. See
+        transit – a retry could place a duplicate request. See
         [Rate limiting](../guide/rate-limiting.md).
 
         Args:
@@ -1113,7 +1113,7 @@ class AlmaClientBibNS(BaseNamespace):
         """Create an item under a holding.
 
         Being a POST, this call is **not replayed** if the response is lost in
-        transit — a retry could create a duplicate item. See
+        transit – a retry could create a duplicate item. See
         [Rate limiting](../guide/rate-limiting.md).
 
         Args:
@@ -1131,8 +1131,8 @@ class AlmaClientBibNS(BaseNamespace):
 
         Raises:
             MMSIdNotFoundError: If no record has that MMS ID.
-            InvalidCodeError: If a code in the item — its policy or material type,
-                for instance — is not valid for this institution.
+            InvalidCodeError: If a code in the item – its policy or material type,
+                for instance – is not valid for this institution.
             APIClientError: If the holding does not exist or the barcode is in use.
 
         Examples:
@@ -1249,7 +1249,7 @@ class AlmaClientBibNS(BaseNamespace):
         """Withdraw (delete) an item.
 
         ``handle_holding`` and ``handle_bib`` decide what happens to the now-empty
-        parents. Both default to ``"retain"``, which leaves them in place — the
+        parents. Both default to ``"retain"``, which leaves them in place – the
         conservative choice, and deliberately so: a bib record deleted here is gone
         along with everything attached to it.
 
@@ -1259,7 +1259,7 @@ class AlmaClientBibNS(BaseNamespace):
             item_pid: The item PID.
             override: Whether to override Alma's warnings, for example when the item
                 is on loan or has outstanding requests.
-            handle_holding: What to do with the holding if this was its last item —
+            handle_holding: What to do with the holding if this was its last item –
                 ``"retain"``, ``"delete"`` or ``"suppress"``.
             handle_bib: What to do with the bib record if this was its last holding.
 
@@ -1456,7 +1456,7 @@ class AlmaClientBibNS(BaseNamespace):
     ) -> Any:
         """List the electronic portfolios on a bibliographic record.
 
-        Portfolios are the electronic counterpart to physical items — the individual
+        Portfolios are the electronic counterpart to physical items – the individual
         holdings of an e-resource within a collection.
 
         Args:
@@ -1488,8 +1488,8 @@ class AlmaClientBibNS(BaseNamespace):
     async def get_holding(self, mms_id: str, holding_id: str) -> str:
         """Retrieve a holding record as raw MARC XML.
 
-        Returns a ``str``, not a ``Box`` — Alma has no JSON representation of a MARC
-        record — and so takes no ``model=`` argument. Parse the result with your own
+        Returns a ``str``, not a ``Box`` – Alma has no JSON representation of a MARC
+        record – and so takes no ``model=`` argument. Parse the result with your own
         MARC or XML library.
 
         Args:
@@ -1554,7 +1554,7 @@ class AlmaClientBibNS(BaseNamespace):
         Takes and returns ``str``, not ``Box``.
 
         Being a POST, this call is **not replayed** if the response is lost in
-        transit — a retry could create a duplicate holding. See
+        transit – a retry could create a duplicate holding. See
         [Rate limiting](../guide/rate-limiting.md).
 
         Args:
@@ -1592,13 +1592,13 @@ class AlmaClientBibNS(BaseNamespace):
         """Delete a holding record.
 
         The holding must have no items left under it. ``handle_bib`` defaults to
-        ``"retain"``, the conservative choice — deleting the bib record removes
+        ``"retain"``, the conservative choice – deleting the bib record removes
         everything attached to it.
 
         Args:
             mms_id: The MMS ID of the bibliographic record.
             holding_id: The holding ID.
-            handle_bib: What to do with the bib record if this was its last holding —
+            handle_bib: What to do with the bib record if this was its last holding –
                 ``"retain"``, ``"delete"`` or ``"suppress"``.
 
         Returns:
@@ -1630,7 +1630,7 @@ class AlmaClientBibNS(BaseNamespace):
         """List the holdings on a bibliographic record.
 
         Unlike the single-holding methods, this one returns a ``Box`` and accepts
-        ``model=`` — it is a summary list rather than MARC records. Use
+        ``model=`` – it is a summary list rather than MARC records. Use
         [`get_holding`][almapy._bibs.AlmaClientBibNS.get_holding] for the MARC XML of
         one holding.
 
@@ -1673,7 +1673,7 @@ class AlmaClientBibNS(BaseNamespace):
             from_cz_mms_id: Link the new bib to this Community Zone record.
             normalization: Normalisation process ID to run on the record.
             validate: Run MARC validation before saving.
-            override_warning: Save despite Alma's validation warnings — which
+            override_warning: Save despite Alma's validation warnings – which
                 include the duplicate-match warning raised by ``check_match``.
                 Defaults to ``False``.
             check_match: Run match detection against existing records. Only has
@@ -1712,8 +1712,8 @@ class AlmaClientBibNS(BaseNamespace):
     ) -> str:
         """Retrieve a bibliographic record as raw MARC XML.
 
-        Returns a ``str``, not a ``Box`` — Alma has no JSON representation of a MARC
-        record — and so takes no ``model=`` argument.
+        Returns a ``str``, not a ``Box`` – Alma has no JSON representation of a MARC
+        record – and so takes no ``model=`` argument.
 
         The ``expand_*`` flags append availability information to the record. Each
         one makes Alma do extra work, so leave off the ones you do not need.
@@ -1823,7 +1823,7 @@ class AlmaClientBibNS(BaseNamespace):
 
         Args:
             mms_id: MMS ID of the bib to delete.
-            override: Delete even when Alma objects — e.g. the bib still has
+            override: Delete even when Alma objects – e.g. the bib still has
                 holdings, items or orders attached. Defaults to ``False`` so the
                 shortest call cannot silently discard inventory.
             cataloguer_level: Cataloguer level to apply to the operation.
@@ -1905,7 +1905,7 @@ class AlmaClientBibNS(BaseNamespace):
         """Scan an item in at a circulation desk or work department.
 
         The API equivalent of passing an item over the desk: returns it if it is on
-        loan, and moves it to its next workflow step — onto the hold shelf, into
+        loan, and moves it to its next workflow step – onto the hold shelf, into
         transit, or back to the shelf.
 
         Supply **either** ``circ_desk`` with ``library`` (a circulation desk scan) or

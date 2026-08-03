@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  # Never cancel a deploy midway — a half-published site is worse than a stale
+  # Never cancel a deploy midway – a half-published site is worse than a stale
   # one. Queue instead, so the last push to main wins.
   group: pages
   cancel-in-progress: false

@@ -1,7 +1,7 @@
 # Advanced
 
-The rate-limiting internals. You do not need these to use the library —
-`AlmaClient` builds and drives them for you — but they are documented because
+The rate-limiting internals. You do not need these to use the library –
+`AlmaClient` builds and drives them for you – but they are documented because
 the behaviour they implement is worth understanding when tuning `rate_limit`, or
 when reading the `almapy.throttle` log output.
 

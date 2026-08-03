@@ -18,7 +18,7 @@ console uninvited.
 | `almapy.error` | WARNING | Alma error before raising | `status_code`, `alma_code` (where applicable) |
 
 They are semantic rather than per-module, so you can turn on exactly the
-category you care about — retries without the full HTTP firehose, say.
+category you care about – retries without the full HTTP firehose, say.
 
 ## Correlation IDs
 
@@ -26,8 +26,8 @@ Every record carries a `req_id` field: a `uuid4().hex` set at the start of each
 `execute()` call and reset in `finally`. It lives in a `contextvars.ContextVar`,
 so it survives across `await` boundaries and stays correct under concurrency.
 
-Use it to reassemble the story of a single request — its retries, its throttle
-waits, and the error it finally raised — out of interleaved output from 150
+Use it to reassemble the story of a single request – its retries, its throttle
+waits, and the error it finally raised – out of interleaved output from 150
 concurrent calls.
 
 ## Turning it on
@@ -39,7 +39,7 @@ import logging
 logging.getLogger("almapy").setLevel(logging.DEBUG)
 logging.getLogger("almapy").addHandler(logging.StreamHandler())
 
-# Or just one area — retry warnings only
+# Or just one area – retry warnings only
 logging.getLogger("almapy.retry").setLevel(logging.WARNING)
 logging.getLogger("almapy.retry").addHandler(logging.StreamHandler())
 ```

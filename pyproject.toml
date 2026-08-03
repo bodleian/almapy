@@ -111,7 +111,7 @@ tag_format = "$version"
 
 [tool.coverage.report] # https://coverage.readthedocs.io/en/latest/config.html#report
 # Enforced by `just test-cov` and CI. Ratchet upward; never lower it to make a
-# run pass. The namespace modules are the weak spot — most of _config and _acq
+# run pass. The namespace modules are the weak spot – most of _config and _acq
 # is untested endpoint templates and query-param spellings.
 fail_under = 65
 precision = 1
@@ -197,6 +197,11 @@ select = [
 
 ignore = ["line-too-long", "suspicious-eval-usage", "unnecessary-assign", "assert", "try-except-in-loop", "undocumented-public-init", "single-line-implicit-string-concatenation"]
 
+# Prose here uses en dashes, which ruff otherwise flags as confusable with a
+# hyphen-minus. Declared rather than ignoring the rule wholesale, so genuinely
+# unintended lookalikes – a Cyrillic 'а', a non-breaking hyphen – are still caught.
+allowed-confusables = ["–"]
+
 unfixable = ["commented-out-code", "unused-import", "unused-variable", "print", "p-print"]
 
 [tool.deptry]
@@ -206,7 +211,7 @@ known_first_party = ["almapy"]
 # urllib3-future[rtls] is niquests' runtime urllib3 backend (pinned here for the
 # [rtls] TLS extra); almapy never imports it directly, so DEP002 is a false positive.
 DEP002 = ["urllib3-future"]
-# tools/ is dev-only tooling that never ships — the build's explicit `include`
-# list keeps it out of the artifacts — so the docs extension importing griffe,
+# tools/ is dev-only tooling that never ships – the build's explicit `include`
+# list keeps it out of the artifacts – so the docs extension importing griffe,
 # a docs-group dependency, is correct rather than a leak into runtime code.
 DEP004 = ["griffe"]

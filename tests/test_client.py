@@ -41,7 +41,7 @@ def _make_response(
 ) -> niquests.Response:
     """Build a niquests.Response for use in _parse() unit tests only.
 
-    Not for execute() tests — use the niquests_mock fixture to register URLs instead.
+    Not for execute() tests – use the niquests_mock fixture to register URLs instead.
     """
     r = niquests.Response()
     r.status_code = status_code
@@ -433,7 +433,7 @@ class TestExecuteDumpableConversion:
     ) -> None:
         """.dump() runs exactly once even when the request retries (catches: per-attempt dump).
 
-        Uses a 429, the one failure a POST is still replayed on — a connection
+        Uses a 429, the one failure a POST is still replayed on – a connection
         error or 5xx on a write is deliberately not retried.
         """
         client = AlmaClient("test-api-key", retry_attempts=3)
@@ -495,8 +495,8 @@ class TestWriteRetryPolicy:
 
     A read timeout, connection error or 5xx on a POST usually means Alma applied
     the write and the response was lost, so a replay creates a second loan,
-    request or PO line. Only failures that prove the request never landed — a
-    429 rejection or a connect timeout — stay retryable for writes.
+    request or PO line. Only failures that prove the request never landed – a
+    429 rejection or a connect timeout – stay retryable for writes.
     """
 
     @staticmethod
@@ -547,7 +547,7 @@ class TestWriteRetryPolicy:
 
     @pytest.mark.asyncio
     async def test_write_still_retried_on_429(self, niquests_mock: MockRouter) -> None:
-        """A 429 is a gateway rejection — Alma never saw the body, so replay is safe."""
+        """A 429 is a gateway rejection – Alma never saw the body, so replay is safe."""
         client = self._mocked()
         niquests_mock.post(f"{_BASE}/users").respond(
             status_code=429,

@@ -5,7 +5,7 @@ user-record methods:
 
 | Attribute | Covers |
 |---|---|
-| ``client.users.loans`` | Loans held by a user — listing, creating, renewing |
+| ``client.users.loans`` | Loans held by a user – listing, creating, renewing |
 | ``client.users.fines`` (alias ``client.users.fees``) | Fines and fees, and paying them |
 | ``client.users.requests`` | Holds, digitisation and booking requests |
 """
@@ -161,7 +161,7 @@ class AlmaClientUserLoansNS(BaseNamespace):
         """Loan an item to a user.
 
         Being a POST, this call is **not replayed** if the response is lost in
-        transit — a retry could create a duplicate loan. See
+        transit – a retry could create a duplicate loan. See
         [Rate limiting](../guide/rate-limiting.md).
 
         Args:
@@ -256,7 +256,7 @@ class AlmaClientUserLoansNS(BaseNamespace):
             The renewed loan record, carrying its new ``due_date``.
 
         Raises:
-            CannotRenewError: If Alma refused the renewal (code ``401822``) — because
+            CannotRenewError: If Alma refused the renewal (code ``401822``) – because
                 the item is requested by someone else, the renewal limit is reached,
                 or a block applies. The exception carries the ``loan_id`` and Alma's
                 own reason.
@@ -357,7 +357,7 @@ class AlmaClientUserLoansNS(BaseNamespace):
 class AlmaClientUserFinesNS(BaseNamespace):
     """Namespace for user fines functionality, exposed at ``client.users.fines``.
 
-    Also available as ``client.users.fees`` — Alma's own API calls these "fees"
+    Also available as ``client.users.fees`` – Alma's own API calls these "fees"
     throughout, so both spellings are provided and refer to the same object.
 
     Two ways to settle a balance:
@@ -442,7 +442,7 @@ class AlmaClientUserFinesNS(BaseNamespace):
         """Charge a fee to a user.
 
         Being a POST, this call is **not replayed** if the response is lost in
-        transit — a retry could charge the user twice. See
+        transit – a retry could charge the user twice. See
         [Rate limiting](../guide/rate-limiting.md).
 
         Args:
@@ -515,11 +515,11 @@ class AlmaClientUserFinesNS(BaseNamespace):
         """Pay against a user's whole fee balance.
 
         Alma applies the payment across the user's active fees rather than to any one
-        of them. To act on a single fee — or to waive rather than pay — use
+        of them. To act on a single fee – or to waive rather than pay – use
         [`update_fee`][almapy._users.AlmaClientUserFinesNS.update_fee].
 
         Being a POST, this call is **not replayed** if the response is lost in
-        transit — a retry could take the payment twice. See
+        transit – a retry could take the payment twice. See
         [Rate limiting](../guide/rate-limiting.md).
 
         Args:
@@ -663,7 +663,7 @@ class AlmaClientUserFinesNS(BaseNamespace):
         Args:
             user_id: The user identifier.
             fee_id: The fee identifier.
-            op: What to do — ``"pay"`` settles it, ``"waive"`` cancels the charge,
+            op: What to do – ``"pay"`` settles it, ``"waive"`` cancels the charge,
                 ``"dispute"`` marks it as contested, ``"restore"`` reverses a
                 previous waiver or dispute.
             user_id_type: Which kind of identifier ``user_id`` is.
@@ -891,7 +891,7 @@ class AlmaClientUserRequestsNS(BaseNamespace):
         request (``item_id``) pins it to one.
 
         Being a POST, this call is **not replayed** if the response is lost in
-        transit — a retry could place a duplicate request. See
+        transit – a retry could place a duplicate request. See
         [Rate limiting](../guide/rate-limiting.md).
 
         Args:
@@ -965,7 +965,7 @@ class AlmaClientUserRequestsNS(BaseNamespace):
 
         Alma replaces the whole request, so fetch it with
         [`get_request`][almapy._users.AlmaClientUserRequestsNS.get_request] and modify
-        that rather than sending a partial body. Not every field is editable — the
+        that rather than sending a partial body. Not every field is editable – the
         pickup location and expiry date generally are; the request type is not.
 
         Args:
@@ -1011,7 +1011,7 @@ class AlmaClientUserRequestsNS(BaseNamespace):
             user_id: The user identifier.
             request_id: The request identifier.
             reason: Cancellation reason. Must be a code from the
-                ``RequestCancellationReasons`` code table — fetch the valid values
+                ``RequestCancellationReasons`` code table – fetch the valid values
                 with ``client.config.code_tables.get_code_table()``.
             notify_user: Whether Alma should notify the user of the cancellation.
             note: Free-text note included in the notification.
@@ -1176,7 +1176,7 @@ class AlmaClientUserNS(BaseNamespace):
         """Update a user record.
 
         Alma replaces the whole user, so fetch it with
-        [`get_user`][almapy._users.AlmaClientUserNS.get_user] and modify that — a
+        [`get_user`][almapy._users.AlmaClientUserNS.get_user] and modify that – a
         partial body drops the fields it omits, including roles and addresses.
 
         Args:
@@ -1192,7 +1192,7 @@ class AlmaClientUserNS(BaseNamespace):
         Raises:
             UserMissingFieldError: If a mandatory field is missing (Alma code
                 ``401664``). The exception carries the user ID.
-            InvalidFieldError: If a field — often a role — is not valid.
+            InvalidFieldError: If a field – often a role – is not valid.
             UserNotFoundError: If no user matches the identifier.
             APIClientError: If any other API client error occurs.
 
@@ -1223,7 +1223,7 @@ class AlmaClientUserNS(BaseNamespace):
         """Create a new user.
 
         Being a POST, this call is **not replayed** if the response is lost in
-        transit — a retry could create a duplicate user. See
+        transit – a retry could create a duplicate user. See
         [Rate limiting](../guide/rate-limiting.md).
 
         Args:
@@ -1239,7 +1239,7 @@ class AlmaClientUserNS(BaseNamespace):
         Raises:
             UserMissingFieldError: If a mandatory field is missing (Alma code
                 ``401664``). The exception carries the ``primary_id`` from the body.
-            InvalidFieldError: If a field — often a role — is not valid.
+            InvalidFieldError: If a field – often a role – is not valid.
             APIClientError: If any other API client error occurs.
 
         Examples:
@@ -1304,13 +1304,13 @@ class AlmaClientUserNS(BaseNamespace):
     ) -> Any:
         """Attach a file to a user's record.
 
-        ``content`` is base64-encoded for you before it is sent — pass the plain
+        ``content`` is base64-encoded for you before it is sent – pass the plain
         text, not an already-encoded string. Note that it is typed as ``str`` and
         encoded as UTF-8, so this method handles text attachments only; binary files
         are not supported.
 
         Being a POST, this call is **not replayed** if the response is lost in
-        transit — a retry could attach the file twice. See
+        transit – a retry could attach the file twice. See
         [Rate limiting](../guide/rate-limiting.md).
 
         Args:
@@ -1327,7 +1327,7 @@ class AlmaClientUserNS(BaseNamespace):
 
         Raises:
             UserNotFoundError: If no user matches the identifier.
-            APIClientError: If the attachment is rejected — for example when it
+            APIClientError: If the attachment is rejected – for example when it
                 exceeds Alma's size limit.
 
         Examples:
