@@ -10,6 +10,16 @@ upgrade:
     uv lock --upgrade
     uv sync
 
+# Regenerate the Alma endpoint links from Ex Libris' OpenAPI specs (needs network)
+docs-links:
+    uv run python tools/alma_links/generate.py
+
+# Re-validate the committed links without rewriting them (needs network).
+# Deliberately not in CI: it depends on an external site, and would block
+# unrelated PRs whenever developers.exlibrisgroup.com is slow or restructured.
+docs-links-check:
+    uv run python tools/alma_links/generate.py --check
+
 # Serve the docs at localhost:8000 with live reload
 docs:
     uv run zensical serve

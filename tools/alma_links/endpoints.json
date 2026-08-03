@@ -1,0 +1,346 @@
+{
+  "almapy._acq.AlmaClientAcqNS.cancel_po_line": {
+    "summary": "Cancel PO-Line",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/acq/REVMRVRFIC9hbG1hd3MvdjEvYWNxL3BvLWxpbmVzL3twb19saW5lX2lkfQ==/"
+  },
+  "almapy._acq.AlmaClientAcqNS.get_po_line": {
+    "summary": "Get PO-Line",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/acq/R0VUIC9hbG1hd3MvdjEvYWNxL3BvLWxpbmVzL3twb19saW5lX2lkfQ==/"
+  },
+  "almapy._acq.AlmaClientAcqNS.receive_existing_item": {
+    "summary": "Receive an Existing Item",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/acq/UE9TVCAvYWxtYXdzL3YxL2FjcS9wby1saW5lcy97cG9fbGluZV9pZH0vaXRlbXMve2l0ZW1faWR9/"
+  },
+  "almapy._acq.AlmaClientAcqNS.update_po_line": {
+    "summary": "Update PO-Line",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/acq/UFVUIC9hbG1hd3MvdjEvYWNxL3BvLWxpbmVzL3twb19saW5lX2lkfQ==/"
+  },
+  "almapy._analytics.AlmaClientAnalyticsNS.get_raw_report": {
+    "summary": "Retrieve Analytics report",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/analytics/R0VUIC9hbG1hd3MvdjEvYW5hbHl0aWNzL3JlcG9ydHM=/"
+  },
+  "almapy._bibs.AlmaClientBibLoansNS.change_loan_due_date": {
+    "summary": "Change loan due date",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UFVUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0vaXRlbXMve2l0ZW1fcGlkfS9sb2Fucy97bG9hbl9pZH0=/"
+  },
+  "almapy._bibs.AlmaClientBibLoansNS.create_loan": {
+    "summary": "Create user loan",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UE9TVCAvYWxtYXdzL3YxL2JpYnMve21tc19pZH0vaG9sZGluZ3Mve2hvbGRpbmdfaWR9L2l0ZW1zL3tpdGVtX3BpZH0vbG9hbnM=/"
+  },
+  "almapy._bibs.AlmaClientBibLoansNS.get_bib_loan": {
+    "summary": "Retrieve Bib Loan information for a Bib id and Loan id",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9sb2Fucy97bG9hbl9pZH0=/"
+  },
+  "almapy._bibs.AlmaClientBibLoansNS.get_bib_loans": {
+    "summary": "Retrieve Bib Loan information",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9sb2Fucw==/"
+  },
+  "almapy._bibs.AlmaClientBibLoansNS.get_loan": {
+    "summary": "Retrieve Item Loan information",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0vaXRlbXMve2l0ZW1fcGlkfS9sb2Fucy97bG9hbl9pZH0=/"
+  },
+  "almapy._bibs.AlmaClientBibLoansNS.get_loans": {
+    "summary": "Loan By Item information",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0vaXRlbXMve2l0ZW1faWR9L2xvYW5z/"
+  },
+  "almapy._bibs.AlmaClientBibLoansNS.renew_loan": {
+    "summary": "Action on a loan",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UE9TVCAvYWxtYXdzL3YxL2JpYnMve21tc19pZH0vaG9sZGluZ3Mve2hvbGRpbmdfaWR9L2l0ZW1zL3tpdGVtX3BpZH0vbG9hbnMve2xvYW5faWR9/"
+  },
+  "almapy._bibs.AlmaClientBibNS.create_bib": {
+    "summary": "Create record",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UE9TVCAvYWxtYXdzL3YxL2JpYnM=/"
+  },
+  "almapy._bibs.AlmaClientBibNS.create_holding": {
+    "summary": "Create holding record",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UE9TVCAvYWxtYXdzL3YxL2JpYnMve21tc19pZH0vaG9sZGluZ3M=/"
+  },
+  "almapy._bibs.AlmaClientBibNS.create_item": {
+    "summary": "Create Item",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UE9TVCAvYWxtYXdzL3YxL2JpYnMve21tc19pZH0vaG9sZGluZ3Mve2hvbGRpbmdfaWR9L2l0ZW1z/"
+  },
+  "almapy._bibs.AlmaClientBibNS.delete_bib": {
+    "summary": "Delete Bib Record",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/REVMRVRFIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfQ==/"
+  },
+  "almapy._bibs.AlmaClientBibNS.delete_holding": {
+    "summary": "Delete Holdings Record",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/REVMRVRFIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0=/"
+  },
+  "almapy._bibs.AlmaClientBibNS.get_bib": {
+    "summary": "Retrieve Bib",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfQ==/"
+  },
+  "almapy._bibs.AlmaClientBibNS.get_holding": {
+    "summary": "Retrieve Holdings Record",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0=/"
+  },
+  "almapy._bibs.AlmaClientBibNS.get_holdings": {
+    "summary": "Retrieve Holdings list",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncw==/"
+  },
+  "almapy._bibs.AlmaClientBibNS.get_item": {
+    "summary": "Retrieve Item and label printing information",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0vaXRlbXMve2l0ZW1fcGlkfQ==/"
+  },
+  "almapy._bibs.AlmaClientBibNS.get_item_by_pid": {
+    "summary": "Retrieve Item and label printing information",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0vaXRlbXMve2l0ZW1fcGlkfQ==/"
+  },
+  "almapy._bibs.AlmaClientBibNS.get_items": {
+    "summary": "Retrieve Items list",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0vaXRlbXM=/"
+  },
+  "almapy._bibs.AlmaClientBibNS.get_portfolios": {
+    "summary": "Retrieve Portfolios list",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9wb3J0Zm9saW9z/"
+  },
+  "almapy._bibs.AlmaClientBibNS.scan_in": {
+    "summary": "Scan-in operation on item.",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UE9TVCAvYWxtYXdzL3YxL2JpYnMve21tc19pZH0vaG9sZGluZ3Mve2hvbGRpbmdfaWR9L2l0ZW1zL3tpdGVtX3BpZH0=/"
+  },
+  "almapy._bibs.AlmaClientBibNS.update_bib": {
+    "summary": "Update Bib Record",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UFVUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfQ==/"
+  },
+  "almapy._bibs.AlmaClientBibNS.update_holding": {
+    "summary": "Update Holdings Record",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UFVUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0=/"
+  },
+  "almapy._bibs.AlmaClientBibNS.update_item": {
+    "summary": "Update Item information",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UFVUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0vaXRlbXMve2l0ZW1fcGlkfQ==/"
+  },
+  "almapy._bibs.AlmaClientBibNS.withdraw_item": {
+    "summary": "Withdraw Item",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/REVMRVRFIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0vaXRlbXMve2l0ZW1fcGlkfQ==/"
+  },
+  "almapy._bibs.AlmaClientBibRequestsNS.cancel_request": {
+    "summary": "Cancel Request",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/REVMRVRFIC9hbG1hd3MvdjEvYmlicy97bW1zSWR9L2hvbGRpbmdzL3tob2xkaW5nSWR9L2l0ZW1zL3tpdGVtUGlkfS9yZXF1ZXN0cy97cmVxdWVzdElkfQ==/"
+  },
+  "almapy._bibs.AlmaClientBibRequestsNS.create_request": {
+    "summary": "Create request for an Item",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UE9TVCAvYWxtYXdzL3YxL2JpYnMve21tc19pZH0vaG9sZGluZ3Mve2hvbGRpbmdfaWR9L2l0ZW1zL3tpdGVtX3BpZH0vcmVxdWVzdHM=/"
+  },
+  "almapy._bibs.AlmaClientBibRequestsNS.get_request": {
+    "summary": "Retrieve User Item Request",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0vaXRlbXMve2l0ZW1faWR9L3JlcXVlc3RzL3tyZXF1ZXN0X2lkfQ==/"
+  },
+  "almapy._bibs.AlmaClientBibRequestsNS.get_request_for_bib": {
+    "summary": "Retrieve User Title Request",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9yZXF1ZXN0cy97cmVxdWVzdF9pZH0=/"
+  },
+  "almapy._bibs.AlmaClientBibRequestsNS.get_requests": {
+    "summary": "Retrieve User Requests per Item",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0vaXRlbXMve2l0ZW1faWR9L3JlcXVlc3Rz/"
+  },
+  "almapy._bibs.AlmaClientBibRequestsNS.get_requests_for_bib": {
+    "summary": "Retrieve User Requests per Bib",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9yZXF1ZXN0cw==/"
+  },
+  "almapy._bibs.AlmaClientBibRequestsNS.process_request_for_bib": {
+    "summary": "Action on a request - Title",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UE9TVCAvYWxtYXdzL3YxL2JpYnMve21tc19pZH0vcmVxdWVzdHMve3JlcXVlc3RfaWR9/"
+  },
+  "almapy._bibs.AlmaClientBibRequestsNS.update_request": {
+    "summary": "Update Item Request",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UFVUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9ob2xkaW5ncy97aG9sZGluZ19pZH0vaXRlbXMve2l0ZW1fcGlkfS9yZXF1ZXN0cy97cmVxdWVzdF9pZH0=/"
+  },
+  "almapy._bibs.AlmaClientBibRequestsNS.update_request_for_bib": {
+    "summary": "Update Title Request",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UFVUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9yZXF1ZXN0cy97cmVxdWVzdF9pZH0=/"
+  },
+  "almapy._config.AlmaClientConfigCodeTablesNS.get_code_table": {
+    "summary": "Retrieve Code-table",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9jb2RlLXRhYmxlcy97Y29kZVRhYmxlTmFtZX0=/"
+  },
+  "almapy._config.AlmaClientConfigCodeTablesNS.get_code_tables": {
+    "summary": "Retrieve Code Tables",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9jb2RlLXRhYmxlcw==/"
+  },
+  "almapy._config.AlmaClientConfigCodeTablesNS.update_code_table": {
+    "summary": "Update Code-table",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/UFVUIC9hbG1hd3MvdjEvY29uZi9jb2RlLXRhYmxlcy97Y29kZVRhYmxlTmFtZX0=/"
+  },
+  "almapy._config.AlmaClientConfigJobsNS.create_integration_profile": {
+    "summary": "Retrieve an Integration Profile",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/UE9TVCAvYWxtYXdzL3YxL2NvbmYvaW50ZWdyYXRpb24tcHJvZmlsZXM=/"
+  },
+  "almapy._config.AlmaClientConfigJobsNS.get_integration_profile": {
+    "summary": "Retrieve an Integration Profile",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9pbnRlZ3JhdGlvbi1wcm9maWxlcy97aWR9/"
+  },
+  "almapy._config.AlmaClientConfigJobsNS.get_integration_profiles": {
+    "summary": "Retrieve a list of Integration Profiles",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9pbnRlZ3JhdGlvbi1wcm9maWxlcw==/"
+  },
+  "almapy._config.AlmaClientConfigJobsNS.get_job": {
+    "summary": "Retrieve Job Details",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9qb2JzL3tqb2JfaWR9/"
+  },
+  "almapy._config.AlmaClientConfigJobsNS.get_job_instance": {
+    "summary": "Retrieve Job Instance Details",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9qb2JzL3tqb2JfaWR9L2luc3RhbmNlcy97aW5zdGFuY2VfaWR9/"
+  },
+  "almapy._config.AlmaClientConfigJobsNS.get_job_instance_matches": {
+    "summary": "Retrieve Job Matching Details",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9qb2JzL3tqb2JfaWR9L2luc3RhbmNlcy97aW5zdGFuY2VfaWR9L21hdGNoZXM=/"
+  },
+  "almapy._config.AlmaClientConfigJobsNS.get_job_instances": {
+    "summary": "Retrieve Job Instances",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9qb2JzL3tqb2JfaWR9L2luc3RhbmNlcw==/"
+  },
+  "almapy._config.AlmaClientConfigJobsNS.get_jobs": {
+    "summary": "Retrieve Jobs",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9qb2Jz/"
+  },
+  "almapy._config.AlmaClientConfigJobsNS.submit_job": {
+    "summary": "Submit a manual or scheduled job",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/UE9TVCAvYWxtYXdzL3YxL2NvbmYvam9icy97am9iX2lkfQ==/"
+  },
+  "almapy._config.AlmaClientConfigJobsNS.update_integration_profile": {
+    "summary": "Update an Integration Profile",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/UFVUIC9hbG1hd3MvdjEvY29uZi9pbnRlZ3JhdGlvbi1wcm9maWxlcy97aWR9/"
+  },
+  "almapy._config.AlmaClientConfigLettersNS.get_components": {
+    "summary": "Retrieve Letters",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9sZXR0ZXJz/"
+  },
+  "almapy._config.AlmaClientConfigLettersNS.get_letter": {
+    "summary": "Retrieve Letter",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9sZXR0ZXJzL3tsZXR0ZXJDb2RlfQ==/"
+  },
+  "almapy._config.AlmaClientConfigLettersNS.get_letters": {
+    "summary": "Retrieve Letters",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9sZXR0ZXJz/"
+  },
+  "almapy._config.AlmaClientConfigLettersNS.update_letter": {
+    "summary": "Update Letter",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/UFVUIC9hbG1hd3MvdjEvY29uZi9sZXR0ZXJzL3tsZXR0ZXJDb2RlfQ==/"
+  },
+  "almapy._config.AlmaClientConfigLibrariesNS.get_circ_desks": {
+    "summary": "Retrieve Circulation Desks",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9saWJyYXJpZXMve2xpYnJhcnlDb2RlfS9jaXJjLWRlc2tzLw==/"
+  },
+  "almapy._config.AlmaClientConfigLibrariesNS.get_departments": {
+    "summary": "Retrieve Departments",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9kZXBhcnRtZW50cw==/"
+  },
+  "almapy._config.AlmaClientConfigLibrariesNS.get_libraries": {
+    "summary": "Retrieve Libraries",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9saWJyYXJpZXM=/"
+  },
+  "almapy._config.AlmaClientConfigLibrariesNS.get_location": {
+    "summary": "Retrieve Location",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9saWJyYXJpZXMve2xpYnJhcnlDb2RlfS9sb2NhdGlvbnMve2xvY2F0aW9uQ29kZX0=/"
+  },
+  "almapy._config.AlmaClientConfigLibrariesNS.get_locations": {
+    "summary": "Retrieve Locations",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9saWJyYXJpZXMve2xpYnJhcnlDb2RlfS9sb2NhdGlvbnM=/"
+  },
+  "almapy._config.AlmaClientConfigSetsNS.create": {
+    "summary": "Create a Set",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/UE9TVCAvYWxtYXdzL3YxL2NvbmYvc2V0cw==/"
+  },
+  "almapy._config.AlmaClientConfigSetsNS.delete_set": {
+    "summary": "Delete a Set",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/REVMRVRFIC9hbG1hd3MvdjEvY29uZi9zZXRzL3tzZXRfaWR9/"
+  },
+  "almapy._config.AlmaClientConfigSetsNS.get_list": {
+    "summary": "Retrieve a list of Sets",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9zZXRz/"
+  },
+  "almapy._config.AlmaClientConfigSetsNS.get_members": {
+    "summary": "Retrieve Set Members",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9zZXRzL3tzZXRfaWR9L21lbWJlcnM=/"
+  },
+  "almapy._config.AlmaClientConfigSetsNS.get_set": {
+    "summary": "Retrieve a Set",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/R0VUIC9hbG1hd3MvdjEvY29uZi9zZXRzL3tzZXRfaWR9/"
+  },
+  "almapy._config.AlmaClientConfigSetsNS.manage_members": {
+    "summary": "Manage Members",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/UE9TVCAvYWxtYXdzL3YxL2NvbmYvc2V0cy97c2V0X2lkfQ==/"
+  },
+  "almapy._users.AlmaClientUserFinesNS.create_fee": {
+    "summary": "Create user fine/fee",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/UE9TVCAvYWxtYXdzL3YxL3VzZXJzL3t1c2VyX2lkfS9mZWVz/"
+  },
+  "almapy._users.AlmaClientUserFinesNS.get_fee": {
+    "summary": "Get user fine/fee",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/R0VUIC9hbG1hd3MvdjEvdXNlcnMve3VzZXJfaWR9L2ZlZXMve2ZlZV9pZH0=/"
+  },
+  "almapy._users.AlmaClientUserFinesNS.get_fines": {
+    "summary": "Get user fines/fees",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/R0VUIC9hbG1hd3MvdjEvdXNlcnMve3VzZXJfaWR9L2ZlZXM=/"
+  },
+  "almapy._users.AlmaClientUserFinesNS.pay_fees": {
+    "summary": "Pay user fines/fees",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/UE9TVCAvYWxtYXdzL3YxL3VzZXJzL3t1c2VyX2lkfS9mZWVzL2FsbA==/"
+  },
+  "almapy._users.AlmaClientUserFinesNS.update_fee": {
+    "summary": "Pay/waive/dispute/restore user fine/fee",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/UE9TVCAvYWxtYXdzL3YxL3VzZXJzL3t1c2VyX2lkfS9mZWVzL3tmZWVfaWR9/"
+  },
+  "almapy._users.AlmaClientUserLoansNS.change_loan_due_date": {
+    "summary": "Change loan due date",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/UFVUIC9hbG1hd3MvdjEvdXNlcnMve3VzZXJfaWR9L2xvYW5zL3tsb2FuX2lkfQ==/"
+  },
+  "almapy._users.AlmaClientUserLoansNS.create_loan": {
+    "summary": "Create user loan",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/UE9TVCAvYWxtYXdzL3YxL3VzZXJzL3t1c2VyX2lkfS9sb2Fucw==/"
+  },
+  "almapy._users.AlmaClientUserLoansNS.get_loan": {
+    "summary": "Loan by user id and loan id",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/R0VUIC9hbG1hd3MvdjEvdXNlcnMve3VzZXJfaWR9L2xvYW5zL3tsb2FuX2lkfQ==/"
+  },
+  "almapy._users.AlmaClientUserLoansNS.get_loans": {
+    "summary": "Retrieve user loans",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/R0VUIC9hbG1hd3MvdjEvdXNlcnMve3VzZXJfaWR9L2xvYW5z/"
+  },
+  "almapy._users.AlmaClientUserLoansNS.renew_loan": {
+    "summary": "Renew loan",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/UE9TVCAvYWxtYXdzL3YxL3VzZXJzL3t1c2VyX2lkfS9sb2Fucy97bG9hbl9pZH0=/"
+  },
+  "almapy._users.AlmaClientUserNS.create_user": {
+    "summary": "Create user",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/UE9TVCAvYWxtYXdzL3YxL3VzZXJz/"
+  },
+  "almapy._users.AlmaClientUserNS.create_user_attachment": {
+    "summary": "Create User Attachment",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/UE9TVCAvYWxtYXdzL3YxL3VzZXJzL3t1c2VyX2lkfS9hdHRhY2htZW50cw==/"
+  },
+  "almapy._users.AlmaClientUserNS.get_user": {
+    "summary": "Get user details",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/R0VUIC9hbG1hd3MvdjEvdXNlcnMve3VzZXJfaWR9/"
+  },
+  "almapy._users.AlmaClientUserNS.get_users": {
+    "summary": "Retrieve users",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/R0VUIC9hbG1hd3MvdjEvdXNlcnM=/"
+  },
+  "almapy._users.AlmaClientUserNS.update_user": {
+    "summary": "Update User Details",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/UFVUIC9hbG1hd3MvdjEvdXNlcnMve3VzZXJfaWR9/"
+  },
+  "almapy._users.AlmaClientUserRequestsNS.cancel_request": {
+    "summary": "Cancel user request",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/REVMRVRFIC9hbG1hd3MvdjEvdXNlcnMve3VzZXJfaWR9L3JlcXVlc3RzL3tyZXF1ZXN0X2lkfQ==/"
+  },
+  "almapy._users.AlmaClientUserRequestsNS.create_request": {
+    "summary": "Create user request",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/UE9TVCAvYWxtYXdzL3YxL3VzZXJzL3t1c2VyX2lkfS9yZXF1ZXN0cw==/"
+  },
+  "almapy._users.AlmaClientUserRequestsNS.get_request": {
+    "summary": "Retrieve user request",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/R0VUIC9hbG1hd3MvdjEvdXNlcnMve3VzZXJfaWR9L3JlcXVlc3RzL3tyZXF1ZXN0X2lkfQ==/"
+  },
+  "almapy._users.AlmaClientUserRequestsNS.get_requests": {
+    "summary": "Retrieve user requests",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/R0VUIC9hbG1hd3MvdjEvdXNlcnMve3VzZXJfaWR9L3JlcXVlc3Rz/"
+  },
+  "almapy._users.AlmaClientUserRequestsNS.update_request": {
+    "summary": "Update request",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/UFVUIC9hbG1hd3MvdjEvdXNlcnMve3VzZXJfaWR9L3JlcXVlc3RzL3tyZXF1ZXN0X2lkfQ==/"
+  }
+}

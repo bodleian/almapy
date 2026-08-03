@@ -125,6 +125,11 @@ inventories = ["https://docs.python.org/3/objects.inv"]
 docstring_style = "google"
 docstring_section_style = "table"
 
+# Appends a link to each method's official Ex Libris documentation. The URLs are
+# ~120 characters of base64 apiece, so they live in a generated mapping rather
+# than in 85 docstrings. Regenerate with `just docs-links`.
+extensions = ["tools/alma_links/extension.py"]
+
 # The namespace methods are three-way @overload groups whose implementation
 # signature is (self, ..., model: Any = None) -> Any, which documents nothing.
 # overloads_only drops it and renders the two typed overloads instead; the
