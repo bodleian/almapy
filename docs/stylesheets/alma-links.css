@@ -1,0 +1,54 @@
+/* Link from each method heading to its Ex Libris endpoint documentation.
+ *
+ * Rendered by tools/alma_links/templates/python/material/function.html.jinja
+ * into the same heading as the `async` label. Those labels are deliberately
+ * muted -- a thin border and --md-default-fg-color--light -- so this uses the
+ * accent colour and a filled background to read as something you can click
+ * rather than one more piece of metadata.
+ */
+
+.doc-heading .doc-alma-link {
+  /* Sits beside .doc-labels, which supplies its own .4rem margin. */
+  margin-left: 0.3rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.5rem;
+
+  background-color: var(--md-accent-fg-color--transparent);
+  color: var(--md-accent-fg-color);
+
+  font-size: 0.65rem;
+  font-weight: 400;
+  /* The heading is monospaced; the link is prose, and should look like it. */
+  font-family: var(--md-text-font-family);
+  vertical-align: text-bottom;
+
+  /* Long summaries ("Retrieve Item and label printing information") must not
+   * drag the heading into a horizontal scroll on a narrow viewport. */
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.doc-heading .doc-alma-link::after {
+  /* The empty alt text keeps the arrow out of the accessible name; the anchor's
+   * title attribute already says where the link goes. Browsers without support
+   * for the alt syntax simply announce the arrow, which is harmless. */
+  content: " \2197" / "";
+}
+
+.doc-heading .doc-alma-link:hover,
+.doc-heading .doc-alma-link:focus-visible {
+  background-color: var(--md-accent-fg-color);
+  color: var(--md-accent-bg-color);
+}
+
+@media screen and (max-width: 44.9375em) {
+  /* On phones the heading already carries the method name and the async chip.
+   * Drop to its own line rather than crowding them. */
+  .doc-heading .doc-alma-link {
+    display: block;
+    width: fit-content;
+    margin-left: 0;
+    margin-top: 0.2rem;
+  }
+}

@@ -1,0 +1,29 @@
+{#- Adds a link to each method's Ex Libris endpoint documentation.
+
+    Overrides only the `labels` block, so the link renders inside the heading
+    element beside the `async` chip rather than at the foot of the docstring.
+    `{{ super() }}` keeps the real labels; this is added to them, not instead.
+
+    The URL comes from `function.extra`, populated by the AlmaDocLinks griffe
+    extension from tools/alma_links/endpoints.json. `.get()` rather than a
+    subscript because `extra` is a defaultdict and would otherwise gain an empty
+    entry for every function rendered.
+
+    `_base/function.html.jinja` is extended rather than replaced: mkdocstrings
+    warns that overriding a `_base` template is unsupported.
+-#}
+{% extends "_base/function.html.jinja" %}
+
+{% block labels scoped %}
+  {{ super() }}
+  {% set alma = function.extra.get("alma_links") %}
+  {% if alma %}
+    <a
+      class="doc doc-alma-link"
+      href="{{ alma.url }}"
+      target="_blank"
+      rel="noopener"
+      title="This endpoint in Alma's own API documentation"
+    >Alma: {{ alma.summary }}</a>
+  {% endif %}
+{% endblock labels %}

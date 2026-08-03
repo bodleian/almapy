@@ -15,8 +15,11 @@ repo_name = "bodleian/almapy"
 edit_uri = "edit/main/docs/"
 
 copyright = """
-Copyright &copy; Bodleian Libraries, University of Oxford — MIT licensed
+Copyright &copy; 2026 University of Oxford — MIT licensed
 """
+
+# Paths are relative to docs_dir.
+extra_css = ["stylesheets/alma-links.css"]
 
 # Explicit rather than derived from the directory tree, so the guide reads in
 # a deliberate order (concepts before reference) instead of alphabetically.
@@ -117,6 +120,12 @@ alternate_style = true
 # API reference generation
 # https://zensical.org/docs/setup/extensions/mkdocstrings/
 # ---------------------------------------------------------------------------
+[project.plugins.mkdocstrings]
+# Overrides only the `labels` block of the function template, to put the Alma
+# link beside each method heading. mkdocstrings hardcodes theme="material" here,
+# so the override has to live at <dir>/python/material/.
+custom_templates = "tools/alma_links/templates"
+
 [project.plugins.mkdocstrings.handlers.python]
 paths = ["src"]
 inventories = ["https://docs.python.org/3/objects.inv"]
@@ -125,9 +134,10 @@ inventories = ["https://docs.python.org/3/objects.inv"]
 docstring_style = "google"
 docstring_section_style = "table"
 
-# Appends a link to each method's official Ex Libris documentation. The URLs are
-# ~120 characters of base64 apiece, so they live in a generated mapping rather
-# than in 85 docstrings. Regenerate with `just docs-links`.
+# Attaches each method's Ex Libris endpoint documentation to the griffe object,
+# which custom_templates above then renders beside the heading. The URLs are ~120
+# characters of base64 apiece, so they live in a generated mapping rather than in
+# 86 docstrings. Regenerate with `just docs-links`.
 extensions = ["tools/alma_links/extension.py"]
 
 # The namespace methods are three-way @overload groups whose implementation

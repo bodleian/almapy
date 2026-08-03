@@ -20,14 +20,15 @@ _MAPPING: dict[str, dict[str, str]] = json.loads(
 
 
 class AlmaDocLinks(griffe.Extension):
-    """Append a ``See Also`` link to every method with a known Alma endpoint."""
+    """Attach each method's Alma endpoint documentation to the griffe object."""
 
     def on_function(self, *, func: griffe.Function, **_: Any) -> None:
-        """Add the link to this function's docstring, if it has an endpoint."""
+        """Record the endpoint link, if this method has one."""
         entry = _MAPPING.get(func.canonical_path)
-        if entry is None or func.docstring is None:
+        if entry is None:
             return
-        # Appended to the raw docstring rather than inserted as a parsed section:
-        # griffe parses lazily, so the Google parser picks this up as a real
-        # "See Also" section and renders it beside Parameters and Returns.
-        func.docstring.value += f"\n\nSee Also:\n    [Alma: {entry['summary']}]({entry['url']})\n"
+        # Stashed on the object rather than appended to the docstring, because
+        # docstring content renders below the heading and the link belongs beside
+        # it. templates/python/material/function.html.jinja reads this back and
+        # renders it in the `labels` block, next to the `async` chip.
+        func.extra["alma_links"] = entry
