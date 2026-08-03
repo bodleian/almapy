@@ -1,6 +1,37 @@
 ## [Unreleased]
 
 
+
+## [9.1.2] - 2026-08-03
+
+### Documentation
+- **exceptions**: show the exception hierarchy on the reference page
+- **throttle**: write the rate-limiting classes for consumers
+- move the Alma link from the docstring foot to the method heading
+- link each method to its Ex Libris endpoint documentation
+- **users**: drop the user-identifier note
+- **client**: explain what execute is for, and surface retry in its signature
+- link the docs site from the README, and fix the model= example
+- add a Zensical site with a generated API reference
+- fix a malformed Attributes entry on CannotRenewError
+- **throttle,utils**: document the backpressure controls and body protocols
+- **bibs**: document bib, holding, loan and request namespaces
+- **users**: document loan, fine and request namespaces
+- **config**: document set, library, letter, job and code-table namespaces
+- **acq,analytics**: document namespace methods
+
+### Style
+- use en dashes throughout, and declare the convention
+
+### Other
+- **deps**: declare griffe for the docs extension
+- **deps**: lock the docs dependency group
+- build the docs on PRs and publish them to GitHub Pages
+
+### Fixed
+- **types**: make Dumpable and ModelDumpable mode keyword-only
+- **types**: accept any Body on sets.create and jobs.submit_job
+
 ## [9.1.1] - 2026-07-29
 
 ### Fixed
