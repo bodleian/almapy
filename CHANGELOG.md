@@ -1,6 +1,15 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
 ## [Unreleased]
 
 
+
+## [9.1.3] - 2026-09-14
+
+### Fixed
+- **bibs**: stop sending override_warning=false on default create and update – Alma rejects it unless validate or check_match is also set (error 401873), so every plain create_bib and update_bib call failed
 
 ## [9.1.2] - 2026-08-03
 
@@ -69,11 +78,6 @@
 ### Added
 - **client**: accept pydantic models as request bodies
 - **packaging**: add MIT licence and complete the PyPI metadata
-
-
-# Changelog
-
-All notable changes to this project will be documented in this file.
 
 ## 9.0.0 (2026-07-28)
 
