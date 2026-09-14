@@ -30,6 +30,24 @@ if TYPE_CHECKING:
     from almapy._base import _AlmaExecutable
 
 
+def _bib_write_params(
+    *, validate: bool, override_warning: bool, check_match: bool
+) -> dict[str, str | bool]:
+    """Query parameters shared by bib create and update.
+
+    ``override_warning`` is deliberately left out of the plain default call.
+    Alma's own default is ``true``, and it rejects an explicit ``false`` unless
+    ``validate`` or ``check_match`` is also set (error 401873) – so sending it
+    unconditionally, as this once did, broke every default create and update.
+    Once either check is on the ``false`` must be explicit, or Alma quietly
+    saves over the warnings the caller asked it to raise.
+    """
+    params: dict[str, str | bool] = {"validate": validate, "check_match": check_match}
+    if override_warning or validate or check_match:
+        params["override_warning"] = override_warning
+    return params
+
+
 class AlmaClientBibLoansNS(BaseNamespace):
     """Namespace for bib loans, exposed at ``client.bibs.loans``.
 
@@ -1675,16 +1693,18 @@ class AlmaClientBibNS(BaseNamespace):
             validate: Run MARC validation before saving.
             override_warning: Save despite Alma's validation warnings – which
                 include the duplicate-match warning raised by ``check_match``.
-                Defaults to ``False``.
+                Defaults to ``False``, but is only sent on the wire when it
+                is ``True`` or when ``validate`` or ``check_match`` is on:
+                Alma rejects an explicit ``false`` outside those cases (error
+                401873), and with neither check running there is no warning
+                to override anyway.
             check_match: Run match detection against existing records. Only has
                 an effect while ``override_warning`` is ``False``.
             import_profile: Import profile ID governing the create.
         """
-        params: dict[str, str | bool] = {
-            "validate": validate,
-            "override_warning": override_warning,
-            "check_match": check_match,
-        }
+        params = _bib_write_params(
+            validate=validate, override_warning=override_warning, check_match=check_match
+        )
         if from_nz_mms_id:
             params["from_nz_mms_id"] = from_nz_mms_id
         if from_cz_mms_id:
@@ -1783,7 +1803,9 @@ class AlmaClientBibNS(BaseNamespace):
             normalization: Normalisation process ID to run on the record.
             validate: Run MARC validation before saving.
             override_warning: Save despite Alma's validation warnings. Defaults
-                to ``False``.
+                to ``False``, but is only sent on the wire when it is ``True``
+                or when ``validate`` or ``check_match`` is on – see
+                [`create_bib`][almapy._bibs.AlmaClientBibNS.create_bib].
             override_lock: Save despite another cataloguer holding the record
                 lock, discarding their in-progress edit. Defaults to ``False``.
             stale_version_check: Reject the update if the record changed since
@@ -1791,11 +1813,9 @@ class AlmaClientBibNS(BaseNamespace):
             cataloguer_level: Cataloguer level to apply to the operation.
             check_match: Run match detection against existing records.
         """
-        params: dict[str, str | bool] = {
-            "validate": validate,
-            "override_warning": override_warning,
-            "check_match": check_match,
-        }
+        params = _bib_write_params(
+            validate=validate, override_warning=override_warning, check_match=check_match
+        )
         if normalization:
             params["normalization"] = normalization
         if override_lock:

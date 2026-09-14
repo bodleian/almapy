@@ -89,16 +89,61 @@ class TestBibWriteParameters:
         assert query["from_cz_mms_id"] == ["991234"]
         assert "to_cz_mms_id" not in query
 
-    async def test_create_bib_does_not_override_warning_by_default(
-        self, client: AlmaClient, niquests_mock: MockRouter
-    ) -> None:
+    def _mock_create(self, niquests_mock: MockRouter) -> None:
         niquests_mock.post(path="/almaws/v1/bibs").respond(
             content=self._RECORD, headers={"Content-Type": "application/xml"}
         )
 
+    def _mock_update(self, niquests_mock: MockRouter) -> None:
+        niquests_mock.put(path="/almaws/v1/bibs/991234").respond(
+            content=self._RECORD, headers={"Content-Type": "application/xml"}
+        )
+
+    async def test_create_bib_omits_override_warning_by_default(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        """Regression: Alma rejects an explicit override_warning=false unless it is
+        paired with validate=true or check_match=true (error 401873), so the
+        plain create must not send it at all.
+        """
+        self._mock_create(niquests_mock)
+
         await client.bibs.create_bib(self._RECORD)
 
-        assert _query(niquests_mock)["override_warning"] == ["False"]
+        assert "override_warning" not in _query(niquests_mock)
+
+    async def test_create_bib_sends_override_warning_false_with_validate(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        """Alma's own default is true, so once validation is on the false must be
+        explicit or warnings are silently overridden."""
+        self._mock_create(niquests_mock)
+
+        await client.bibs.create_bib(self._RECORD, validate=True)
+
+        query = _query(niquests_mock)
+        assert query["validate"] == ["True"]
+        assert query["override_warning"] == ["False"]
+
+    async def test_create_bib_sends_override_warning_false_with_check_match(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        self._mock_create(niquests_mock)
+
+        await client.bibs.create_bib(self._RECORD, check_match=True)
+
+        query = _query(niquests_mock)
+        assert query["check_match"] == ["True"]
+        assert query["override_warning"] == ["False"]
+
+    async def test_create_bib_sends_override_warning_true_when_enabled(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        self._mock_create(niquests_mock)
+
+        await client.bibs.create_bib(self._RECORD, override_warning=True)
+
+        assert _query(niquests_mock)["override_warning"] == ["True"]
 
     async def test_delete_bib_does_not_override_by_default(
         self, client: AlmaClient, niquests_mock: MockRouter
@@ -109,16 +154,46 @@ class TestBibWriteParameters:
 
         assert _query(niquests_mock)["override"] == ["False"]
 
-    async def test_update_bib_does_not_override_warning_or_lock_by_default(
+    async def test_update_bib_omits_override_warning_and_lock_by_default(
         self, client: AlmaClient, niquests_mock: MockRouter
     ) -> None:
-        niquests_mock.put(path="/almaws/v1/bibs/991234").respond(
-            content=self._RECORD, headers={"Content-Type": "application/xml"}
-        )
+        """Same 401873 regression as create_bib – see above."""
+        self._mock_update(niquests_mock)
 
         await client.bibs.update_bib("991234", self._RECORD)
 
         query = _query(niquests_mock)
-        assert query["override_warning"] == ["False"]
+        assert "override_warning" not in query
         # override_lock is only sent when explicitly enabled
         assert "override_lock" not in query
+
+    async def test_update_bib_sends_override_warning_false_with_validate(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        self._mock_update(niquests_mock)
+
+        await client.bibs.update_bib("991234", self._RECORD, validate=True)
+
+        query = _query(niquests_mock)
+        assert query["validate"] == ["True"]
+        assert query["override_warning"] == ["False"]
+
+    async def test_update_bib_sends_override_warning_false_with_check_match(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        self._mock_update(niquests_mock)
+
+        await client.bibs.update_bib("991234", self._RECORD, check_match=True)
+
+        query = _query(niquests_mock)
+        assert query["check_match"] == ["True"]
+        assert query["override_warning"] == ["False"]
+
+    async def test_update_bib_sends_override_warning_true_when_enabled(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        self._mock_update(niquests_mock)
+
+        await client.bibs.update_bib("991234", self._RECORD, override_warning=True)
+
+        assert _query(niquests_mock)["override_warning"] == ["True"]
