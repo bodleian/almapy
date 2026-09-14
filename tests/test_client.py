@@ -3,7 +3,7 @@
 import json
 import logging
 from collections.abc import Callable
-from typing import Any
+from typing import Any, ClassVar
 from unittest.mock import AsyncMock, MagicMock
 
 import niquests
@@ -14,6 +14,7 @@ from niquests_mock import MockRouter, build_response
 from typeguard import suppress_type_checks
 
 from almapy import AlmaClient, exceptions
+from almapy._utils import _should_retry
 
 _BASE = "https://api-eu.hosted.exlibrisgroup.com/almaws/v1"
 
@@ -144,6 +145,99 @@ class TestParse:
         result = client._parse(resp, "xml")
         assert isinstance(result, Box)
         assert result.root.item == "hello"
+
+
+class TestParseMalformedBodies:
+    """A 2xx whose body is not what the endpoint promised.
+
+    A struggling Alma has answered 200 to an item POST with a non-JSON body,
+    having created the item regardless. Left to escape, niquests' own
+    JSONDecodeError carried no status, content type or body, was not an
+    AlmapyError so callers could not catch it per row, and was neither retried
+    nor counted as backpressure.
+    """
+
+    def test_html_body_with_json_parser(self, client: AlmaClient) -> None:
+        resp = _make_response(200, "<html>Service Unavailable</html>", content_type="text/html")
+        with pytest.raises(exceptions.MalformedResponseError) as exc_info:
+            client._parse(resp, "json")
+        exc = exc_info.value
+        assert exc.code == "200"
+        assert "text/html" in str(exc)
+        assert "Service Unavailable" in str(exc)
+        assert _should_retry(exc) is True
+
+    def test_empty_body_gets_a_placeholder_message(self, client: AlmaClient) -> None:
+        resp = _make_response(200, "   ")
+        with pytest.raises(exceptions.MalformedResponseError, match="<empty body>"):
+            client._parse(resp, "json")
+
+    def test_non_xml_body_with_xml_parser(self, client: AlmaClient) -> None:
+        resp = _make_response(200, "not xml", content_type="application/xml")
+        with pytest.raises(exceptions.MalformedResponseError):
+            client._parse(resp, "xml")
+
+    def test_html_body_with_xml_parser_is_caught_by_content_type(self, client: AlmaClient) -> None:
+        """xmltodict parses an HTML page happily, so only the content type gives it away."""
+        resp = _make_response(
+            200, "<html><body>maintenance</body></html>", content_type="text/html"
+        )
+        with pytest.raises(exceptions.MalformedResponseError):
+            client._parse(resp, "xml")
+
+    def test_text_parser_passes_html_through(self, client: AlmaClient) -> None:
+        resp = _make_response(200, "<html>fine</html>", content_type="text/html")
+        assert client._parse(resp, "text") == "<html>fine</html>"
+
+    def test_logs_one_warning_with_req_id(
+        self, client: AlmaClient, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        resp = _make_response(200, "<html>x</html>", content_type="text/html")
+        with (
+            caplog.at_level(logging.WARNING, logger="almapy.error"),
+            pytest.raises(exceptions.MalformedResponseError),
+        ):
+            client._parse(resp, "json")
+        records = [r for r in caplog.records if r.name == "almapy.error"]
+        assert len(records) == 1
+        assert "Malformed 200 response" in records[0].message
+        assert hasattr(records[0], "req_id")
+
+
+class TestExecuteMalformedBodies:
+    """Method-gated retries apply to a malformed 2xx just as to a 5xx."""
+
+    _HTML: ClassVar[dict[str, Any]] = {
+        "status_code": 200,
+        "text": "<html>Bad Gateway</html>",
+        "headers": {"Content-Type": "text/html"},
+    }
+
+    @pytest.mark.asyncio
+    async def test_get_is_retried_and_counted_as_backpressure(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        route = niquests_mock.get(f"{_BASE}/bibs/123").mock(
+            side_effect=_responder_sequence(self._HTML, {"status_code": 200, "json": {"ok": True}})
+        )
+        client._controller = MagicMock()
+        client._controller.acquire = AsyncMock()
+        result = await client.execute("GET", "/bibs/123", parser="json")
+        assert result.ok is True
+        assert route.call_count == 2
+        client._controller.record_failure.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_post_is_not_replayed(
+        self, client: AlmaClient, niquests_mock: MockRouter
+    ) -> None:
+        """Alma may have applied the write before the response was mangled."""
+        route = niquests_mock.post(f"{_BASE}/bibs/123/holdings").mock(
+            side_effect=_responder_sequence(self._HTML, {"status_code": 200, "json": {"ok": True}})
+        )
+        with pytest.raises(exceptions.MalformedResponseError):
+            await client.execute("POST", "/bibs/123/holdings", parser="json", json={})
+        assert route.call_count == 1
 
 
 class TestAlmaClientInternals:

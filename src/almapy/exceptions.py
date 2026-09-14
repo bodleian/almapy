@@ -46,6 +46,19 @@ class APIServerError(_AlmaError):
     """Base exception for generic server-related errors (HTTP 500s)."""
 
 
+class MalformedResponseError(APIServerError):
+    """A success status whose body was not in the format the endpoint promised.
+
+    Alma, or a gateway in front of it, answered 2xx with an HTML page, an empty
+    body or the wrong content type – typically while it is struggling. ``code``
+    is the HTTP status; ``error`` is the content type and a short body excerpt.
+
+    Retried for idempotent verbs and counted as backpressure like any
+    ``APIServerError``. Not replayed for POST or PATCH: Alma may well have
+    applied the write before the response was mangled.
+    """
+
+
 class ThresholdError(APIClientError):
     """Raised when the API rate limit is exceeded."""
 

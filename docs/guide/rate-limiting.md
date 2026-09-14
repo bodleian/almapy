@@ -78,7 +78,7 @@ almapy gates retries on the HTTP method:
 
 | Verb | Retried on |
 |---|---|
-| GET, HEAD, OPTIONS, PUT, DELETE | The full transient set – 5xx, 429, connect and read timeouts, dropped connections |
+| GET, HEAD, OPTIONS, PUT, DELETE | The full transient set – 5xx, an unparseable 2xx body, 429, connect and read timeouts, dropped connections |
 | POST, PATCH | Only `ThresholdError` (429 – the gateway rejected it outright) and `ConnectTimeout` (no connection was ever established) |
 
 Both of the POST cases prove the request never landed, so replaying is safe.

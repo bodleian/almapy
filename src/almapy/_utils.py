@@ -15,7 +15,7 @@ import logging
 import operator
 import re
 import traceback
-import xml
+import xml.parsers.expat
 from collections.abc import Callable
 from http import HTTPStatus
 from typing import (
@@ -121,7 +121,7 @@ class Request(TypedDict, total=False):
 def _parse_xml(text: str) -> dict[str, Any]:
     try:
         body = xmltodict.parse(text)
-    except xml.parsers.expat.ExpatError:  # type: ignore  # ruff: ignore[blanket-type-ignore]
+    except xml.parsers.expat.ExpatError:
         text = re.sub(r"https://(.*)&(.*)", r"\g<1>&#38;\g<2>", text)
         body = xmltodict.parse(text)
     return cast(dict[str, Any], body)
@@ -277,28 +277,25 @@ def _raise_for_error_body(response: niquests.Response) -> None:
     ct = response.headers.get("Content-Type") or ""
 
     body: Any
-    if "xml" in ct:
-        body = _parse_xml(response.text)
-    else:
-        try:
-            body = json.loads(response.text)
-        except ValueError as e:
-            # Not every error body is Alma's JSON: a proxy returns an HTML 502,
-            # an overloaded gateway an empty 503, and Alma itself sends
-            # "text/plain;charset=UTF-8" – which an exact-equality check on the
-            # Content-Type never matched. Letting json.loads raise here escaped
-            # as a bare JSONDecodeError rather than an AlmapyError, so the
-            # status code was lost, _should_retry returned False and
-            # record_failure never fired: precisely the transient failures
-            # retries and backpressure exist for.
-            detail = _body_excerpt(response.text)
-            _error_log.warning(
-                "API error %s: unparseable body: %s",
-                status,
-                detail,
-                extra={"req_id": request_id.get(), "status_code": status},
-            )
-            raise _error_class_for(status)(str(status), detail) from e
+    try:
+        body = _parse_xml(response.text) if "xml" in ct else json.loads(response.text)
+    except (ValueError, xml.parsers.expat.ExpatError) as e:
+        # Not every error body is Alma's JSON: a proxy returns an HTML 502,
+        # an overloaded gateway an empty 503, and Alma itself sends
+        # "text/plain;charset=UTF-8" – which an exact-equality check on the
+        # Content-Type never matched. Letting the parser raise here escaped
+        # as a bare JSONDecodeError or ExpatError rather than an AlmapyError,
+        # so the status code was lost, _should_retry returned False and
+        # record_failure never fired: precisely the transient failures
+        # retries and backpressure exist for.
+        detail = _body_excerpt(response.text)
+        _error_log.warning(
+            "API error %s: unparseable body: %s",
+            status,
+            detail,
+            extra={"req_id": request_id.get(), "status_code": status},
+        )
+        raise _error_class_for(status)(str(status), detail) from e
 
     try:
         code, message = glom(

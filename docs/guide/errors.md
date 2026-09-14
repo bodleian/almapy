@@ -9,7 +9,8 @@ clause catches anything originating in the library:
 AlmapyError
 ├── ThrottleTimeoutError        (also a TimeoutError)
 └── _AlmaError
-    ├── APIServerError          5xx – Alma's fault, retried automatically
+    ├── APIServerError          5xx, or an unusable 2xx body – Alma's fault, retried automatically
+    │   └── MalformedResponseError
     └── APIClientError          4xx – your request, not retried
         ├── ThresholdError      429 – rate limit exceeded
         ├── BarcodeNotFoundError
@@ -22,6 +23,14 @@ The split that matters in practice is `APIServerError` versus
 `APIClientError`. A server error has already been retried three times before it
 reaches you, so seeing one means Alma is genuinely unwell. A client error means
 the request itself was wrong and retrying will not help.
+
+`MalformedResponseError` is the one server error that does not come from a 5xx:
+Alma, or a gateway in front of it, answered 2xx with a body that is not the JSON
+or XML the endpoint promised – an HTML maintenance page, say. Its `code` is the
+HTTP status and its message carries the content type and a short excerpt of the
+body. It has no Alma error code, so it does not appear in the table below. Like
+any other 5xx it is not replayed for POST or PATCH: Alma may well have applied
+the write before the response was mangled.
 
 ```python
 from almapy.exceptions import APIClientError, APIServerError

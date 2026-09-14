@@ -461,6 +461,12 @@ class TestUnparseableErrorBodies:
         with pytest.raises(exceptions.APIServerError, match="<empty body>"):
             _validate_response(self._response(503, "   ", None))
 
+    def test_non_xml_body_under_xml_content_type_is_retryable_almapy_error(self) -> None:
+        """The XML branch used to let ExpatError escape unwrapped."""
+        with pytest.raises(exceptions.APIServerError) as exc_info:
+            _validate_response(self._response(502, "not xml", "application/xml"))
+        assert _should_retry(exc_info.value) is True
+
     def test_unrecognised_4xx_body_is_a_client_error_not_retried(self) -> None:
         """Was hardcoded to APIServerError, which is retryable – so an
         unparseable 404 cost three round-trips and depressed the rate limit."""
@@ -485,6 +491,7 @@ class TestExceptionRobustness:
             (exceptions.APIClientError, ("401861", "User not found.")),
             (exceptions.APIServerError, ("500", "boom")),
             (exceptions.ThresholdError, ("429", "too many")),
+            (exceptions.MalformedResponseError, ("200", "text/html: <html>")),
             (
                 exceptions.UserNotFoundError,
                 ("401861", "User with identifier jsmith was not found."),

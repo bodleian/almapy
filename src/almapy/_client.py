@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import logging
 import time
+import xml.parsers.expat
 from collections.abc import Callable
 from http import HTTPStatus
 from typing import Any, Literal, overload
@@ -13,6 +14,7 @@ import niquests
 import stamina
 from box import Box
 
+from almapy import exceptions
 from almapy._acq import AlmaClientAcqNS
 from almapy._analytics import AlmaClientAnalyticsNS
 from almapy._base import Parser
@@ -24,7 +26,9 @@ from almapy._throttle import AdaptiveController, TokenBucket
 from almapy._users import AlmaClientUserNS
 from almapy._utils import (
     RESP_TYPE,
+    _body_excerpt,
     _dump_body,
+    _error_log,
     _ModelT,
     _parse_xml,
     _retry_predicate,
@@ -220,6 +224,8 @@ class AlmaClient:
             APIClientError: For 4xx responses, or a more specific subclass where
                 Alma's error code maps to one.
             APIServerError: For 5xx responses that survived the retries.
+            MalformedResponseError: For a 2xx whose body could not be parsed as
+                the requested format – an HTML maintenance page, say.
             ThrottleTimeoutError: If ``max_wait`` is configured and elapsed while
                 waiting for a rate-limit token.
 
@@ -341,12 +347,46 @@ class AlmaClient:
 
     @staticmethod
     def _parse(response: niquests.Response, parser: Parser) -> RESP_TYPE | str:
-        """Parse a niquests response according to the requested parser."""
+        """Parse a niquests response according to the requested parser.
+
+        Raises:
+            MalformedResponseError: If a ``json`` or ``xml`` body cannot be parsed
+                as such, or arrives with an HTML content type. An HTML page is
+                well-formed XML as far as xmltodict is concerned, so the
+                content type is checked before the body is parsed.
+        """
         if parser == "none" or response.status_code == HTTPStatus.NO_CONTENT:
             return Box()
         assert response.text is not None
-        if parser == "xml":
-            return Box(_parse_xml(response.text))
         if parser == "text":
             return response.text
-        return Box(response.json())
+
+        content_type = response.headers.get("Content-Type") or ""
+        if "html" in content_type.lower():
+            raise _malformed(response, content_type)
+        try:
+            if parser == "xml":
+                return Box(_parse_xml(response.text))
+            return Box(response.json())
+        except (ValueError, xml.parsers.expat.ExpatError) as e:
+            # A struggling Alma has been seen to answer 200 with a body that is
+            # not the JSON it promised, having applied the write regardless.
+            # Left to escape, the parser's own exception carried no status,
+            # content type or body, and was neither retried nor counted as
+            # backpressure.
+            raise _malformed(response, content_type) from e
+
+
+def _malformed(response: niquests.Response, content_type: str) -> exceptions.MalformedResponseError:
+    """Log a 2xx body that could not be parsed and build the exception for it."""
+    status = response.status_code
+    assert status is not None
+    assert response.text is not None
+    detail = f"{content_type or 'no content-type'}: {_body_excerpt(response.text)}"
+    _error_log.warning(
+        "Malformed %s response: %s",
+        status,
+        detail,
+        extra={"req_id": request_id.get(), "status_code": status},
+    )
+    return exceptions.MalformedResponseError(str(status), detail)

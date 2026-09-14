@@ -13,6 +13,7 @@ Exception
 └── AlmapyError                          catch-all for anything almapy raises
     ├── _AlmaError                       internal; carries Alma's code and message
     │   ├── APIServerError               5xx, already retried before you see it
+    │   │   └── MalformedResponseError   2xx whose body was not the promised format
     │   └── APIClientError               4xx, your request – not retried
     │       ├── ThresholdError           429, rate limit exceeded
     │       ├── BarcodeNotFoundError
