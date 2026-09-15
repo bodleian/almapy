@@ -11,6 +11,18 @@ All notable changes to this project will be documented in this file.
 - **utils**: an error body under an XML content type that is not well-formed XML now raises the status-appropriate almapy error instead of a bare `ExpatError`
 
 
+
+## [9.2.0] - 2026-09-15
+
+### Added
+- **client**: raise MalformedResponseError on unparseable 2xx bodies
+
+### Other
+- 9.1.2 -> 9.1.3
+
+### Fixed
+- **bibs**: stop sending override_warning=false on default create and update
+
 ## [9.1.3] - 2026-09-14
 
 ### Fixed
