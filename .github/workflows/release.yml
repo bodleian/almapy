@@ -37,6 +37,13 @@ jobs:
           fi
           echo "tag and version agree: $version"
 
+      # The changelog is the release notes (see the release-notes job), so a
+      # tag with no section, or entries still sitting under [Unreleased], means
+      # the bump was not made with `just bump`.
+      - name: Check the changelog has a section for this release
+        if: github.event_name == 'release'
+        run: just changelog-check "${GITHUB_REF_NAME}"
+
       - name: Lint
         run: just lint-ci
 
@@ -89,3 +96,24 @@ jobs:
           # cannot silently drop provenance. Needs Trusted Publishing and the
           # id-token: write above – no separate attestations: permission.
           attestations: true
+
+  release-notes:
+    name: release notes from CHANGELOG.md
+    needs: build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      # Only this job may edit the release; the build and publish jobs keep
+      # their narrower grants.
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: extractions/setup-just@v4
+
+      # CHANGELOG.md is the source of truth however the release was created,
+      # so an auto-generated or empty body is replaced by the version's section.
+      - name: Set the release notes from the changelog section
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: just changelog-section "${GITHUB_REF_NAME}" | gh release edit "${GITHUB_REF_NAME}" --notes-file -

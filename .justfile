@@ -104,6 +104,76 @@ smoke:
     PY
     echo "smoke: wheel installs and imports correctly"
 
+# Bump version, changelog and tag from the conventional commits since the last
+# release. Needs jj-cz >= 0.4.0: it promotes the [Unreleased] block into the new
+# section, so write the entries there in the feature commit. Review CHANGELOG.md
+# afterwards, then `just release`.
+bump:
+    jj-cz bump
+    just changelog-check "$(uv version --short)"
+
+# Push the bump, wait for CI to pass on it, then push the tag and create the
+# GitHub Release with notes from CHANGELOG.md. @- must be the bump commit, as
+# `just bump` leaves it.
+release:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    version="$(uv version --short)"
+    just changelog-check "$version"
+    bump_change="$(jj log -r @- --no-graph -T change_id)"
+    tag_change="$(jj log -r "tags(exact:\"$version\")" --no-graph -T change_id)"
+    if [ "$bump_change" != "$tag_change" ]; then
+        echo "tag $version is not on the bump commit (@-) – run 'just bump' first" >&2
+        exit 1
+    fi
+    # Editing the changelog after the bump rewrites the commit and leaves the
+    # tag on the hidden predecessor, so re-point it before pushing.
+    jj tag set "$version" -r @- --allow-move
+    jj bookmark set main -r @-
+    jj git push --bookmark main
+    # The tag and the release are what cannot be taken back – a version can
+    # never be reused – so neither is created until the ci workflow is green
+    # on the pushed commit. release.yml runs the same checks again before
+    # publishing, but by then the tag and release already exist.
+    sha="$(jj log -r @- --no-graph -T commit_id)"
+    run_id=""
+    for _ in $(seq 1 24); do
+        run_id="$(gh run list --workflow ci.yml --commit "$sha" --json databaseId --jq '.[0].databaseId // empty')"
+        [ -n "$run_id" ] && break
+        sleep 5
+    done
+    if [ -z "$run_id" ]; then
+        echo "no ci run appeared for $sha within two minutes" >&2
+        exit 1
+    fi
+    echo "waiting for ci run $run_id on $sha"
+    gh run watch "$run_id" --exit-status
+    jj git push --tag "$version"
+    just changelog-section "$version" \
+        | gh release create "$version" --verify-tag --title "$version" --notes-file -
+
+# Fail unless CHANGELOG.md has a section for VERSION and nothing left under [Unreleased]
+changelog-check version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! grep -q '^## \[{{ version }}\]' CHANGELOG.md; then
+        echo "CHANGELOG.md has no section for {{ version }}" >&2
+        exit 1
+    fi
+    if awk '/^## \[Unreleased\]/ {p = 1; next} /^## \[/ {p = 0} p && NF {found = 1} END {exit !found}' CHANGELOG.md; then
+        echo "CHANGELOG.md still has entries under [Unreleased] – release them or move them" >&2
+        exit 1
+    fi
+
+# Print the CHANGELOG.md section for VERSION without its heading (the release notes)
+changelog-section version:
+    @awk -v v='{{ version }}' \
+        '/^## \[/ {h = "## [" v "]"; p = (substr($0, 1, length(h)) == h); next} \
+         p {lines[n++] = $0} \
+         END {while (n > 0 && lines[n - 1] ~ /^[[:space:]]*$/) n--; \
+              s = 0; while (s < n && lines[s] ~ /^[[:space:]]*$/) s++; \
+              for (i = s; i < n; i++) print lines[i]}' CHANGELOG.md
+
 publish: build-check
     uv publish --username __token__
 
