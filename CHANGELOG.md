@@ -4,8 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [9.2.1] - 2026-09-15
+
 ### Fixed
 - **client**: an injected niquests session now asks Alma for JSON – niquests seeds new sessions with `Accept: */*`, which `setdefault` left in place, so Alma answered every JSON endpoint in XML
+
+### Build
+- **release**: drive the GitHub Release notes from CHANGELOG.md
+
+### Documentation
+- **changelog**: reconcile the 9.2.0 section
 
 ## [9.2.0] - 2026-09-15
 
