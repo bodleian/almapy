@@ -7,24 +7,13 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - **client**: an injected niquests session now asks Alma for JSON – niquests seeds new sessions with `Accept: */*`, which `setdefault` left in place, so Alma answered every JSON endpoint in XML
 
+## [9.2.0] - 2026-09-15
+
 ### Added
 - **client**: raise `MalformedResponseError`, a retryable `APIServerError`, when a 2xx body cannot be parsed as the promised JSON or XML or arrives as HTML – previously niquests' own `JSONDecodeError` escaped with no status, content type or body, and was neither retried nor counted as backpressure
 
 ### Fixed
 - **utils**: an error body under an XML content type that is not well-formed XML now raises the status-appropriate almapy error instead of a bare `ExpatError`
-
-
-
-## [9.2.0] - 2026-09-15
-
-### Added
-- **client**: raise MalformedResponseError on unparseable 2xx bodies
-
-### Other
-- 9.1.2 -> 9.1.3
-
-### Fixed
-- **bibs**: stop sending override_warning=false on default create and update
 
 ## [9.1.3] - 2026-09-14
 
