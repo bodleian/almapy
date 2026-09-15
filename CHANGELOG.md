@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **client**: an injected niquests session now asks Alma for JSON – niquests seeds new sessions with `Accept: */*`, which `setdefault` left in place, so Alma answered every JSON endpoint in XML
+
 ### Added
 - **client**: raise `MalformedResponseError`, a retryable `APIServerError`, when a 2xx body cannot be parsed as the promised JSON or XML or arrives as HTML – previously niquests' own `JSONDecodeError` escaped with no status, content type or body, and was neither retried nor counted as backpressure
 

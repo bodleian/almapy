@@ -813,6 +813,20 @@ class TestInjectedSession:
         assert client._http.headers["Authorization"] == "apikey caller-supplied"
 
     @pytest.mark.asyncio
+    async def test_bare_session_asks_for_json(self) -> None:
+        """niquests gives a new session ``Accept: */*``, so setdefault left it in
+        place and Alma answered every JSON endpoint in XML."""
+        client = AlmaClient("my-key", client=niquests.AsyncSession())
+        assert client._http.headers["Accept"] == "application/json"
+
+    @pytest.mark.asyncio
+    async def test_explicit_accept_on_injected_session_is_kept(self) -> None:
+        session = niquests.AsyncSession()
+        session.headers["Accept"] = "application/xml"
+        client = AlmaClient("my-key", client=session)
+        assert client._http.headers["Accept"] == "application/xml"
+
+    @pytest.mark.asyncio
     async def test_injected_session_location_is_respected(self) -> None:
         client = AlmaClient("my-key", location="America", client=niquests.AsyncSession())
         assert client._http.base_url == "https://api-na.hosted.exlibrisgroup.com/almaws/v1"

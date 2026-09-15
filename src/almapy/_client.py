@@ -126,7 +126,10 @@ class AlmaClient:
             # own values, which is the point of injecting one.
             if not getattr(client, "base_url", None):
                 client.base_url = _LOCATIONS[location] + "/almaws/v1"
-            client.headers.setdefault("Accept", "application/json")
+            # niquests seeds every new session with ``Accept: */*``, which Alma
+            # answers in XML. Only a caller's own explicit choice is kept.
+            if client.headers.get("Accept", "*/*") == "*/*":
+                client.headers["Accept"] = "application/json"
             client.headers.setdefault("Authorization", f"apikey {apikey}")
             self._http = client
             self._owns_client = False
