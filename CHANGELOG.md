@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [9.3.0] - 2026-09-21
+
 ### Added
 - **bibs**: digital representations at `client.bibs.representations` – list, create, update and delete Alma Digital representations and their files
 - **exceptions**: `BibNotInCollectionError` for Alma error 402260, raised when creating a representation on a bib that belongs to no collection
