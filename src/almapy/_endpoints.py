@@ -34,6 +34,10 @@ class AlmaEndpoint(StrEnum):
     BIB_REQUEST = "/bibs/{MMS_ID}/requests/{REQUEST_ID}"
     ITEM_REQUESTS = "/bibs/{MMS_ID}/holdings/{HOLDING_ID}/items/{ITEM_PID}/requests"
     ITEM_REQUEST = "/bibs/{MMS_ID}/holdings/{HOLDING_ID}/items/{ITEM_PID}/requests/{REQUEST_ID}"
+    REPRESENTATIONS = "/bibs/{MMS_ID}/representations"
+    REPRESENTATION = "/bibs/{MMS_ID}/representations/{REP_ID}"
+    REPRESENTATION_FILES = "/bibs/{MMS_ID}/representations/{REP_ID}/files"
+    REPRESENTATION_FILE = "/bibs/{MMS_ID}/representations/{REP_ID}/files/{FILE_ID}"
 
     PO_LINE = "/acq/po-lines/{PO_LINE_ID}"
     PO_LINE_ITEM = "/acq/po-lines/{PO_LINE_ID}/items/{ITEM_PID}"

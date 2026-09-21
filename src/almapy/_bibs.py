@@ -1,12 +1,13 @@
 """Bibliographic, holding and item namespaces.
 
 Reached as ``client.bibs``, which carries the record-level methods themselves plus
-two sub-namespaces:
+three sub-namespaces:
 
 | Attribute | Covers |
 |---|---|
 | ``client.bibs.loans`` | Loans reached from a record or item, rather than a user |
 | ``client.bibs.requests`` | Requests on a record or item, and processing them |
+| ``client.bibs.representations`` | Alma Digital representations on a record, and their files |
 
 Most methods here want the full MMS ID / holding ID / item PID path;
 [`get_item`][almapy._bibs.AlmaClientBibNS.get_item] resolves all three from a
@@ -23,6 +24,7 @@ from typing import TYPE_CHECKING, Any, Literal, overload
 
 from almapy._base import BaseNamespace
 from almapy._endpoints import AlmaEndpoint
+from almapy._representations import AlmaClientBibRepresentationsNS
 from almapy._utils import RESP_TYPE, Body, Request, _ModelT
 from almapy.exceptions import APIClientError, CannotRenewError, InvalidCodeError, RequestFailedError
 
@@ -994,12 +996,13 @@ class AlmaClientBibRequestsNS(BaseNamespace):
 class AlmaClientBibNS(BaseNamespace):
     """Namespace for bibliographic functionality, exposed at ``client.bibs``.
 
-    Carries the record, holding and item methods themselves, plus two sub-namespaces:
+    Carries the record, holding and item methods themselves, plus three sub-namespaces:
 
     | Attribute | Class |
     |---|---|
     | ``client.bibs.loans`` | [`AlmaClientBibLoansNS`][almapy._bibs.AlmaClientBibLoansNS] |
     | ``client.bibs.requests`` | [`AlmaClientBibRequestsNS`][almapy._bibs.AlmaClientBibRequestsNS] |
+    | ``client.bibs.representations`` | [`AlmaClientBibRepresentationsNS`][almapy._representations.AlmaClientBibRepresentationsNS] |
 
     Start with [`get_item`][almapy._bibs.AlmaClientBibNS.get_item] when all you have
     is a barcode: it resolves the MMS ID, holding ID and item PID that the other
@@ -1015,6 +1018,7 @@ class AlmaClientBibNS(BaseNamespace):
         super().__init__(client)
         self.loans = AlmaClientBibLoansNS(client)
         self.requests = AlmaClientBibRequestsNS(client)
+        self.representations = AlmaClientBibRepresentationsNS(client)
 
     @overload
     async def get_item(self, item_barcode: str, *, model: type[_ModelT]) -> _ModelT: ...

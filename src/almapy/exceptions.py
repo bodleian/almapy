@@ -295,5 +295,13 @@ class UserIsNotAPatronError(APIClientError):
     """Raised when a user cannot borrow because they either don't have a patron role or it has expired."""
 
 
+class BibNotInCollectionError(APIClientError):
+    """Raised when creating a representation on a bib that is in no collection.
+
+    Alma Digital requires the bibliographic record to belong to at least one
+    collection before a representation can hang off it.
+    """
+
+
 class ThrottleTimeoutError(TimeoutError, AlmapyError):
     """Raised when max_wait is exceeded waiting for adaptive throttle."""

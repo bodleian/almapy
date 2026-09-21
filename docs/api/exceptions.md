@@ -17,6 +17,7 @@ Exception
     │   └── APIClientError               4xx, your request – not retried
     │       ├── ThresholdError           429, rate limit exceeded
     │       ├── BarcodeNotFoundError
+    │       ├── BibNotInCollectionError
     │       ├── CannotBeLoanedError
     │       ├── CannotRenewError
     │       ├── ExpiredCardError

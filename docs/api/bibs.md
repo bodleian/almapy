@@ -1,7 +1,7 @@
 # Bibs, holdings and items
 
 Reached as `client.bibs`, which carries the record, holding and item methods
-plus sub-namespaces for loans and requests.
+plus sub-namespaces for loans, requests and digital representations.
 
 Most methods here want the full MMS ID / holding ID / item PID path.
 [`get_item`][almapy._bibs.AlmaClientBibNS.get_item] resolves all three from a
@@ -32,3 +32,11 @@ item_pid = item.item_data.pid
 ## `client.bibs.requests`
 
 ::: almapy._bibs.AlmaClientBibRequestsNS
+
+## `client.bibs.representations`
+
+Alma Digital representations on a record, and the files under each one. Files are
+not uploaded through this API – `create_file` registers a file already staged in
+the institution's S3 upload folder.
+
+::: almapy._representations.AlmaClientBibRepresentationsNS

@@ -56,6 +56,38 @@ class TestBuild:
         result = AlmaEndpoint.BIB_REQUEST.build({"MMS_ID": "111", "REQUEST_ID": "222"})
         assert result == "/bibs/111/requests/222"
 
+    def test_representation_collection_and_single(self) -> None:
+        assert AlmaEndpoint.REPRESENTATIONS.build({"MMS_ID": "111"}) == "/bibs/111/representations"
+        assert (
+            AlmaEndpoint.REPRESENTATION.build({"MMS_ID": "111", "REP_ID": "999"})
+            == "/bibs/111/representations/999"
+        )
+
+    def test_representation_files(self) -> None:
+        assert (
+            AlmaEndpoint.REPRESENTATION_FILES.build({"MMS_ID": "111", "REP_ID": "999"})
+            == "/bibs/111/representations/999/files"
+        )
+        assert (
+            AlmaEndpoint.REPRESENTATION_FILE.build({
+                "MMS_ID": "111",
+                "REP_ID": "999",
+                "FILE_ID": "888",
+            })
+            == "/bibs/111/representations/999/files/888"
+        )
+
+    def test_representation_file_id_is_encoded(self) -> None:
+        """A file ID carrying a slash must not invent a path segment."""
+        assert (
+            AlmaEndpoint.REPRESENTATION_FILE.build({
+                "MMS_ID": "111",
+                "REP_ID": "999",
+                "FILE_ID": "a/b",
+            })
+            == "/bibs/111/representations/999/files/a%2Fb"
+        )
+
 
 class TestPathParameterEncoding:
     """Path parameters are percent-encoded so they cannot act as URL syntax.

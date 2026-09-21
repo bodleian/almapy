@@ -107,6 +107,7 @@ rejected.
 | `401873` | `RequestFailedError` |
 | `401876` | `POUpdateFailedError` |
 | `402203` | `MMSIdNotFoundError` |
+| `402260` | `BibNotInCollectionError` |
 | `402504` | `ScanItemRetrievalError` |
 
 ## Rate limiting

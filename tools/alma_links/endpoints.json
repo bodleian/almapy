@@ -263,6 +263,46 @@
     "summary": "Manage Members",
     "url": "https://developers.exlibrisgroup.com/alma/apis/docs/conf/UE9TVCAvYWxtYXdzL3YxL2NvbmYvc2V0cy97c2V0X2lkfQ==/"
   },
+  "almapy._representations.AlmaClientBibRepresentationsNS.create_file": {
+    "summary": "Create Representation File",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UE9TVCAvYWxtYXdzL3YxL2JpYnMve21tc19pZH0vcmVwcmVzZW50YXRpb25zL3tyZXBfaWR9L2ZpbGVz/"
+  },
+  "almapy._representations.AlmaClientBibRepresentationsNS.create_representation": {
+    "summary": "Create Representation",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UE9TVCAvYWxtYXdzL3YxL2JpYnMve21tc19pZH0vcmVwcmVzZW50YXRpb25z/"
+  },
+  "almapy._representations.AlmaClientBibRepresentationsNS.delete_file": {
+    "summary": "Delete Representation File",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/REVMRVRFIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9yZXByZXNlbnRhdGlvbnMve3JlcF9pZH0vZmlsZXMve2ZpbGVfaWR9/"
+  },
+  "almapy._representations.AlmaClientBibRepresentationsNS.delete_representation": {
+    "summary": "Delete Representation",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/REVMRVRFIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9yZXByZXNlbnRhdGlvbnMve3JlcF9pZH0=/"
+  },
+  "almapy._representations.AlmaClientBibRepresentationsNS.get_file": {
+    "summary": "Retrieve Representation File Details",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9yZXByZXNlbnRhdGlvbnMve3JlcF9pZH0vZmlsZXMve2ZpbGVfaWR9/"
+  },
+  "almapy._representations.AlmaClientBibRepresentationsNS.get_files": {
+    "summary": "Retrieve Representation Files' Details",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9yZXByZXNlbnRhdGlvbnMve3JlcF9pZH0vZmlsZXM=/"
+  },
+  "almapy._representations.AlmaClientBibRepresentationsNS.get_representation": {
+    "summary": "Retrieve Representation Details",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9yZXByZXNlbnRhdGlvbnMve3JlcF9pZH0=/"
+  },
+  "almapy._representations.AlmaClientBibRepresentationsNS.get_representations": {
+    "summary": "Retrieve Representations",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/R0VUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9yZXByZXNlbnRhdGlvbnM=/"
+  },
+  "almapy._representations.AlmaClientBibRepresentationsNS.update_file": {
+    "summary": "Update Representation File",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UFVUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9yZXByZXNlbnRhdGlvbnMve3JlcF9pZH0vZmlsZXMve2ZpbGVfaWR9/"
+  },
+  "almapy._representations.AlmaClientBibRepresentationsNS.update_representation": {
+    "summary": "Update Representation",
+    "url": "https://developers.exlibrisgroup.com/alma/apis/docs/bibs/UFVUIC9hbG1hd3MvdjEvYmlicy97bW1zX2lkfS9yZXByZXNlbnRhdGlvbnMve3JlcF9pZH0=/"
+  },
   "almapy._users.AlmaClientUserFinesNS.create_fee": {
     "summary": "Create user fine/fee",
     "url": "https://developers.exlibrisgroup.com/alma/apis/docs/users/UE9TVCAvYWxtYXdzL3YxL3VzZXJzL3t1c2VyX2lkfS9mZWVz/"

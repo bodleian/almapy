@@ -250,6 +250,7 @@ _ERROR_MAPPING: dict[str, type[exceptions.APIServerError | exceptions.APIClientE
     "401690": exceptions.IllegalBarcodeError,
     "401153": exceptions.CannotBeLoanedError,
     "401151": exceptions.UserIsNotAPatronError,
+    "402260": exceptions.BibNotInCollectionError,
 }
 
 
