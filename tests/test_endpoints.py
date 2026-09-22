@@ -120,3 +120,55 @@ class TestPathParameterEncoding:
             AlmaEndpoint.ITEM.build({"MMS_ID": "991234567", "HOLDING_ID": "22", "ITEM_PID": "23"})
             == "/bibs/991234567/holdings/22/items/23"
         )
+
+
+class TestSlashBearingIdentifiers:
+    """A PO line number keeps its slash, because that is where Alma keeps it.
+
+    Migrated orders are numbered `<order>/<line>`, and Alma addresses the record
+    at a path with the slash raw – its own search results give the record's
+    `link` as `/acq/po-lines/204029292/0005`. Encoded to `%2F`, the Ex Libris
+    gateway refuses the request at the connector, before Alma sees it.
+    """
+
+    def test_po_line_number_keeps_its_slash(self) -> None:
+        assert (
+            AlmaEndpoint.PO_LINE.build({"PO_LINE_ID": "204029292/0005"})
+            == "/acq/po-lines/204029292/0005"
+        )
+
+    def test_po_line_item_keeps_its_slash(self) -> None:
+        assert (
+            AlmaEndpoint.PO_LINE_ITEM.build({"PO_LINE_ID": "204029292/0005", "ITEM_PID": "23"})
+            == "/acq/po-lines/204029292/0005/items/23"
+        )
+
+    def test_ordinary_po_line_number_is_unchanged(self) -> None:
+        """The overwhelmingly common case must not be disturbed."""
+        assert AlmaEndpoint.PO_LINE.build({"PO_LINE_ID": "POL-12345"}) == "/acq/po-lines/POL-12345"
+
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        [
+            ("a b/c", "/acq/po-lines/a%20b/c"),
+            ("a#1/c", "/acq/po-lines/a%231/c"),
+            ("a?apikey=other/c", "/acq/po-lines/a%3Fapikey%3Dother/c"),
+        ],
+    )
+    def test_the_slash_is_the_only_exception(self, raw: str, expected: str) -> None:
+        """Each segment either side of a slash is still encoded strictly."""
+        assert AlmaEndpoint.PO_LINE.build({"PO_LINE_ID": raw}) == expected
+
+    @pytest.mark.parametrize(
+        "raw",
+        ["../../users/jsmith", "a/../b", "a//b", "/a", "a/", ".", ".."],
+        ids=["traversal", "inner_dots", "empty_inner", "leading", "trailing", "dot", "dotdot"],
+    )
+    def test_path_rewriting_segments_are_refused(self, raw: str) -> None:
+        """Letting the slash through is only safe while it cannot rewrite the path."""
+        with pytest.raises(ValueError, match="empty or relative path segment"):
+            AlmaEndpoint.PO_LINE.build({"PO_LINE_ID": raw})
+
+    def test_the_exception_is_narrow(self) -> None:
+        """Every other identifier space still encodes its slash."""
+        assert AlmaEndpoint.USER.build({"USER_ID": "a/b"}) == "/users/a%2Fb"

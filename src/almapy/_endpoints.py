@@ -5,6 +5,40 @@ from collections.abc import Mapping
 from enum import StrEnum
 from urllib.parse import quote
 
+_SLASH_BEARING = frozenset({"PO_LINE_ID"})
+"""Path parameters whose Alma identifier space contains slashes.
+
+Migrated PO line numbers are `<order>/<line>` – `204029292/0005` is line 0005 of
+order 204029292 – and Alma addresses the record at a path with that slash left
+raw: its own search results give the record's `link` as
+`/acq/po-lines/204029292/0005`. Encoded to `%2F`, the Ex Libris gateway refuses
+the request at the connector, before Alma sees it, with a bare Tomcat page
+carrying no error code – indistinguishable from an outage, and unreachable.
+
+Every other parameter keeps the strict encoding. A slash arriving in a free-text
+barcode or "other ID" is the route-confusion bug this encoding exists to stop.
+"""
+
+
+def _encode(name: str, value: str) -> str:
+    """Percent-encode one path parameter so it cannot act as URL syntax.
+
+    The slash is the single exception, and only for `_SLASH_BEARING`, where it
+    separates the parts of one of Alma's own identifiers. Each segment either
+    side of it is still encoded strictly, so nothing else gets through that way,
+    and a segment that would rewrite the path – empty, `.` or `..` – is refused
+    rather than sent: letting the slash through is only safe while it stays a
+    separator and cannot become navigation.
+    """
+    text = str(value)
+    if name not in _SLASH_BEARING:
+        return quote(text, safe="")
+    segments = text.split("/")
+    if any(segment in {"", ".", ".."} for segment in segments):
+        msg = f"{name}: {text!r} has an empty or relative path segment"
+        raise ValueError(msg)
+    return "/".join(quote(segment, safe="") for segment in segments)
+
 
 class AlmaEndpoint(StrEnum):
     USERS = "/users"
@@ -76,9 +110,9 @@ class AlmaEndpoint(StrEnum):
         if extra := provided - expected:
             msg = f"{self.name}: unexpected path params {extra}"
             raise ValueError(msg)
-        # Percent-encode with safe="" so nothing survives as a URL delimiter.
-        # Alma "other IDs", card numbers and barcodes are free text arriving from
+        # Encode so nothing survives as a URL delimiter – see `_encode`. Alma
+        # "other IDs", card numbers and barcodes are free text arriving from
         # upstream systems: unencoded, "smith#1" fetched user "smith" because the
         # fragment never left the client, "a/b" hit a different route, and
         # "x?apikey=y" became a query string.
-        return self.value.format_map({k: quote(str(v), safe="") for k, v in path.items()})
+        return self.value.format_map({k: _encode(k, v) for k, v in path.items()})
