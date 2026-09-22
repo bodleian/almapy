@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [9.3.1] - 2026-09-22
+
 ### Fixed
 - **endpoints**: keep the slash in a PO line number – Alma addresses `204029292/0005` with the slash raw, and encoding it to `%2F` made the Ex Libris gateway refuse the request before Alma saw it
 
