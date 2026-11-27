@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **bibs**: retry `scan_in` on timeouts, dropped connections and server errors again – a scan-in is idempotent, so the 9.0 rule against replaying a POST only turned a transient Alma failure into an item left unscanned
+
 ## [9.3.1] - 2026-09-22
 
 ### Fixed

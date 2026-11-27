@@ -1935,8 +1935,9 @@ class AlmaClientBibNS(BaseNamespace):
         Supply **either** ``circ_desk`` with ``library`` (a circulation desk scan) or
         ``department`` with ``work_order_type`` (a work department scan), not both.
 
-        Being a POST, this call is **not replayed** if the response is lost in
-        transit. See [Rate limiting](../guide/rate-limiting.md).
+        Unlike other POSTs, this call **is replayed** on a timeout or server error,
+        as a read would be: a scan-in is idempotent, so a repeat cannot leave a
+        duplicate behind. See [Rate limiting](../guide/rate-limiting.md).
 
         Args:
             mms_id: The MMS ID of the bibliographic record.
@@ -2006,4 +2007,5 @@ class AlmaClientBibNS(BaseNamespace):
             {"MMS_ID": mms_id, "HOLDING_ID": holding_id, "ITEM_PID": item_pid},
             model=model,
             params=params,
+            retry=True,
         )

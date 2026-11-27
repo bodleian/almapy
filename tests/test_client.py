@@ -690,6 +690,23 @@ class TestWriteRetryPolicy:
         assert len(niquests_mock.calls) == 3
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "failure",
+        [niquests.ConnectionError("reset"), niquests.ReadTimeout("timed out")],
+    )
+    async def test_scan_in_is_retried_like_a_read(
+        self, niquests_mock: MockRouter, failure: Exception
+    ) -> None:
+        """A scan-in is idempotent, so the POST rule does not apply to it."""
+        client = self._mocked()
+        niquests_mock.post(path="/almaws/v1/bibs/99/holdings/22/items/23").mock(side_effect=failure)
+
+        with pytest.raises(type(failure)):
+            await client.bibs.scan_in("99", "22", "23", library="MAIN", circ_desk="DEFAULT")
+
+        assert len(niquests_mock.calls) == 3
+
+    @pytest.mark.asyncio
     async def test_retry_false_disables_retries_for_a_read(self, niquests_mock: MockRouter) -> None:
         client = self._mocked()
         niquests_mock.get(f"{_BASE}/users").mock(side_effect=niquests.ConnectionError("reset"))

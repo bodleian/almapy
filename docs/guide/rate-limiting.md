@@ -84,6 +84,10 @@ almapy gates retries on the HTTP method:
 Both of the POST cases prove the request never landed, so replaying is safe.
 Everything else is left to fail rather than risk a duplicate.
 
+One POST is the exception: `bibs.scan_in` is retried on the full transient set,
+as a read is. A scan-in is idempotent – there is nothing for a repeat to
+duplicate – so failing it would only leave an item unscanned for no gain.
+
 ### Overriding per call
 
 The namespace methods do not expose this. `retry=` is a parameter of
