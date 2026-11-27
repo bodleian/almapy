@@ -86,11 +86,11 @@ dev = [
   "pytest-mock>=3.14.0",
   "niquests-mock>=0.4.0",
   "ruff>=0.13.2",
-  "safety>=3.6.2",
   "typeguard>=4.3.0",
   "environs>=11.0.0",
   "deptry>=0.25.1",
   "pytest-cov>=7.1.0",
+  "pydantic>=2",
 ]
 # Zensical is pre-1.0 and iterating rapidly, so the exact version is pinned:
 # a 0.0.x release that changes the config schema would otherwise break the docs
